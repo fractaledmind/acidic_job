@@ -7,6 +7,14 @@ gemspec
 
 gem "rake", "~> 13.0"
 
-gem "rspec", "~> 3.0"
+gem "minitest", "~> 5.0"
 
 gem "rubocop", "~> 1.7"
+
+gem "activerecord", "~> 6.1.3.2"
+
+gem "activejob", "~> 6.1.3.2"
+
+gem "sqlite3"
+
+gem "database_cleaner"
