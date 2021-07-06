@@ -4,6 +4,7 @@ require_relative "acidic_job/version"
 require_relative "acidic_job/no_op"
 require_relative "acidic_job/recovery_point"
 require_relative "acidic_job/response"
+require "active_support/concern"
 
 module AcidicJob
   class IdempotencyKeyRequired < StandardError; end
@@ -68,7 +69,7 @@ module AcidicJob
 
     # find or create an AcidicJobKey record to store all information about this job
     # side-effect: will set the @key instance variable
-    ensure_idempotency_key_record(key, params, defined_steps.first)
+    ensure_idempotency_key_record(key, with, defined_steps.first)
 
     # if the key record is already marked as finished, immediately return its result
     return @key.succeeded? if @key.finished?
@@ -100,9 +101,9 @@ module AcidicJob
 
   private
 
-  def atomic_phase(key = nil, proc = nil, &block)
+  def atomic_phase(key = nil, proc = nil) # &block
     error = false
-    phase_callable = (proc || block)
+    phase_callable = (proc || yield)
 
     begin
       # ActiveRecord::Base.transaction(isolation: :serializable) do
@@ -110,6 +111,7 @@ module AcidicJob
         phase_result = phase_callable.call
 
         if phase_result.is_a?(NoOp) || phase_result.is_a?(RecoveryPoint) || phase_result.is_a?(Response)
+          # TODO: why is this here?
           key ||= @key
           phase_result.call(key: key)
         else
@@ -127,7 +129,7 @@ module AcidicJob
       # key right away so that another request can try again.
       if error && !key.nil?
         begin
-          key.update(locked_at: nil, error_object: error)
+          key.update_columns(locked_at: nil, error_object: error)
         rescue => e
           # We're already inside an error condition, so swallow any additional
           # errors from here and just send them to logs.
