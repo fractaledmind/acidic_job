@@ -18,3 +18,5 @@ gem "activejob", "~> 6.1.3.2"
 gem "sqlite3"
 
 gem "database_cleaner"
+
+gem "simplecov"
