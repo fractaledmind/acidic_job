@@ -119,10 +119,6 @@ module AcidicJob
       ActiveRecord::Base.transaction(isolation: :read_uncommitted) do
         phase_result = phase_callable.call
 
-        raise UnknownAtomicPhaseType unless phase_result.is_a?(NoOp) ||
-                                            phase_result.is_a?(RecoveryPoint) ||
-                                            phase_result.is_a?(Response)
-
         # TODO: why is this here?
         key ||= @key
         phase_result.call(key: key)

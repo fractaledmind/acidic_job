@@ -176,7 +176,7 @@ class RideCreateJob < ActiveJob::Base
   required :user, :params
 
   def perform(idempotency_key, user, ride_params)
-    idempotently key: idempotency_key, with: { user: user, params: ride_params } do
+    idempotently key: idempotency_key, with: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -187,7 +187,7 @@ class RideCreateJob < ActiveJob::Base
 
   # rubocop:disable Metrics/MethodLength
   def create_ride_and_audit_record
-    ride = Ride.create!(
+    @ride = Ride.create!(
       acidic_job_key_id: key.id,
       origin_lat: params["origin_lat"],
       origin_lon: params["origin_lon"],
@@ -210,7 +210,7 @@ class RideCreateJob < ActiveJob::Base
   # rubocop:disable Metrics/MethodLength
   def create_stripe_charge
     # retrieve a ride record if necessary (i.e. we're recovering)
-    ride = Ride.find_by(acidic_job_key_id: key.id) if ride.nil?
+    @ride = Ride.find_by(acidic_job_key_id: key.id) if ride.nil?
 
     # if ride is still nil by this point, we have a bug
     raise MissingRideAtRideCreatedRecoveryPoint if ride.nil?

@@ -225,6 +225,19 @@ class TestAcidicJobs < Minitest::Test
       key.reload
       assert_nil key.locked_at
     end
+
+    def test_throws_error_if_recovering_without_ride_record
+      key = create_key(recovery_point: :create_stripe_charge)
+
+      assert_raises RideCreateJob::MissingRideAtRideCreatedRecoveryPoint do
+        RideCreateJob.perform_now(key.idempotency_key, @valid_user, @valid_params)
+      end
+      key.reload
+
+      assert_equal false, key.succeeded?
+      assert_equal 1, AcidicJobKey.count
+      assert_equal 0, Ride.count
+    end
   end
 
   class SpecificTest < TestAcidicJobs
