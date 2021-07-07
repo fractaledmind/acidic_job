@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    acidic_job (0.1.1)
+    acidic_job (0.1.2)
       activesupport
 
 GEM
