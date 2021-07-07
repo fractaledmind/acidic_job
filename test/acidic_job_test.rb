@@ -198,7 +198,7 @@ class TestAcidicJobs < Minitest::Test
       end
     end
 
-    def test_unlocks_a_key_and_returns_409_on_a_serialization_failure
+    def test_unlocks_a_key_on_a_serialization_failure
       key = create_key
       raises_exception = ->(_params, _args) { raise ActiveRecord::SerializationFailure, "Serialization failure." }
 
@@ -212,7 +212,7 @@ class TestAcidicJobs < Minitest::Test
       assert_nil key.locked_at
     end
 
-    def test_unlocks_a_key_and_returns_500_on_an_internal_error
+    def test_unlocks_a_key_on_an_internal_error
       key = create_key
       raises_exception = ->(_params, _args) { raise "Internal server error!" }
 
