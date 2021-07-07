@@ -110,17 +110,14 @@ module AcidicJob
 
   private
 
-  def atomic_phase(key = nil, proc = nil, &block)
+  def atomic_phase(key, proc = nil, &block)
     error = false
     phase_callable = (proc || block)
 
     begin
-      # ActiveRecord::Base.transaction(isolation: :serializable) do
-      ActiveRecord::Base.transaction(isolation: :read_uncommitted) do
+      key.with_lock do
         phase_result = phase_callable.call
 
-        # TODO: why is this here?
-        key ||= @key
         phase_result.call(key: key)
       end
     rescue StandardError => e
@@ -142,7 +139,14 @@ module AcidicJob
   end
 
   def ensure_idempotency_key_record(key_val, params, first_step)
-    atomic_phase do
+    isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
+                      when :sqlite
+                        :read_uncommitted
+                      else
+                        :serializable
+                      end
+
+    ActiveRecord::Base.transaction(isolation: isolation_level) do
       @key = AcidicJobKey.find_by(idempotency_key: key_val)
 
       if @key
@@ -167,9 +171,6 @@ module AcidicJob
           job_args: params.as_json
         )
       end
-
-      # no response and no need to set a recovery point
-      NoOp.new
     end
   end
 
