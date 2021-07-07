@@ -10,7 +10,7 @@ require "sqlite3"
 # DATABASE AND MODELS ----------------------------------------------------------
 ActiveRecord::Base.establish_connection(
   adapter: "sqlite3",
-  database: "file::memory:",
+  database: "test/database.sqlite",
   flags: SQLite3::Constants::Open::READWRITE |
          SQLite3::Constants::Open::CREATE |
          SQLite3::Constants::Open::SHAREDCACHE
