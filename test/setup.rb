@@ -6,6 +6,7 @@ require "minitest"
 require "minitest/mock"
 require "logger"
 require "sqlite3"
+require "database_cleaner/active_record"
 
 # DATABASE AND MODELS ----------------------------------------------------------
 ActiveRecord::Base.establish_connection(
