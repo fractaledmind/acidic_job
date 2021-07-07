@@ -207,7 +207,7 @@ class RideCreateJob < ActiveJob::Base
   end
   # rubocop:enable Metrics/MethodLength
 
-  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def create_stripe_charge
     # retrieve a ride record if necessary (i.e. we're recovering)
     @ride = Ride.find_by(acidic_job_key_id: key.id) if ride.nil?
@@ -233,9 +233,9 @@ class RideCreateJob < ActiveJob::Base
                                      idempotency_key: "rocket-rides-atomic-#{key.id}"
                                    })
 
-    ride.update(stripe_charge_id: charge.id)
+    ride.update_column(:stripe_charge_id, charge.id)
   end
-  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
   def send_receipt
     # Send a receipt asynchronously by adding an entry to the staged_jobs

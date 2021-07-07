@@ -11,6 +11,10 @@ gem "minitest", "~> 5.0"
 
 gem "rubocop", "~> 1.7"
 
+gem "rubocop-minitest"
+
+gem "rubocop-rake"
+
 gem "activerecord", "~> 6.1.3.2"
 
 gem "activejob", "~> 6.1.3.2"

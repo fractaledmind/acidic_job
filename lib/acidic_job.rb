@@ -6,7 +6,7 @@ require_relative "acidic_job/recovery_point"
 require_relative "acidic_job/response"
 require "active_support/concern"
 
-# rubocop:disable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+# rubocop:disable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength
 module AcidicJob
   class IdempotencyKeyRequired < StandardError; end
 
@@ -220,4 +220,4 @@ module AcidicJob
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+# rubocop:enable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength

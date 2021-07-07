@@ -53,6 +53,10 @@ GEM
       unicode-display_width (>= 1.4.0, < 3.0)
     rubocop-ast (1.7.0)
       parser (>= 3.0.1.1)
+    rubocop-minitest (0.14.0)
+      rubocop (>= 0.90, < 2.0)
+    rubocop-rake (0.6.0)
+      rubocop (~> 1.0)
     ruby-progressbar (1.11.0)
     simplecov (0.21.2)
       docile (~> 1.1)
@@ -77,6 +81,8 @@ DEPENDENCIES
   minitest (~> 5.0)
   rake (~> 13.0)
   rubocop (~> 1.7)
+  rubocop-minitest
+  rubocop-rake
   simplecov
   sqlite3
 
