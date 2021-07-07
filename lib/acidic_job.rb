@@ -6,6 +6,7 @@ require_relative "acidic_job/recovery_point"
 require_relative "acidic_job/response"
 require "active_support/concern"
 
+# rubocop:disable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 module AcidicJob
   class IdempotencyKeyRequired < StandardError; end
 
@@ -27,6 +28,13 @@ module AcidicJob
 
   included do
     attr_reader :key
+
+    # discard_on MismatchedIdempotencyKeyAndJobArguments
+    # discard_on UnknownRecoveryPoint
+    # discard_on UnknownAtomicPhaseType
+    # discard_on MissingRequiredAttribute
+    # retry_on LockedIdempotencyKey
+    # retry_on ActiveRecord::SerializationFailure
   end
 
   class_methods do
@@ -53,10 +61,11 @@ module AcidicJob
   # something like the Shannon entropy equation.
   IDEMPOTENCY_KEY_MIN_LENGTH = 20
 
-  def idempotently(key:, with:) # &block
+  # &block
+  def idempotently(key:, with:)
     # set accessors for each argument passed in to ensure they are available
     # to the step methods the job will have written
-    set_accessors_for_passed_arguments(with)
+    define_accessors_for_passed_arguments(with)
 
     validate_passed_idempotency_key(key)
     validate_passed_arguments(with)
@@ -69,7 +78,7 @@ module AcidicJob
 
     # find or create an AcidicJobKey record to store all information about this job
     # side-effect: will set the @key instance variable
-    ensure_idempotency_key_record(key, with, defined_steps.first)
+    ensure_idempotency_key_record(key, with[:params], defined_steps.first)
 
     # if the key record is already marked as finished, immediately return its result
     return @key.succeeded? if @key.finished?
@@ -101,27 +110,24 @@ module AcidicJob
 
   private
 
-  def atomic_phase(key = nil, proc = nil) # &block
+  def atomic_phase(key = nil, proc = nil, &block)
     error = false
-    phase_callable = (proc || yield)
+    phase_callable = (proc || block)
 
     begin
       # ActiveRecord::Base.transaction(isolation: :serializable) do
       ActiveRecord::Base.transaction(isolation: :read_uncommitted) do
         phase_result = phase_callable.call
 
-        if phase_result.is_a?(NoOp) || phase_result.is_a?(RecoveryPoint) || phase_result.is_a?(Response)
-          # TODO: why is this here?
-          key ||= @key
-          phase_result.call(key: key)
-        else
-          raise UnknownAtomicPhaseType
-        end
+        raise UnknownAtomicPhaseType unless phase_result.is_a?(NoOp) ||
+                                            phase_result.is_a?(RecoveryPoint) ||
+                                            phase_result.is_a?(Response)
+
+        # TODO: why is this here?
+        key ||= @key
+        phase_result.call(key: key)
       end
-    rescue MismatchedIdempotencyKeyAndJobArguments, LockedIdempotencyKey, UnknownRecoveryPoint, UnknownAtomicPhaseType, MissingRequiredAttribute, ActiveRecord::SerializationFailure => e
-      error = e
-      raise e
-    rescue => e
+    rescue StandardError => e
       error = e
       raise e
     ensure
@@ -130,7 +136,7 @@ module AcidicJob
       if error && !key.nil?
         begin
           key.update_columns(locked_at: nil, error_object: error)
-        rescue => e
+        rescue StandardError => e
           # We're already inside an error condition, so swallow any additional
           # errors from here and just send them to logs.
           puts "Failed to unlock key #{key.id} because of #{e}."
@@ -146,21 +152,15 @@ module AcidicJob
       if @key
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
-        if @key.job_args != params.as_json
-          raise MismatchedIdempotencyKeyAndJobArguments
-        end
+        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != params.as_json
 
         # Only acquire a lock if the key is unlocked or its lock has expired
         # because the original job was long enough ago.
-        if @key.locked_at && @key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
-          raise LockedIdempotencyKey
-        end
+        raise LockedIdempotencyKey if @key.locked_at && @key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
 
         # Lock the key and update latest run unless the job is already
         # finished.
-        if !@key.finished?
-          @key.update!(last_run_at: Time.current, locked_at: Time.current)
-        end
+        @key.update!(last_run_at: Time.current, locked_at: Time.current) unless @key.finished?
       else
         @key = AcidicJobKey.create!(
           idempotency_key: key_val,
@@ -177,9 +177,11 @@ module AcidicJob
     end
   end
 
-  def set_accessors_for_passed_arguments(passed_arguments)
+  def define_accessors_for_passed_arguments(passed_arguments)
     passed_arguments.each do |accessor, value|
-      self.class.attr_accessor accessor
+      # the reader method may already be defined
+      self.class.attr_reader accessor unless respond_to?(accessor)
+      # but we should always update the value to match the current value
       instance_variable_set("@#{accessor}", value)
     end
 
@@ -200,7 +202,8 @@ module AcidicJob
 
     return if missing_attributes.empty?
 
-    raise MissingRequiredAttribute, "The following required job parameters are missing: #{missing_attributes.to_sentence}"
+    raise MissingRequiredAttribute,
+          "The following required job parameters are missing: #{missing_attributes.to_sentence}"
   end
 
   def define_atomic_phases(defined_steps)
@@ -221,3 +224,4 @@ module AcidicJob
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
