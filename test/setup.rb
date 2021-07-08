@@ -176,8 +176,8 @@ class RideCreateJob < ActiveJob::Base
 
   required :user, :params
 
-  def perform(idempotency_key, user, ride_params)
-    idempotently key: idempotency_key, with: { user: user, params: ride_params, ride: nil } do
+  def perform(user, ride_params)
+    idempotently with: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt

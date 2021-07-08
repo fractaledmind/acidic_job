@@ -62,12 +62,11 @@ module AcidicJob
   IDEMPOTENCY_KEY_MIN_LENGTH = 20
 
   # &block
-  def idempotently(key:, with:)
+  def idempotently(with:)
     # set accessors for each argument passed in to ensure they are available
     # to the step methods the job will have written
     define_accessors_for_passed_arguments(with)
 
-    validate_passed_idempotency_key(key)
     validate_passed_arguments(with)
 
     # execute the block to gather the info on what phases are defined for this job
@@ -78,7 +77,7 @@ module AcidicJob
 
     # find or create an AcidicJobKey record to store all information about this job
     # side-effect: will set the @key instance variable
-    ensure_idempotency_key_record(key, with[:params], defined_steps.first)
+    ensure_idempotency_key_record(job_id, with[:params], defined_steps.first)
 
     # if the key record is already marked as finished, immediately return its result
     return @key.succeeded? if @key.finished?
@@ -126,25 +125,24 @@ module AcidicJob
     ensure
       # If we're leaving under an error condition, try to unlock the idempotency
       # key right away so that another request can try again.
-      if error && !key.nil?
-        begin
-          key.update_columns(locked_at: nil, error_object: error)
-        rescue StandardError => e
-          # We're already inside an error condition, so swallow any additional
-          # errors from here and just send them to logs.
-          puts "Failed to unlock key #{key.id} because of #{e}."
-        end
+      begin
+        key.update_columns(locked_at: nil, error_object: error) if error.present?
+      rescue StandardError => e
+        # We're already inside an error condition, so swallow any additional
+        # errors from here and just send them to logs.
+        puts "Failed to unlock key #{key.id} because of #{e}."
       end
     end
   end
 
   def ensure_idempotency_key_record(key_val, params, first_step)
-    isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
-                      when :sqlite
-                        :read_uncommitted
-                      else
-                        :serializable
-                      end
+    # isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
+    #                   when :sqlite
+    #                     :read_uncommitted
+    #                   else # :nocov:
+    #                     :serializable # :nocov:
+    #                   end
+    isolation_level = :read_uncommitted
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
       @key = AcidicJobKey.find_by(idempotency_key: key_val)
@@ -181,13 +179,6 @@ module AcidicJob
       # but we should always update the value to match the current value
       instance_variable_set("@#{accessor}", value)
     end
-
-    true
-  end
-
-  def validate_passed_idempotency_key(key)
-    raise IdempotencyKeyRequired if key.nil?
-    raise IdempotencyKeyTooShort if key.length < IDEMPOTENCY_KEY_MIN_LENGTH
 
     true
   end
