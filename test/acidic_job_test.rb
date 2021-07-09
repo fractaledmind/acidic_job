@@ -36,8 +36,8 @@ class TestAcidicJobs < Minitest::Test
       last_run_at: Time.current,
       recovery_point: :create_ride_and_audit_record,
       job_name: "RideCreateJob",
-      job_args: @valid_params.as_json
-    }.merge(params))
+      job_args: {"user"=>@valid_user, "params"=>@valid_params, "ride"=>nil}.as_json
+    }.deep_merge(params))
   end
 
   def test_that_it_has_a_version_number
@@ -102,7 +102,7 @@ class TestAcidicJobs < Minitest::Test
     end
 
     def test_stores_results_for_a_permanent_failure
-      key = create_key
+      key = create_key(job_args: { "user" => @invalid_user.as_json } )
       AcidicJobKey.stub(:find_by, ->(*) { key }) do
         assert_raises Stripe::CardError do
           RideCreateJob.perform_now(@invalid_user, @valid_params)

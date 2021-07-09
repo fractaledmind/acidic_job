@@ -77,7 +77,7 @@ module AcidicJob
 
     # find or create an AcidicJobKey record to store all information about this job
     # side-effect: will set the @key instance variable
-    ensure_idempotency_key_record(job_id, with[:params], defined_steps.first)
+    ensure_idempotency_key_record(job_id, with, defined_steps.first)
 
     # if the key record is already marked as finished, immediately return its result
     return @key.succeeded? if @key.finished?
@@ -135,7 +135,7 @@ module AcidicJob
     end
   end
 
-  def ensure_idempotency_key_record(key_val, params, first_step)
+  def ensure_idempotency_key_record(key_val, job_args, first_step)
     # isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
     #                   when :sqlite
     #                     :read_uncommitted
@@ -150,7 +150,7 @@ module AcidicJob
       if @key
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
-        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != params.as_json
+        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != job_args.as_json
 
         # Only acquire a lock if the key is unlocked or its lock has expired
         # because the original job was long enough ago.
@@ -166,7 +166,7 @@ module AcidicJob
           last_run_at: Time.current,
           recovery_point: first_step,
           job_name: self.class.name,
-          job_args: params.as_json
+          job_args: job_args.as_json
         )
       end
     end
