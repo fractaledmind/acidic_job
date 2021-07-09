@@ -19,7 +19,7 @@ This is, of course, far easier said than done. Thus, `AcidicJob`.
 3. https://brandur.org/job-drain
 4. https://brandur.org/idempotency-keys
 
-`AcididJob` brings these techniques and principles into the world of a standard Rails application.
+`AcidicJob` brings these techniques and principles into the world of a standard Rails application.
 
 ## Installation
 
