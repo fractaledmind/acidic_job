@@ -37,18 +37,6 @@ module AcidicJob
     # retry_on ActiveRecord::SerializationFailure
   end
 
-  class_methods do
-    def required(*names)
-      required_attributes.push(*names)
-    end
-
-    def required_attributes
-      return @required_attributes if instance_variable_defined?(:@required_attributes)
-
-      @required_attributes = []
-    end
-  end
-
   # Number of seconds passed which we consider a held idempotency key lock to be
   # defunct and eligible to be locked again by a different API call. We try to
   # unlock keys on our various failure conditions, but software is buggy, and
@@ -66,8 +54,6 @@ module AcidicJob
     # set accessors for each argument passed in to ensure they are available
     # to the step methods the job will have written
     define_accessors_for_passed_arguments(with)
-
-    validate_passed_arguments(with)
 
     # execute the block to gather the info on what phases are defined for this job
     defined_steps = yield
@@ -181,17 +167,6 @@ module AcidicJob
     end
 
     true
-  end
-
-  def validate_passed_arguments(attributes)
-    missing_attributes = self.class.required_attributes.select do |required_attribute|
-      attributes[required_attribute].nil?
-    end
-
-    return if missing_attributes.empty?
-
-    raise MissingRequiredAttribute,
-          "The following required job parameters are missing: #{missing_attributes.to_sentence}"
   end
 
   def define_atomic_phases(defined_steps)

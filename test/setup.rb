@@ -172,10 +172,6 @@ class RideCreateJob < ActiveJob::Base
 
   class SimulatedTestingFailure < StandardError; end
 
-  attr_accessor :ride
-
-  required :user, :params
-
   def perform(user, ride_params)
     idempotently with: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record

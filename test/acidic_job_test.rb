@@ -171,18 +171,6 @@ class TestAcidicJobs < Minitest::Test
   end
 
   class FailuresTest < TestAcidicJobs
-    def test_denies_requests_that_are_missing_required_params
-      assert_raises AcidicJob::MissingRequiredAttribute do
-        RideCreateJob.perform_now(nil, @valid_params)
-      end
-    end
-
-    def test_denies_requests_that_are_missing_parameters
-      assert_raises AcidicJob::MissingRequiredAttribute do
-        RideCreateJob.perform_now(@valid_user, nil)
-      end
-    end
-
     def test_denies_requests_where_parameters_dont_match_on_an_existing_key
       key = create_key
 
