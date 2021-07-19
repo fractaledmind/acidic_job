@@ -22,9 +22,9 @@ DatabaseCleaner.clean_with :truncation
 # rubocop:disable Metrics/BlockLength
 ActiveRecord::Schema.define do
   create_table :acidic_job_keys, force: true do |t|
+    t.string :idempotency_key, null: false
     t.string :job_name, null: false
     t.text :job_args, null: false
-    t.string :idempotency_key, null: false
     t.datetime :last_run_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
     t.datetime :locked_at, null: true
     t.string :recovery_point, null: false
@@ -214,23 +214,26 @@ class RideCreateJob < ActiveJob::Base
 
     raise SimulatedTestingFailure if defined?(raise_error)
 
-    # Rocket Rides is still a new service, so during our prototype phase
-    # we're going to give $20 fixed-cost rides to everyone, regardless of
-    # distance. We'll implement a better algorithm later to better
-    # represent the cost in time and jetfuel on the part of our pilots.
-    charge = Stripe::Charge.create({
-                                     amount: 20_00,
-                                     currency: "usd",
-                                     customer: user.stripe_customer_id,
-                                     description: "Charge for ride #{ride.id}"
-                                   }, {
-                                     # Pass through our own unique ID rather than the value
-                                     # transmitted to us so that we can guarantee uniqueness to Stripe
-                                     # across all Rocket Rides accounts.
-                                     idempotency_key: "rocket-rides-atomic-#{key.id}"
-                                   })
-
-    ride.update_column(:stripe_charge_id, charge.id)
+    begin
+      charge = Stripe::Charge.create({
+        amount: 20_00,
+        currency: "usd",
+        customer: user.stripe_customer_id,
+        description: "Charge for ride #{ride.id}"
+      }, {
+        # Pass through our own unique ID rather than the value
+        # transmitted to us so that we can guarantee uniqueness to Stripe
+        # across all Rocket Rides accounts.
+        idempotency_key: "rocket-rides-atomic-#{key.id}"
+      })
+    rescue Stripe::CardError => e
+      # Short circuits execution by sending execution right to 'finished'.
+      # So, ends the job "successfully"
+      Response.new
+    else
+      # if there is some sort of failure here (like server downtime), what happens?
+      ride.update_column(:stripe_charge_id, charge.id)
+    end
   end
   # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
