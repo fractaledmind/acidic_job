@@ -74,7 +74,7 @@ module AcidicJob
       recovery_point = @key.recovery_point.to_sym
 
       case recovery_point
-      when :FINISHED
+      when AcidicJobKey::RECOVERY_POINT_FINISHED.to_sym
         break
       else
         raise UnknownRecoveryPoint unless phases.key? recovery_point
@@ -170,14 +170,14 @@ module AcidicJob
   end
 
   def define_atomic_phases(defined_steps)
-    defined_steps << :FINISHED
+    defined_steps << AcidicJobKey::RECOVERY_POINT_FINISHED
 
     {}.tap do |phases|
       defined_steps.each_cons(2).map do |enter_method, exit_method|
         phases[enter_method] = lambda do
           method(enter_method).call
 
-          if exit_method == :FINISHED
+          if exit_method.to_s == AcidicJobKey::RECOVERY_POINT_FINISHED
             Response.new
           else
             RecoveryPoint.new(exit_method)

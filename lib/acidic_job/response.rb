@@ -7,7 +7,7 @@ class Response
   def call(key:)
     key.update!(
       locked_at: nil,
-      recovery_point: :FINISHED
+      recovery_point: AcidicJobKey::RECOVERY_POINT_FINISHED
     )
   end
 end
