@@ -8,12 +8,6 @@ require "active_support/concern"
 
 # rubocop:disable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength
 module AcidicJob
-  class IdempotencyKeyRequired < StandardError; end
-
-  class MissingRequiredAttribute < StandardError; end
-
-  class IdempotencyKeyTooShort < StandardError; end
-
   class MismatchedIdempotencyKeyAndJobArguments < StandardError; end
 
   class LockedIdempotencyKey < StandardError; end
