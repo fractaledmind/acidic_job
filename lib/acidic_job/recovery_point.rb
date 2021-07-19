@@ -10,6 +10,6 @@ class RecoveryPoint
   end
 
   def call(key:)
-    key.update(recovery_point: name)
+    key.update_column(:recovery_point, name)
   end
 end
