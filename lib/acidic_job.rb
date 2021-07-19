@@ -117,13 +117,12 @@ module AcidicJob
   end
 
   def ensure_idempotency_key_record(key_val, job_args, first_step)
-    # isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
-    #                   when :sqlite
-    #                     :read_uncommitted
-    #                   else # :nocov:
-    #                     :serializable # :nocov:
-    #                   end
-    isolation_level = :read_uncommitted
+    isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
+                      when :sqlite
+                        :read_uncommitted
+                      else
+                        :serializable
+                      end
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
       @key = AcidicJobKey.find_by(idempotency_key: key_val)
