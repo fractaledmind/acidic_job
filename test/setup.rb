@@ -81,31 +81,6 @@ ActiveRecord::Schema.define do
 end
 # rubocop:enable Metrics/BlockLength
 
-class AcidicJobKey < ActiveRecord::Base
-  RECOVERY_POINT_FINISHED = "FINISHED"
-
-  serialize :job_args, Hash
-  serialize :error_object
-
-  validates :job_name, presence: true
-  validates :job_args, presence: true
-  validates :idempotency_key, presence: true
-  validates :last_run_at, presence: true
-  validates :recovery_point, presence: true
-
-  def finished?
-    recovery_point == RECOVERY_POINT_FINISHED
-  end
-
-  def succeeded?
-    finished? && !failed?
-  end
-
-  def failed?
-    error_object.present?
-  end
-end
-
 class Audit < ActiveRecord::Base
   belongs_to :auditable, polymorphic: true
   belongs_to :associated, polymorphic: true
@@ -119,7 +94,7 @@ end
 
 class Ride < ActiveRecord::Base
   belongs_to :user
-  belongs_to :acidic_job_key, optional: true
+  belongs_to :acidic_job_key, optional: true, class_name: "AcidicJob::Key"
 end
 
 class StagedJob < ActiveRecord::Base

@@ -8,7 +8,7 @@ module AcidicJob
     def call(key:)
       key.update!(
         locked_at: nil,
-        recovery_point: AcidicJobKey::RECOVERY_POINT_FINISHED
+        recovery_point: Key::RECOVERY_POINT_FINISHED
       )
     end
   end

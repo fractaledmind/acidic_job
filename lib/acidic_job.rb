@@ -18,6 +18,33 @@ module AcidicJob
 
   class SerializedTransactionConflict < StandardError; end
 
+  class Key < ActiveRecord::Base
+    RECOVERY_POINT_FINISHED = "FINISHED"
+
+    self.table_name = "acidic_job_keys"
+
+    serialize :job_args, Hash
+    serialize :error_object
+
+    validates :job_name, presence: true
+    validates :job_args, presence: true
+    validates :idempotency_key, presence: true
+    validates :last_run_at, presence: true
+    validates :recovery_point, presence: true
+
+    def finished?
+      recovery_point == RECOVERY_POINT_FINISHED
+    end
+
+    def succeeded?
+      finished? && !failed?
+    end
+
+    def failed?
+      error_object.present?
+    end
+  end
+
   extend ActiveSupport::Concern
 
   included do
@@ -51,7 +78,7 @@ module AcidicJob
     phases = define_atomic_phases(defined_steps)
     # { create_ride_and_audit_record: <#Method >, ... }
 
-    # find or create an AcidicJobKey record (our idempotency key) to store all information about this job
+    # find or create an Key record (our idempotency key) to store all information about this job
     # side-effect: will set the @key instance variable
     #
     # A key concept here is that if two requests try to insert or update within
@@ -69,7 +96,7 @@ module AcidicJob
       recovery_point = @key.recovery_point.to_sym
 
       case recovery_point
-      when AcidicJobKey::RECOVERY_POINT_FINISHED.to_sym
+      when Key::RECOVERY_POINT_FINISHED.to_sym
         break
       else
         raise UnknownRecoveryPoint unless phases.key? recovery_point
@@ -125,7 +152,7 @@ module AcidicJob
                       end
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
-      @key = AcidicJobKey.find_by(idempotency_key: key_val)
+      @key = Key.find_by(idempotency_key: key_val)
 
       if @key
         # Programs enqueuing multiple jobs with different parameters but the
@@ -139,7 +166,7 @@ module AcidicJob
         # Lock the key and update latest run unless the job is already finished.
         @key.update!(last_run_at: Time.current, locked_at: Time.current) unless @key.finished?
       else
-        @key = AcidicJobKey.create!(
+        @key = Key.create!(
           idempotency_key: key_val,
           locked_at: Time.current,
           last_run_at: Time.current,
@@ -163,14 +190,14 @@ module AcidicJob
   end
 
   def define_atomic_phases(defined_steps)
-    defined_steps << AcidicJobKey::RECOVERY_POINT_FINISHED
+    defined_steps << Key::RECOVERY_POINT_FINISHED
 
     {}.tap do |phases|
       defined_steps.each_cons(2).map do |enter_method, exit_method|
         phases[enter_method] = lambda do
           method(enter_method).call
 
-          if exit_method.to_s == AcidicJobKey::RECOVERY_POINT_FINISHED
+          if exit_method.to_s == Key::RECOVERY_POINT_FINISHED
             Response.new
           else
             RecoveryPoint.new(exit_method)

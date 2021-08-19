@@ -30,7 +30,7 @@ class TestAcidicJobs < Minitest::Test
   end
 
   def create_key(params = {})
-    AcidicJobKey.create!({
+    AcidicJob::Key.create!({
       idempotency_key: "XXXX_IDEMPOTENCY_KEY",
       locked_at: nil,
       last_run_at: Time.current,
@@ -49,8 +49,8 @@ class TestAcidicJobs < Minitest::Test
       result = RideCreateJob.perform_now(@valid_user, @valid_params)
 
       assert_equal true, result
-      assert_equal true, AcidicJobKey.first.succeeded?
-      assert_equal 1, AcidicJobKey.count
+      assert_equal true, AcidicJob::Key.first.succeeded?
+      assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
       assert_equal 1, StagedJob.count
@@ -58,14 +58,14 @@ class TestAcidicJobs < Minitest::Test
 
     def test_returns_a_stored_result
       key = create_key(recovery_point: :FINISHED)
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         result = RideCreateJob.perform_now(@valid_user, @valid_params)
         assert_equal true, result
       end
       key.reload
 
       assert_equal true, key.succeeded?
-      assert_equal 1, AcidicJobKey.count
+      assert_equal 1, AcidicJob::Key.count
       assert_equal 0, Ride.count
       assert_equal 0, Audit.count
       assert_equal 0, StagedJob.count
@@ -73,14 +73,14 @@ class TestAcidicJobs < Minitest::Test
 
     def test_passes_for_keys_that_are_unlocked
       key = create_key(locked_at: nil)
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         result = RideCreateJob.perform_now(@valid_user, @valid_params)
         assert_equal true, result
       end
       key.reload
 
       assert_equal true, key.succeeded?
-      assert_equal 1, AcidicJobKey.count
+      assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
       assert_equal 1, StagedJob.count
@@ -88,14 +88,14 @@ class TestAcidicJobs < Minitest::Test
 
     def test_passes_for_keys_with_a_stale_locked_at
       key = create_key(locked_at: Time.now - 1.hour - 1)
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         result = RideCreateJob.perform_now(@valid_user, @valid_params)
         assert_equal true, result
       end
       key.reload
 
       assert_equal true, key.succeeded?
-      assert_equal 1, AcidicJobKey.count
+      assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
       assert_equal 1, StagedJob.count
@@ -104,7 +104,7 @@ class TestAcidicJobs < Minitest::Test
     def test_stores_results_for_a_permanent_failure
       RideCreateJob.attr_reader(:raise_error)
       key = create_key
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises RideCreateJob::SimulatedTestingFailure do
           RideCreateJob.perform_now(@valid_user, @valid_params)
         end
@@ -112,7 +112,7 @@ class TestAcidicJobs < Minitest::Test
       RideCreateJob.undef_method(:raise_error)
 
       assert_equal "RideCreateJob::SimulatedTestingFailure", key.error_object.class.name
-      assert_equal 1, AcidicJobKey.count
+      assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
       assert_equal 0, StagedJob.count
@@ -122,14 +122,14 @@ class TestAcidicJobs < Minitest::Test
   class AtomicPhasesAndRecoveryPointsTest < TestAcidicJobs
     def test_continues_from_recovery_point_create_ride_and_audit_record
       key = create_key(recovery_point: :create_ride_and_audit_record)
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         result = RideCreateJob.perform_now(@valid_user, @valid_params)
         assert_equal true, result
       end
       key.reload
 
       assert_equal true, key.succeeded?
-      assert_equal 1, AcidicJobKey.count
+      assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
       assert_equal 1, StagedJob.count
@@ -141,14 +141,14 @@ class TestAcidicJobs < Minitest::Test
                     acidic_job_key: key,
                     user: @valid_user
                   ))
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         result = RideCreateJob.perform_now(@valid_user, @valid_params)
         assert_equal true, result
       end
       key.reload
 
       assert_equal true, key.succeeded?
-      assert_equal 1, AcidicJobKey.count
+      assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 0, Audit.count
       assert_equal 1, StagedJob.count
@@ -156,14 +156,14 @@ class TestAcidicJobs < Minitest::Test
 
     def test_continues_from_recovery_point_send_receipt
       key = create_key(recovery_point: :send_receipt)
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         result = RideCreateJob.perform_now(@valid_user, @valid_params)
         assert_equal true, result
       end
       key.reload
 
       assert_equal true, key.succeeded?
-      assert_equal 1, AcidicJobKey.count
+      assert_equal 1, AcidicJob::Key.count
       assert_equal 0, Ride.count
       assert_equal 0, Audit.count
       assert_equal 1, StagedJob.count
@@ -174,7 +174,7 @@ class TestAcidicJobs < Minitest::Test
     def test_denies_requests_where_parameters_dont_match_on_an_existing_key
       key = create_key
 
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises AcidicJob::MismatchedIdempotencyKeyAndJobArguments do
           RideCreateJob.perform_now(@valid_user, @valid_params.merge("origin_lat" => 10.0))
         end
@@ -184,7 +184,7 @@ class TestAcidicJobs < Minitest::Test
     def test_denies_requests_that_have_an_equivalent_in_flight
       key = create_key(locked_at: Time.now)
 
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises AcidicJob::LockedIdempotencyKey do
           RideCreateJob.perform_now(@valid_user, @valid_params)
         end
@@ -196,7 +196,7 @@ class TestAcidicJobs < Minitest::Test
       raises_exception = ->(_params, _args) { raise ActiveRecord::SerializationFailure, "Serialization failure." }
 
       Stripe::Charge.stub(:create, raises_exception) do
-        AcidicJobKey.stub(:find_by, ->(*) { key }) do
+        AcidicJob::Key.stub(:find_by, ->(*) { key }) do
           assert_raises ActiveRecord::SerializationFailure do
             RideCreateJob.perform_now(@valid_user, @valid_params)
           end
@@ -213,7 +213,7 @@ class TestAcidicJobs < Minitest::Test
       raises_exception = ->(_params, _args) { raise "Internal server error!" }
 
       Stripe::Charge.stub(:create, raises_exception) do
-        AcidicJobKey.stub(:find_by, ->(*) { key }) do
+        AcidicJob::Key.stub(:find_by, ->(*) { key }) do
           assert_raises StandardError do
             RideCreateJob.perform_now(@valid_user, @valid_params)
           end
@@ -228,7 +228,7 @@ class TestAcidicJobs < Minitest::Test
     def test_throws_error_if_recovering_without_ride_record
       key = create_key(recovery_point: :create_stripe_charge)
 
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises RideCreateJob::MissingRideAtRideCreatedRecoveryPoint do
           RideCreateJob.perform_now(@valid_user, @valid_params)
         end
@@ -242,7 +242,7 @@ class TestAcidicJobs < Minitest::Test
     def test_throws_error_with_unknown_recovery_point
       key = create_key(recovery_point: :SOME_UNKNOWN_POINT)
 
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises AcidicJob::UnknownRecoveryPoint do
           RideCreateJob.perform_now(@valid_user, @valid_params)
         end
@@ -260,7 +260,7 @@ class TestAcidicJobs < Minitest::Test
       raises_exception = ->(_params, _args) { raise "Internal server error!" }
 
       Stripe::Charge.stub(:create, raises_exception) do
-        AcidicJobKey.stub(:find_by, ->(*) { key }) do
+        AcidicJob::Key.stub(:find_by, ->(*) { key }) do
           assert_raises StandardError do
             RideCreateJob.perform_now(@valid_user, @valid_params)
           end
@@ -275,23 +275,23 @@ class TestAcidicJobs < Minitest::Test
   class SpecificTest < TestAcidicJobs
     def test_successfully_performs_synchronous_job_with_unique_idempotency_key
       result = RideCreateJob.perform_now(@valid_user, @valid_params)
-      assert_equal 1, AcidicJobKey.count
+      assert_equal 1, AcidicJob::Key.count
       assert_equal true, result
     end
 
     def test_successfully_performs_synchronous_job_with_duplicate_idempotency_key
       RideCreateJob.perform_now(@valid_user, @valid_params)
 
-      assert_equal 1, AcidicJobKey.count
+      assert_equal 1, AcidicJob::Key.count
       result = RideCreateJob.perform_now(@valid_user, @valid_params)
-      assert_equal 2, AcidicJobKey.count
+      assert_equal 2, AcidicJob::Key.count
       assert_equal true, result
     end
 
     def test_throws_appropriate_error_when_job_method_throws_exception
       RideCreateJob.attr_reader(:raise_error)
       key = create_key
-      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises RideCreateJob::SimulatedTestingFailure do
           RideCreateJob.perform_now(@valid_user, @valid_params)
         end
