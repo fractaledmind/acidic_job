@@ -40,7 +40,7 @@ Or install it yourself as:
 Then, use the following command to copy over the AcidicJobKey migration.
 
 ```
-rails generate acidic_job:key
+rails generate acidic_job
 ```
 
 ## Usage
