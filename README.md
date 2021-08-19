@@ -33,9 +33,9 @@ And then execute:
 
     $ bundle install
 
-Or install it yourself as:
+Or simply execute to install the gem yourself:
 
-    $ gem install acidic_job
+    $ bundle add acidic_job
 
 Then, use the following command to copy over the AcidicJobKey migration.
 
