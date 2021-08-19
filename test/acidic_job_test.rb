@@ -102,16 +102,16 @@ class TestAcidicJobs < Minitest::Test
     end
 
     def test_stores_results_for_a_permanent_failure
-      key = create_key(job_args: { "user" => @invalid_user.as_json } )
+      RideCreateJob.attr_reader(:raise_error)
+      key = create_key
       AcidicJobKey.stub(:find_by, ->(*) { key }) do
-        assert_raises Stripe::CardError do
-          RideCreateJob.perform_now(@invalid_user, @valid_params)
+        assert_raises RideCreateJob::SimulatedTestingFailure do
+          RideCreateJob.perform_now(@valid_user, @valid_params)
         end
       end
-      key.reload
+      RideCreateJob.undef_method(:raise_error)
 
-      assert_equal "Stripe::CardError", key.error_object.class.name
-      assert_equal "Your card was declined.", key.error_object.message
+      assert_equal "RideCreateJob::SimulatedTestingFailure", key.error_object.class.name
       assert_equal 1, AcidicJobKey.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
@@ -205,6 +205,7 @@ class TestAcidicJobs < Minitest::Test
 
       key.reload
       assert_nil key.locked_at
+      assert_equal "ActiveRecord::SerializationFailure", key.error_object.class.name
     end
 
     def test_unlocks_a_key_on_an_internal_error
@@ -235,6 +236,7 @@ class TestAcidicJobs < Minitest::Test
       key.reload
       assert_nil key.locked_at
       assert_equal false, key.succeeded?
+      assert_equal "RideCreateJob::MissingRideAtRideCreatedRecoveryPoint", key.error_object.class.name
     end
 
     def test_throws_error_with_unknown_recovery_point
@@ -259,7 +261,7 @@ class TestAcidicJobs < Minitest::Test
 
       Stripe::Charge.stub(:create, raises_exception) do
         AcidicJobKey.stub(:find_by, ->(*) { key }) do
-          assert_raises RuntimeError do
+          assert_raises StandardError do
             RideCreateJob.perform_now(@valid_user, @valid_params)
           end
         end
@@ -288,10 +290,15 @@ class TestAcidicJobs < Minitest::Test
 
     def test_throws_appropriate_error_when_job_method_throws_exception
       RideCreateJob.attr_reader(:raise_error)
-      assert_raises RideCreateJob::SimulatedTestingFailure do
-        RideCreateJob.perform_now(@valid_user, @valid_params)
+      key = create_key
+      AcidicJobKey.stub(:find_by, ->(*) { key }) do
+        assert_raises RideCreateJob::SimulatedTestingFailure do
+          RideCreateJob.perform_now(@valid_user, @valid_params)
+        end
       end
       RideCreateJob.undef_method(:raise_error)
+
+      assert_equal "RideCreateJob::SimulatedTestingFailure", key.error_object.class.name
     end
   end
 end
