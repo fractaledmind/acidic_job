@@ -36,7 +36,7 @@ class TestAcidicJobs < Minitest::Test
       last_run_at: Time.current,
       recovery_point: :create_ride_and_audit_record,
       job_name: "RideCreateJob",
-      job_args: {"user"=>@valid_user, "params"=>@valid_params, "ride"=>nil}.as_json
+      job_args: {"user"=>@valid_user, "params"=>@valid_params, "ride"=>nil}.inspect
     }.deep_merge(params))
   end
 

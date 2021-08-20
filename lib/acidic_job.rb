@@ -23,7 +23,6 @@ module AcidicJob
 
     self.table_name = "acidic_job_keys"
 
-    serialize :job_args, Hash
     serialize :error_object
 
     validates :job_name, presence: true
@@ -157,7 +156,7 @@ module AcidicJob
       if @key
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
-        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != job_args.as_json
+        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != job_args.deep_stringify_keys.inspect
 
         # Only acquire a lock if the key is unlocked or its lock has expired
         # because the original job was long enough ago.
@@ -172,7 +171,7 @@ module AcidicJob
           last_run_at: Time.current,
           recovery_point: first_step,
           job_name: self.class.name,
-          job_args: job_args.as_json
+          job_args: job_args.inspect
         )
       end
     end
