@@ -29,6 +29,11 @@ class TestAcidicJobs < Minitest::Test
     super
   end
 
+  def serialize_job_args(user, params)
+    # [{"_aj_globalid"=>"gid://test/User/1"}, {"origin_lat"=>0.0, "origin_lon"=>0.0, "target_lat"=>0.0, "target_lon"=>0.0, "_aj_symbol_keys"=>[]}]
+    [{"_aj_globalid" => user.to_global_id.to_s}, params.merge("_aj_symbol_keys" => [])]
+  end
+
   def create_key(params = {})
     AcidicJob::Key.create!({
       idempotency_key: "XXXX_IDEMPOTENCY_KEY",
@@ -36,7 +41,7 @@ class TestAcidicJobs < Minitest::Test
       last_run_at: Time.current,
       recovery_point: :create_ride_and_audit_record,
       job_name: "RideCreateJob",
-      job_args: {"user"=>@valid_user, "params"=>@valid_params, "ride"=>nil}.inspect
+      job_args: serialize_job_args(@valid_user, @valid_params)
     }.deep_merge(params))
   end
 

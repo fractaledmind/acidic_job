@@ -24,6 +24,7 @@ module AcidicJob
     self.table_name = "acidic_job_keys"
 
     serialize :error_object
+    serialize :job_args
 
     validates :job_name, presence: true
     validates :job_args, presence: true
@@ -84,7 +85,7 @@ module AcidicJob
     # close proximity, one of the two will be aborted by Postgres because we're
     # using a transaction with SERIALIZABLE isolation level. It may not look
     # it, but this code is safe from races.
-    ensure_idempotency_key_record(job_id, with, defined_steps.first)
+    ensure_idempotency_key_record(job_id, defined_steps.first)
 
     # if the key record is already marked as finished, immediately return its result
     return @key.succeeded? if @key.finished?
@@ -126,7 +127,7 @@ module AcidicJob
 
         phase_result.call(key: key)
       end
-    rescue StandardError => e
+    rescue => e
       error = e
       raise e
     ensure
@@ -134,7 +135,7 @@ module AcidicJob
       # key right away so that another request can try again.
       begin
         key.update_columns(locked_at: nil, error_object: error) if error.present?
-      rescue StandardError => e
+      rescue => e
         # We're already inside an error condition, so swallow any additional
         # errors from here and just send them to logs.
         puts "Failed to unlock key #{key.id} because of #{e}."
@@ -142,13 +143,14 @@ module AcidicJob
     end
   end
 
-  def ensure_idempotency_key_record(key_val, job_args, first_step)
+  def ensure_idempotency_key_record(key_val, first_step)
     isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
                       when :sqlite
                         :read_uncommitted
                       else
                         :serializable
-                      end
+    end
+    serialized_job_info = serialize
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
       @key = Key.find_by(idempotency_key: key_val)
@@ -156,7 +158,7 @@ module AcidicJob
       if @key
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
-        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != job_args.deep_stringify_keys.inspect
+        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != serialized_job_info["arguments"]
 
         # Only acquire a lock if the key is unlocked or its lock has expired
         # because the original job was long enough ago.
@@ -170,8 +172,8 @@ module AcidicJob
           locked_at: Time.current,
           last_run_at: Time.current,
           recovery_point: first_step,
-          job_name: self.class.name,
-          job_args: job_args.inspect
+          job_name: serialized_job_info["job_class"],
+          job_args: serialized_job_info["arguments"]
         )
       end
     end
