@@ -143,9 +143,9 @@ class TestAcidicJobs < Minitest::Test
     def test_continues_from_recovery_point_create_stripe_charge
       key = create_key(recovery_point: :create_stripe_charge)
       Ride.create(@valid_params.merge(
-                    acidic_job_key: key,
-                    user: @valid_user
-                  ))
+        acidic_job_key: key,
+        user: @valid_user
+      ))
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         result = RideCreateJob.perform_now(@valid_user, @valid_params)
         assert_equal true, result
@@ -253,7 +253,7 @@ class TestAcidicJobs < Minitest::Test
         end
       end
       key.reload
-      assert key.locked_at != nil
+      assert !key.locked_at.nil?
       assert_equal false, key.succeeded?
     end
 
@@ -272,7 +272,7 @@ class TestAcidicJobs < Minitest::Test
         end
       end
       key.reload
-      assert key.locked_at != nil
+      assert !key.locked_at.nil?
       assert_equal false, key.succeeded?
     end
   end

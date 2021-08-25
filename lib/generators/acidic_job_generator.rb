@@ -23,15 +23,16 @@ class AcidicJobGenerator < ActiveRecord::Generators::Base
   # Copies the migration template to db/migrate.
   def copy_files
     migration_template "migration.rb",
-                       "db/migrate/create_acidic_job_keys.rb"
+      "db/migrate/create_acidic_job_keys.rb"
   end
 
   protected
-    def migration_class
-      if ActiveRecord::VERSION::MAJOR >= 5
-        ActiveRecord::Migration["#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}"]
-      else
-        ActiveRecord::Migration
-      end
+
+  def migration_class
+    if ActiveRecord::VERSION::MAJOR >= 5
+      ActiveRecord::Migration["#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}"]
+    else
+      ActiveRecord::Migration
     end
+  end
 end
