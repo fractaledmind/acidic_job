@@ -26,9 +26,9 @@ module AcidicJob
     serialize :error_object
     serialize :job_args
 
+    validates :idempotency_key, presence: true, uniqueness: {scope: [:job_name, :job_args]}
     validates :job_name, presence: true
     validates :job_args, presence: true
-    validates :idempotency_key, presence: true
     validates :last_run_at, presence: true
     validates :recovery_point, presence: true
 
