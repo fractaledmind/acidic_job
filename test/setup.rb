@@ -19,6 +19,8 @@ ActiveRecord::Base.establish_connection(
 
 DatabaseCleaner.clean_with :truncation
 
+GlobalID.app = :test
+
 # rubocop:disable Metrics/BlockLength
 ActiveRecord::Schema.define do
   create_table :acidic_job_keys, force: true do |t|
@@ -81,23 +83,28 @@ ActiveRecord::Schema.define do
 end
 # rubocop:enable Metrics/BlockLength
 
-class Audit < ActiveRecord::Base
+class ApplicationRecord < ActiveRecord::Base
+  self.abstract_class = true
+  include GlobalID::Identification
+end
+
+class Audit < ApplicationRecord
   belongs_to :auditable, polymorphic: true
   belongs_to :associated, polymorphic: true
   belongs_to :user, polymorphic: true
 end
 
-class User < ActiveRecord::Base
+class User < ApplicationRecord
   validates :email, presence: true
   validates :stripe_customer_id, presence: true
 end
 
-class Ride < ActiveRecord::Base
+class Ride < ApplicationRecord
   belongs_to :user
   belongs_to :acidic_job_key, optional: true, class_name: "AcidicJob::Key"
 end
 
-class StagedJob < ActiveRecord::Base
+class StagedJob < ApplicationRecord
   validates :job_name, presence: true
   validates :job_args, presence: true
 end
@@ -148,7 +155,7 @@ class RideCreateJob < ActiveJob::Base
   class SimulatedTestingFailure < StandardError; end
 
   def perform(user, ride_params)
-    idempotently with: { user: user, params: ride_params, ride: nil } do
+    idempotently with: {user: user, params: ride_params, ride: nil} do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
