@@ -24,3 +24,5 @@ gem "sqlite3"
 gem "database_cleaner"
 
 gem "simplecov"
+
+gem "pry"
