@@ -11,6 +11,7 @@ module AcidicJob
     def enqueue_job
       job = ActiveJob::Base.deserialize(serialized_params)
       job.enqueue
+      delete
     end
   end
 end
