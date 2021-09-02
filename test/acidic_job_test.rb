@@ -58,7 +58,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
-      assert_equal 1, StagedJob.count
+        assert_equal 1, AcidicJob::Staging.count
     end
 
     def test_returns_a_stored_result
@@ -73,7 +73,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, AcidicJob::Key.count
       assert_equal 0, Ride.count
       assert_equal 0, Audit.count
-      assert_equal 0, StagedJob.count
+      assert_equal 0, AcidicJob::Staging.count
     end
 
     def test_passes_for_keys_that_are_unlocked
@@ -88,7 +88,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
-      assert_equal 1, StagedJob.count
+      assert_equal 1, AcidicJob::Staging.count
     end
 
     def test_passes_for_keys_with_a_stale_locked_at
@@ -103,7 +103,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
-      assert_equal 1, StagedJob.count
+      assert_equal 1, AcidicJob::Staging.count
     end
 
     def test_stores_results_for_a_permanent_failure
@@ -120,7 +120,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
-      assert_equal 0, StagedJob.count
+      assert_equal 0, AcidicJob::Staging.count
     end
   end
 
@@ -137,7 +137,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
-      assert_equal 1, StagedJob.count
+      assert_equal 1, AcidicJob::Staging.count
     end
 
     def test_continues_from_recovery_point_create_stripe_charge
@@ -156,7 +156,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, AcidicJob::Key.count
       assert_equal 1, Ride.count
       assert_equal 0, Audit.count
-      assert_equal 1, StagedJob.count
+      assert_equal 1, AcidicJob::Staging.count
     end
 
     def test_continues_from_recovery_point_send_receipt
@@ -171,7 +171,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, AcidicJob::Key.count
       assert_equal 0, Ride.count
       assert_equal 0, Audit.count
-      assert_equal 1, StagedJob.count
+      assert_equal 1, AcidicJob::Staging.count
     end
   end
 
