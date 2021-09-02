@@ -3,7 +3,7 @@ class CreateAcidicJobKeys < <%= migration_class %>
     create_table :acidic_job_keys do |t|
       t.string :idempotency_key, null: false
       t.string :job_name, null: false
-      t.text :job_args, null: false
+      t.text :job_args, null: true
       t.datetime :last_run_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
       t.datetime :locked_at, null: true
       t.string :recovery_point, null: false

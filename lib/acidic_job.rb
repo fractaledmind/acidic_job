@@ -28,7 +28,6 @@ module AcidicJob
 
     validates :idempotency_key, presence: true, uniqueness: {scope: [:job_name, :job_args]}
     validates :job_name, presence: true
-    validates :job_args, presence: true
     validates :last_run_at, presence: true
     validates :recovery_point, presence: true
 
