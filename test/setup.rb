@@ -37,6 +37,10 @@ ActiveRecord::Schema.define do
                                                    name: "idx_acidic_job_keys_on_idempotency_key_n_job_name_n_job_args"
   end
 
+  create_table :acidic_job_stagings, force: true do |t|
+    t.text :serialized_params, null: false
+  end
+
   create_table :audits, force: true do |t|
     t.references :auditable, polymorphic: true
     t.references :associated, polymorphic: true
@@ -74,12 +78,6 @@ ActiveRecord::Schema.define do
 
     t.index %i[user_id acidic_job_key_id], unique: true
   end
-
-  create_table :staged_jobs, force: true do |t|
-    t.string :job_name, null: false
-    t.text :job_args, null: false
-    t.timestamps
-  end
 end
 # rubocop:enable Metrics/BlockLength
 
@@ -102,11 +100,6 @@ end
 class Ride < ApplicationRecord
   belongs_to :user
   belongs_to :acidic_job_key, optional: true, class_name: "AcidicJob::Key"
-end
-
-class StagedJob < ApplicationRecord
-  validates :job_name, presence: true
-  validates :job_args, presence: true
 end
 
 # SEEDS ------------------------------------------------------------------------
@@ -144,6 +137,12 @@ module Stripe
 end
 
 # TEST JOB ------------------------------------------------------------------------
+
+class SendRideReceiptJob < ActiveJob::Base
+  def perform(amount:, currency:, user:)
+    {amount: amount, currency: currency, user: user}
+  end
+end
 
 class RideCreateJob < ActiveJob::Base
   self.log_arguments = false
@@ -223,13 +222,10 @@ class RideCreateJob < ActiveJob::Base
     # Send a receipt asynchronously by adding an entry to the staged_jobs
     # table. By funneling the job through Postgres, we make this
     # operation transaction-safe.
-    StagedJob.create!(
-      job_name: "send_ride_receipt",
-      job_args: {
-        amount: 20_00,
-        currency: "usd",
-        user_id: user.id
-      }
+    SendRideReceiptJob.perform_transactionally(
+      amount: 20_00,
+      currency: "usd",
+      user: user
     )
   end
 end

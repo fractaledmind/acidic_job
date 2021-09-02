@@ -45,7 +45,34 @@ module AcidicJob
     end
   end
 
+  class Staging < ActiveRecord::Base
+    self.table_name = "acidic_job_stagings"
+
+    validates :serialized_params, presence: true
+
+    serialize :serialized_params
+
+    after_create_commit :enqueue_job
+
+    def enqueue_job
+      job = ActiveJob::Base.deserialize(serialized_params)
+      job.enqueue
+    end
+  end
+
   extend ActiveSupport::Concern
+
+  module ActiveJobExtension
+    extend ActiveSupport::Concern
+
+    class_methods do
+      def perform_transactionally(args)
+        AcidicJob::Staging.create!(
+          serialized_params: job_or_instantiate(args).serialize
+        )
+      end
+    end
+  end
 
   included do
     attr_reader :key
@@ -56,6 +83,9 @@ module AcidicJob
     # discard_on MissingRequiredAttribute
     # retry_on LockedIdempotencyKey
     # retry_on ActiveRecord::SerializationFailure
+    ActiveSupport.on_load(:active_job) do
+      self.send(:include, ActiveJobExtension)
+    end
   end
 
   # Number of seconds passed which we consider a held idempotency key lock to be

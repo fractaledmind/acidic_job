@@ -13,6 +13,9 @@ class CreateAcidicJobKeys < <%= migration_class %>
       t.index %i[idempotency_key job_name job_args],
         unique: true,
         name: "idx_acidic_job_keys_on_idempotency_key_n_job_name_n_job_args"
+
+    create_table :acidic_job_stagings do |t|
+      t.text :serialized_params, null: false
     end
   end
 end
