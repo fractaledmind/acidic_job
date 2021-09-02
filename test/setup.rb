@@ -68,11 +68,8 @@ ActiveRecord::Schema.define do
     t.integer :target_lat
     t.integer :target_lon
     t.string :stripe_charge_id
-    t.references :acidic_job_key, foreign_key: true, null: true, on_delete: :nullify
     t.references :user, foreign_key: true, on_delete: :restrict
     t.timestamps
-
-    t.index %i[user_id acidic_job_key_id], unique: true
   end
 
   create_table :staged_jobs, force: true do |t|
@@ -101,7 +98,6 @@ end
 
 class Ride < ApplicationRecord
   belongs_to :user
-  belongs_to :acidic_job_key, optional: true, class_name: "AcidicJob::Key"
 end
 
 class StagedJob < ApplicationRecord
@@ -150,8 +146,6 @@ class RideCreateJob < ActiveJob::Base
 
   include AcidicJob
 
-  class MissingRideAtRideCreatedRecoveryPoint < StandardError; end
-
   class SimulatedTestingFailure < StandardError; end
 
   def perform(user, ride_params)
@@ -167,7 +161,6 @@ class RideCreateJob < ActiveJob::Base
   # rubocop:disable Metrics/MethodLength
   def create_ride_and_audit_record
     @ride = Ride.create!(
-      acidic_job_key_id: key.id,
       origin_lat: params["origin_lat"],
       origin_lon: params["origin_lon"],
       target_lat: params["target_lat"],
@@ -189,10 +182,12 @@ class RideCreateJob < ActiveJob::Base
   # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def create_stripe_charge
     # retrieve a ride record if necessary (i.e. we're recovering)
-    @ride = Ride.find_by(acidic_job_key_id: key.id) if ride.nil?
-
-    # if ride is still nil by this point, we have a bug
-    raise MissingRideAtRideCreatedRecoveryPoint if ride.nil?
+    @ride = Ride.find_by!(
+      origin_lat: params["origin_lat"],
+      origin_lon: params["origin_lon"],
+      target_lat: params["target_lat"],
+      target_lon: params["target_lon"],
+    ) if ride.nil?
 
     raise SimulatedTestingFailure if defined?(raise_error)
 

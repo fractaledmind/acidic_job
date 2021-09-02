@@ -143,7 +143,6 @@ class TestAcidicJobs < Minitest::Test
     def test_continues_from_recovery_point_create_stripe_charge
       key = create_key(recovery_point: :create_stripe_charge)
       Ride.create(@valid_params.merge(
-        acidic_job_key: key,
         user: @valid_user
       ))
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
@@ -234,14 +233,14 @@ class TestAcidicJobs < Minitest::Test
       key = create_key(recovery_point: :create_stripe_charge)
 
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
-        assert_raises RideCreateJob::MissingRideAtRideCreatedRecoveryPoint do
+        assert_raises ActiveRecord::RecordNotFound do
           RideCreateJob.perform_now(@valid_user, @valid_params)
         end
       end
       key.reload
       assert_nil key.locked_at
       assert_equal false, key.succeeded?
-      assert_equal "RideCreateJob::MissingRideAtRideCreatedRecoveryPoint", key.error_object.class.name
+      assert_equal "ActiveRecord::RecordNotFound", key.error_object.class.name
     end
 
     def test_throws_error_with_unknown_recovery_point
