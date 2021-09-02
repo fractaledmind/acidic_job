@@ -51,14 +51,16 @@ class TestAcidicJobs < Minitest::Test
 
   class IdempotencyKeysAndRecoveryTest < TestAcidicJobs
     def test_passes_for_a_new_key
-      result = RideCreateJob.perform_now(@valid_user, @valid_params)
+      assert_enqueued_with(job: SendRideReceiptJob, args: [{amount: 20_00,currency: "usd",user: @valid_user}]) do
+        result = RideCreateJob.perform_now(@valid_user, @valid_params)
 
-      assert_equal true, result
-      assert_equal true, AcidicJob::Key.first.succeeded?
-      assert_equal 1, AcidicJob::Key.count
-      assert_equal 1, Ride.count
-      assert_equal 1, Audit.count
+        assert_equal true, result
+        assert_equal true, AcidicJob::Key.first.succeeded?
+        assert_equal 1, AcidicJob::Key.count
+        assert_equal 1, Ride.count
+        assert_equal 1, Audit.count
         assert_equal 1, AcidicJob::Staging.count
+      end
     end
 
     def test_returns_a_stored_result
