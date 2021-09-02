@@ -4,6 +4,8 @@ require_relative "acidic_job/version"
 require_relative "acidic_job/no_op"
 require_relative "acidic_job/recovery_point"
 require_relative "acidic_job/response"
+require_relative "acidic_job/key"
+require_relative "acidic_job/staging"
 require "active_support/concern"
 
 # rubocop:disable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength
@@ -17,47 +19,6 @@ module AcidicJob
   class UnknownAtomicPhaseType < StandardError; end
 
   class SerializedTransactionConflict < StandardError; end
-
-  class Key < ActiveRecord::Base
-    RECOVERY_POINT_FINISHED = "FINISHED"
-
-    self.table_name = "acidic_job_keys"
-
-    serialize :error_object
-    serialize :job_args
-
-    validates :idempotency_key, presence: true, uniqueness: {scope: [:job_name, :job_args]}
-    validates :job_name, presence: true
-    validates :last_run_at, presence: true
-    validates :recovery_point, presence: true
-
-    def finished?
-      recovery_point == RECOVERY_POINT_FINISHED
-    end
-
-    def succeeded?
-      finished? && !failed?
-    end
-
-    def failed?
-      error_object.present?
-    end
-  end
-
-  class Staging < ActiveRecord::Base
-    self.table_name = "acidic_job_stagings"
-
-    validates :serialized_params, presence: true
-
-    serialize :serialized_params
-
-    after_create_commit :enqueue_job
-
-    def enqueue_job
-      job = ActiveJob::Base.deserialize(serialized_params)
-      job.enqueue
-    end
-  end
 
   extend ActiveSupport::Concern
 
