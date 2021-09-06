@@ -26,9 +26,9 @@ module AcidicJob
     extend ActiveSupport::Concern
 
     class_methods do
-      def perform_transactionally(args)
+      def perform_transactionally(*args)
         AcidicJob::Staging.create!(
-          serialized_params: job_or_instantiate(args).serialize
+          serialized_params: job_or_instantiate(*args).serialize
         )
       end
     end
@@ -37,12 +37,7 @@ module AcidicJob
   included do
     attr_reader :key
 
-    # discard_on MismatchedIdempotencyKeyAndJobArguments
-    # discard_on UnknownRecoveryPoint
-    # discard_on UnknownAtomicPhaseType
-    # discard_on MissingRequiredAttribute
-    # retry_on LockedIdempotencyKey
-    # retry_on ActiveRecord::SerializationFailure
+    # Extend ActiveJob only once it has been loaded
     ActiveSupport.on_load(:active_job) do
       send(:include, ActiveJobExtension)
     end
