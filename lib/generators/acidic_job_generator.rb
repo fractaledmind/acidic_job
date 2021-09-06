@@ -24,7 +24,7 @@ class AcidicJobGenerator < ActiveRecord::Generators::Base
 
   # Copies the migration template to db/migrate.
   def copy_files
-    migration_template "migration.rb",
+    migration_template "migration.rb.erb",
                        "db/migrate/create_acidic_job_keys.rb"
   end
 
