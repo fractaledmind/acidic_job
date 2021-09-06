@@ -37,6 +37,10 @@ ActiveRecord::Schema.define do
                                                    name: "idx_acidic_job_keys_on_idempotency_key_n_job_name_n_job_args"
   end
 
+  create_table :acidic_job_stagings, force: true do |t|
+    t.text :serialized_params, null: false
+  end
+
   create_table :audits, force: true do |t|
     t.references :auditable, polymorphic: true
     t.references :associated, polymorphic: true
@@ -68,16 +72,7 @@ ActiveRecord::Schema.define do
     t.integer :target_lat
     t.integer :target_lon
     t.string :stripe_charge_id
-    t.references :acidic_job_key, foreign_key: true, null: true, on_delete: :nullify
     t.references :user, foreign_key: true, on_delete: :restrict
-    t.timestamps
-
-    t.index %i[user_id acidic_job_key_id], unique: true
-  end
-
-  create_table :staged_jobs, force: true do |t|
-    t.string :job_name, null: false
-    t.text :job_args, null: false
     t.timestamps
   end
 end
@@ -101,12 +96,6 @@ end
 
 class Ride < ApplicationRecord
   belongs_to :user
-  belongs_to :acidic_job_key, optional: true, class_name: "AcidicJob::Key"
-end
-
-class StagedJob < ApplicationRecord
-  validates :job_name, presence: true
-  validates :job_args, presence: true
 end
 
 # SEEDS ------------------------------------------------------------------------
@@ -145,17 +134,21 @@ end
 
 # TEST JOB ------------------------------------------------------------------------
 
+class SendRideReceiptJob < ActiveJob::Base
+  def perform(amount:, currency:, user:)
+    { amount: amount, currency: currency, user: user }
+  end
+end
+
 class RideCreateJob < ActiveJob::Base
   self.log_arguments = false
 
   include AcidicJob
 
-  class MissingRideAtRideCreatedRecoveryPoint < StandardError; end
-
   class SimulatedTestingFailure < StandardError; end
 
   def perform(user, ride_params)
-    idempotently with: {user: user, params: ride_params, ride: nil} do
+    idempotently with: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -167,7 +160,6 @@ class RideCreateJob < ActiveJob::Base
   # rubocop:disable Metrics/MethodLength
   def create_ride_and_audit_record
     @ride = Ride.create!(
-      acidic_job_key_id: key.id,
       origin_lat: params["origin_lat"],
       origin_lon: params["origin_lon"],
       target_lat: params["target_lat"],
@@ -189,26 +181,30 @@ class RideCreateJob < ActiveJob::Base
   # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def create_stripe_charge
     # retrieve a ride record if necessary (i.e. we're recovering)
-    @ride = Ride.find_by(acidic_job_key_id: key.id) if ride.nil?
-
-    # if ride is still nil by this point, we have a bug
-    raise MissingRideAtRideCreatedRecoveryPoint if ride.nil?
+    if ride.nil?
+      @ride = Ride.find_by!(
+        origin_lat: params["origin_lat"],
+        origin_lon: params["origin_lon"],
+        target_lat: params["target_lat"],
+        target_lon: params["target_lon"]
+      )
+    end
 
     raise SimulatedTestingFailure if defined?(raise_error)
 
     begin
       charge = Stripe::Charge.create({
-        amount: 20_00,
-        currency: "usd",
-        customer: user.stripe_customer_id,
-        description: "Charge for ride #{ride.id}"
-      }, {
-        # Pass through our own unique ID rather than the value
-        # transmitted to us so that we can guarantee uniqueness to Stripe
-        # across all Rocket Rides accounts.
-        idempotency_key: "rocket-rides-atomic-#{key.id}"
-      })
-    rescue Stripe::CardError => e
+                                       amount: 20_00,
+                                       currency: "usd",
+                                       customer: user.stripe_customer_id,
+                                       description: "Charge for ride #{ride.id}"
+                                     }, {
+                                       # Pass through our own unique ID rather than the value
+                                       # transmitted to us so that we can guarantee uniqueness to Stripe
+                                       # across all Rocket Rides accounts.
+                                       idempotency_key: "rocket-rides-atomic-#{key.id}"
+                                     })
+    rescue Stripe::CardError
       # Short circuits execution by sending execution right to 'finished'.
       # So, ends the job "successfully"
       Response.new
@@ -223,13 +219,10 @@ class RideCreateJob < ActiveJob::Base
     # Send a receipt asynchronously by adding an entry to the staged_jobs
     # table. By funneling the job through Postgres, we make this
     # operation transaction-safe.
-    StagedJob.create!(
-      job_name: "send_ride_receipt",
-      job_args: {
-        amount: 20_00,
-        currency: "usd",
-        user_id: user.id
-      }
+    SendRideReceiptJob.perform_transactionally(
+      amount: 20_00,
+      currency: "usd",
+      user: user
     )
   end
 end

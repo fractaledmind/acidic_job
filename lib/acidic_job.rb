@@ -4,9 +4,11 @@ require_relative "acidic_job/version"
 require_relative "acidic_job/no_op"
 require_relative "acidic_job/recovery_point"
 require_relative "acidic_job/response"
+require_relative "acidic_job/key"
+require_relative "acidic_job/staging"
 require "active_support/concern"
 
-# rubocop:disable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength
+# rubocop:disable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
 module AcidicJob
   class MismatchedIdempotencyKeyAndJobArguments < StandardError; end
 
@@ -18,43 +20,27 @@ module AcidicJob
 
   class SerializedTransactionConflict < StandardError; end
 
-  class Key < ActiveRecord::Base
-    RECOVERY_POINT_FINISHED = "FINISHED"
+  extend ActiveSupport::Concern
 
-    self.table_name = "acidic_job_keys"
+  module ActiveJobExtension
+    extend ActiveSupport::Concern
 
-    serialize :error_object
-    serialize :job_args
-
-    validates :idempotency_key, presence: true, uniqueness: {scope: [:job_name, :job_args]}
-    validates :job_name, presence: true
-    validates :last_run_at, presence: true
-    validates :recovery_point, presence: true
-
-    def finished?
-      recovery_point == RECOVERY_POINT_FINISHED
-    end
-
-    def succeeded?
-      finished? && !failed?
-    end
-
-    def failed?
-      error_object.present?
+    class_methods do
+      def perform_transactionally(*args)
+        AcidicJob::Staging.create!(
+          serialized_params: job_or_instantiate(*args).serialize
+        )
+      end
     end
   end
-
-  extend ActiveSupport::Concern
 
   included do
     attr_reader :key
 
-    # discard_on MismatchedIdempotencyKeyAndJobArguments
-    # discard_on UnknownRecoveryPoint
-    # discard_on UnknownAtomicPhaseType
-    # discard_on MissingRequiredAttribute
-    # retry_on LockedIdempotencyKey
-    # retry_on ActiveRecord::SerializationFailure
+    # Extend ActiveJob only once it has been loaded
+    ActiveSupport.on_load(:active_job) do
+      send(:include, ActiveJobExtension)
+    end
   end
 
   # Number of seconds passed which we consider a held idempotency key lock to be
@@ -64,7 +50,8 @@ module AcidicJob
   IDEMPOTENCY_KEY_LOCK_TIMEOUT = 90
 
   # &block
-  def idempotently(with:) # &block
+  # &block
+  def idempotently(with:)
     # set accessors for each argument passed in to ensure they are available
     # to the step methods the job will have written
     define_accessors_for_passed_arguments(with)
@@ -126,7 +113,7 @@ module AcidicJob
 
         phase_result.call(key: key)
       end
-    rescue => e
+    rescue StandardError => e
       error = e
       raise e
     ensure
@@ -134,7 +121,7 @@ module AcidicJob
       # key right away so that another request can try again.
       begin
         key.update_columns(locked_at: nil, error_object: error) if error.present?
-      rescue => e
+      rescue StandardError => e
         # We're already inside an error condition, so swallow any additional
         # errors from here and just send them to logs.
         puts "Failed to unlock key #{key.id} because of #{e}."
@@ -148,7 +135,7 @@ module AcidicJob
                         :read_uncommitted
                       else
                         :serializable
-    end
+                      end
     serialized_job_info = serialize
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
@@ -207,4 +194,4 @@ module AcidicJob
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength
+# rubocop:enable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
