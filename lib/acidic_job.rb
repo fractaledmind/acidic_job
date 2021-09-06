@@ -8,7 +8,7 @@ require_relative "acidic_job/key"
 require_relative "acidic_job/staging"
 require "active_support/concern"
 
-# rubocop:disable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength
+# rubocop:disable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
 module AcidicJob
   class MismatchedIdempotencyKeyAndJobArguments < StandardError; end
 
@@ -44,7 +44,7 @@ module AcidicJob
     # retry_on LockedIdempotencyKey
     # retry_on ActiveRecord::SerializationFailure
     ActiveSupport.on_load(:active_job) do
-      self.send(:include, ActiveJobExtension)
+      send(:include, ActiveJobExtension)
     end
   end
 
@@ -55,7 +55,8 @@ module AcidicJob
   IDEMPOTENCY_KEY_LOCK_TIMEOUT = 90
 
   # &block
-  def idempotently(with:) # &block
+  # &block
+  def idempotently(with:)
     # set accessors for each argument passed in to ensure they are available
     # to the step methods the job will have written
     define_accessors_for_passed_arguments(with)
@@ -117,7 +118,7 @@ module AcidicJob
 
         phase_result.call(key: key)
       end
-    rescue => e
+    rescue StandardError => e
       error = e
       raise e
     ensure
@@ -125,7 +126,7 @@ module AcidicJob
       # key right away so that another request can try again.
       begin
         key.update_columns(locked_at: nil, error_object: error) if error.present?
-      rescue => e
+      rescue StandardError => e
         # We're already inside an error condition, so swallow any additional
         # errors from here and just send them to logs.
         puts "Failed to unlock key #{key.id} because of #{e}."
@@ -139,7 +140,7 @@ module AcidicJob
                         :read_uncommitted
                       else
                         :serializable
-    end
+                      end
     serialized_job_info = serialize
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
@@ -198,4 +199,4 @@ module AcidicJob
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength, Style/Documentation, Metrics/AbcSize, Metrics/MethodLength
+# rubocop:enable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength

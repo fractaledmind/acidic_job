@@ -16,7 +16,7 @@ class TestAcidicJobs < Minitest::Test
     }.freeze
     @valid_user = User.find_by(stripe_customer_id: "tok_visa")
     @invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
-    @staged_job_params = {amount: 20_00, currency: "usd", user: @valid_user}
+    @staged_job_params = { amount: 20_00, currency: "usd", user: @valid_user }
     RideCreateJob.undef_method(:raise_error) if RideCreateJob.respond_to?(:raise_error)
   end
 
@@ -31,8 +31,11 @@ class TestAcidicJobs < Minitest::Test
   end
 
   def serialize_job_args(user, params)
-    # [{"_aj_globalid"=>"gid://test/User/1"}, {"origin_lat"=>0.0, "origin_lon"=>0.0, "target_lat"=>0.0, "target_lon"=>0.0, "_aj_symbol_keys"=>[]}]
-    [{"_aj_globalid" => user.to_global_id.to_s}, params.merge("_aj_symbol_keys" => [])]
+    # [
+    #   {"_aj_globalid"=>"gid://test/User/1"},
+    #   {"origin_lat"=>0.0, "origin_lon"=>0.0, "target_lat"=>0.0, "target_lon"=>0.0, "_aj_symbol_keys"=>[]}
+    # ]
+    [{ "_aj_globalid" => user.to_global_id.to_s }, params.merge("_aj_symbol_keys" => [])]
   end
 
   def create_key(params = {})
@@ -152,8 +155,8 @@ class TestAcidicJobs < Minitest::Test
     def test_continues_from_recovery_point_create_stripe_charge
       key = create_key(recovery_point: :create_stripe_charge)
       Ride.create(@valid_params.merge(
-        user: @valid_user
-      ))
+                    user: @valid_user
+                  ))
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
           result = RideCreateJob.perform_now(@valid_user, @valid_params)
@@ -271,7 +274,7 @@ class TestAcidicJobs < Minitest::Test
 
     def test_swallows_error_when_trying_to_unlock_key_after_error
       key = create_key
-      def key.update_columns(**kwargs)
+      def key.update_columns(**_kwargs)
         raise StandardError
       end
       raises_exception = ->(_params, _args) { raise "Internal server error!" }

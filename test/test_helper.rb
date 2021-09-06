@@ -16,4 +16,4 @@ require "minitest/autorun"
 
 require "database_cleaner/active_record"
 
-DatabaseCleaner.strategy = [:deletion, {except: %w[users]}]
+DatabaseCleaner.strategy = [:deletion, { except: %w[users] }]

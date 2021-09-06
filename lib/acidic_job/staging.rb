@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module AcidicJob
   class Staging < ActiveRecord::Base
     self.table_name = "acidic_job_stagings"

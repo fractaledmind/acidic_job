@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module AcidicJob
   class Key < ActiveRecord::Base
     RECOVERY_POINT_FINISHED = "FINISHED"
@@ -7,7 +9,7 @@ module AcidicJob
     serialize :error_object
     serialize :job_args
 
-    validates :idempotency_key, presence: true, uniqueness: {scope: [:job_name, :job_args]}
+    validates :idempotency_key, presence: true, uniqueness: { scope: %i[job_name job_args] }
     validates :job_name, presence: true
     validates :last_run_at, presence: true
     validates :recovery_point, presence: true

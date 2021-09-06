@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "rails/generators"
 require "generators/acidic_job_generator"
 
 class AcidicJobGeneratorTest < Rails::Generators::TestCase
   tests AcidicJobGenerator
-  destination File.expand_path("../../tmp", __FILE__)
+  destination File.expand_path("../tmp", __dir__)
 
   setup :prepare_destination
 
