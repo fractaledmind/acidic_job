@@ -26,3 +26,5 @@ gem "database_cleaner"
 gem "simplecov"
 
 gem "pry"
+
+gem "sidekiq"
