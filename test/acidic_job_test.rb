@@ -313,6 +313,13 @@ class TestAcidicJobs < Minitest::Test
 
       assert_equal "RideCreateJob::SimulatedTestingFailure", key.error_object.class.name
     end
+
+    def test_successfully_handles_stripe_card_error
+      result = RideCreateJob.perform_now(@invalid_user, @valid_params)
+      assert_equal 1, AcidicJob::Key.count
+      assert_equal true, result
+      assert_equal true, AcidicJob::Key.first.succeeded?
+    end
   end
 end
 # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
