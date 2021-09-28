@@ -41,8 +41,7 @@ module AcidicJob
   # this might not happen 100% of the time, so this is a hedge against it.
   IDEMPOTENCY_KEY_LOCK_TIMEOUT = 90
 
-  # &block
-  # &block
+  # takes a block
   def idempotently(with:)
     # set accessors for each argument passed in to ensure they are available
     # to the step methods the job will have written
@@ -102,7 +101,7 @@ module AcidicJob
   private
 
   def atomic_phase(key, proc = nil, &block)
-    error = false
+    rescued_error = false
     phase_callable = (proc || block)
 
     begin
@@ -112,13 +111,15 @@ module AcidicJob
         phase_result.call(key: key)
       end
     rescue StandardError => e
-      error = e
+      rescued_error = e
       raise e
     ensure
+      return unless rescued_error
+
       # If we're leaving under an error condition, try to unlock the idempotency
-      # key right away so that another request can try again.
+      # key right away so that another request can try again.3
       begin
-        key.update_columns(locked_at: nil, error_object: error) if error.present?
+        key.update_columns(locked_at: nil, error_object: rescued_error)
       rescue StandardError => e
         # We're already inside an error condition, so swallow any additional
         # errors from here and just send them to logs.
