@@ -141,7 +141,9 @@ module AcidicJob
 
         # Only acquire a lock if the key is unlocked or its lock has expired
         # because the original job was long enough ago.
-        raise LockedIdempotencyKey if @key.locked_at && @key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
+        if @key.locked_at && @key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
+          raise LockedIdempotencyKey
+        end
 
         # Lock the key and update latest run unless the job is already finished.
         @key.update!(last_run_at: Time.current, locked_at: Time.current) unless @key.finished?
@@ -189,11 +191,9 @@ module AcidicJob
 
   def idempotency_key_value
     return job_id if defined?(job_id) && !job_id.nil?
-
     return jid if defined?(jid) && !jid.nil?
 
     require 'securerandom'
-
     SecureRandom.hex
   end
 end
