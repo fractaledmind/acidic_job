@@ -21,6 +21,7 @@ module AcidicJob
       elsif adapter == "sidekiq"
         Sidekiq::Client.push("class" => job_name, "args" => job_args)
       else
+        raise UnknownJobAdapter.new(adapter: adapter)
       end
 
       # TODO: ensure successful enqueuing before deletion
