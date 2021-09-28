@@ -93,6 +93,12 @@ module AcidicJob
     @_steps
   end
 
+  def safely_finish_acidic_job
+    # Short circuits execution by sending execution right to 'finished'.
+    # So, ends the job "successfully"
+    AcidicJob::Response.new
+  end
+
   private
 
   def atomic_phase(key, proc = nil, &block)

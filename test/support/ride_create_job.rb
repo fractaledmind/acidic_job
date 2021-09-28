@@ -77,7 +77,7 @@ class RideCreateJob < ActiveJob::Base
     rescue Stripe::CardError
       # Short circuits execution by sending execution right to 'finished'.
       # So, ends the job "successfully"
-      Response.new
+      safely_finish_acidic_job
     else
       # if there is some sort of failure here (like server downtime), what happens?
       ride.update_column(:stripe_charge_id, charge.id)
