@@ -127,6 +127,8 @@ module Stripe
   class StripeError < StandardError; end
 
   class Charge
+    extend AcidicJob::Deferrable::Behavior
+
     def self.create(params, _args)
       raise CardError, "Your card was declined." if params[:customer] == "tok_chargeCustomerFail"
 
@@ -144,6 +146,28 @@ class SendRideReceiptJob
 
   def perform(amount:, currency:, user_id:)
     { amount: amount, currency: currency, user_id: user_id }
+  end
+end
+
+class ChargeAttemptJob < ActiveJob::Base
+  def perform
+    Stripe::Charge.create({
+                                  amount: 20_00,
+                                  currency: "usd",
+                                  customer: user.stripe_customer_id,
+                                  description: "Charge for ride #{ride.id}"
+                                }, {
+                                  # Pass through our own unique ID rather than the value
+                                  # transmitted to us so that we can guarantee uniqueness to Stripe
+                                  # across all Rocket Rides accounts.
+                                  idempotency_key: "rocket-rides-atomic-#{key.id}"
+                                })
+    # if there is some sort of failure here (like server downtime), what happens?
+    ride.update_column(:stripe_charge_id, charge.id)
+  rescue Stripe::CardError
+    # Short circuits execution by sending execution right to 'finished'.
+    # So, ends the job "successfully"
+    Response.new
   end
 end
 
