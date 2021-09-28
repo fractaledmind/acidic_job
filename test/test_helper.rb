@@ -10,10 +10,8 @@ SimpleCov.start do
   primary_coverage :branch
 end
 
-require "active_record"
 require "acidic_job"
 require "minitest/autorun"
-
 require "database_cleaner/active_record"
 
 DatabaseCleaner.strategy = [:deletion, { except: %w[users] }]
