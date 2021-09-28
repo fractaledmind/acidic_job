@@ -64,10 +64,10 @@ module AcidicJob
     attr_reader :key
     attr_accessor :arguments_for_perform
 
-    # Extend ActiveJob only once it has been loaded
+    # Extend ActiveJob with `perform_transactionally` class method
     include ActiveJobExtension
 
-    # ...
+    # Ensure our `perform` method always runs first to gather parameters
     prepend ParameterWrapper
   end
 
@@ -99,11 +99,6 @@ module AcidicJob
     # close proximity, one of the two will be aborted by Postgres because we're
     # using a transaction with SERIALIZABLE isolation level. It may not look
     # it, but this code is safe from races.
-    idempotency_key_value = if defined?(job_id)
-      job_id
-    elsif defined?(jid)
-      jid
-    end
     ensure_idempotency_key_record(idempotency_key_value, defined_steps.first)
 
     # if the key record is already marked as finished, immediately return its result
@@ -226,6 +221,16 @@ module AcidicJob
         end
       end
     end
+  end
+
+  def idempotency_key_value
+    return job_id if defined?(job_id) && !job_id.nil?
+
+    return jid if defined?(jid) && !jid.nil?
+
+    require 'securerandom'
+
+    SecureRandom.hex
   end
 end
 # rubocop:enable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
