@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "acidic_job/version"
+require_relative "acidic_job/errors"
 require_relative "acidic_job/no_op"
 require_relative "acidic_job/recovery_point"
 require_relative "acidic_job/response"
@@ -12,16 +13,6 @@ require "active_support/concern"
 
 # rubocop:disable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
 module AcidicJob
-  class MismatchedIdempotencyKeyAndJobArguments < StandardError; end
-
-  class LockedIdempotencyKey < StandardError; end
-
-  class UnknownRecoveryPoint < StandardError; end
-
-  class UnknownAtomicPhaseType < StandardError; end
-
-  class SerializedTransactionConflict < StandardError; end
-
   extend ActiveSupport::Concern
 
   included do
