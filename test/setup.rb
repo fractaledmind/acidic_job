@@ -7,6 +7,8 @@ require "minitest/mock"
 require "logger"
 require "sqlite3"
 require "database_cleaner/active_record"
+require "sidekiq"
+require "sidekiq/testing"
 
 # DATABASE AND MODELS ----------------------------------------------------------
 ActiveRecord::Base.establish_connection(
@@ -134,9 +136,12 @@ end
 
 # TEST JOB ------------------------------------------------------------------------
 
-class SendRideReceiptJob < ActiveJob::Base
-  def perform(amount:, currency:, user:)
-    { amount: amount, currency: currency, user: user }
+class SendRideReceiptJob
+  include Sidekiq::Worker
+  include AcidicJob
+
+  def perform(amount:, currency:, user_id:)
+    { amount: amount, currency: currency, user_id: user_id }
   end
 end
 
@@ -222,7 +227,7 @@ class RideCreateJob < ActiveJob::Base
     SendRideReceiptJob.perform_transactionally(
       amount: 20_00,
       currency: "usd",
-      user: user
+      user_id: user.id
     )
   end
 end
