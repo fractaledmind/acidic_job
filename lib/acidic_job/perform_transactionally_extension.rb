@@ -14,13 +14,16 @@ module AcidicJob
             job_name: self.name,
             job_args: job_or_instantiate(*args).serialize
           }
-        else
+        elsif self.include? Sidekiq::Worker
           {
             adapter: "sidekiq",
             job_name: self.name,
             job_args: args
           }
+        else
+          raise UnknownJobAdapter
         end
+
         AcidicJob::Staged.create!(attributes)
       end
     end
