@@ -5,7 +5,7 @@ require_relative "acidic_job/no_op"
 require_relative "acidic_job/recovery_point"
 require_relative "acidic_job/response"
 require_relative "acidic_job/key"
-require_relative "acidic_job/staging"
+require_relative "acidic_job/staged"
 require "active_support/concern"
 
 # rubocop:disable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
@@ -27,9 +27,20 @@ module AcidicJob
 
     class_methods do
       def perform_transactionally(*args)
-        AcidicJob::Staging.create!(
-          serialized_params: job_or_instantiate(*args).serialize
-        )
+        attributes = if self < ActiveJob::Base
+          {
+            adapter: "activejob",
+            job_name: self.name,
+            job_args: job_or_instantiate(*args).serialize
+          }
+        else
+          {
+            adapter: "sidekiq",
+            job_name: self.name,
+            job_args: args
+          }
+        end
+        AcidicJob::Staged.create!(attributes)
       end
     end
   end

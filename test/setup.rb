@@ -39,8 +39,10 @@ ActiveRecord::Schema.define do
                                                    name: "idx_acidic_job_keys_on_idempotency_key_n_job_name_n_job_args"
   end
 
-  create_table :acidic_job_stagings, force: true do |t|
-    t.text :serialized_params, null: false
+  create_table :staged_acidic_jobs, force: true do |t|
+    t.string :adapter, null: false
+    t.string :job_name, null: false
+    t.text :job_args, null: true
   end
 
   create_table :audits, force: true do |t|

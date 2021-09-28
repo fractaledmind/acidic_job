@@ -14,8 +14,10 @@ class CreateAcidicJobKeys < <%= migration_class %>
         unique: true,
         name: "idx_acidic_job_keys_on_idempotency_key_n_job_name_n_job_args"
 
-    create_table :acidic_job_stagings do |t|
-      t.text :serialized_params, null: false
+    create_table :staged_acidic_jobs do |t|
+      t.string :adapter, null: false
+      t.string :job_name, null: false
+      t.text :job_args, null: true
     end
   end
 end
