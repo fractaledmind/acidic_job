@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "active_record"
+
 module AcidicJob
   class Key < ActiveRecord::Base
     RECOVERY_POINT_FINISHED = "FINISHED"
