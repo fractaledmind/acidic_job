@@ -6,7 +6,8 @@
 module AcidicJob
   class Response
     def call(key:)
-      key.update!(
+      # Skip AR callbacks as there are none on the model
+      key.update_columns(
         locked_at: nil,
         recovery_point: Key::RECOVERY_POINT_FINISHED
       )

@@ -11,6 +11,7 @@ module AcidicJob
     end
 
     def call(key:)
+      # Skip AR callbacks as there are none on the model
       key.update_column(:recovery_point, name)
     end
   end
