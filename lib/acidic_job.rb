@@ -45,13 +45,30 @@ module AcidicJob
     end
   end
 
+  module ParameterWrapper
+    def perform(*args, **kwargs)
+      @arguments_for_perform = if args.any? && kwargs.any?
+        args + [kwargs]
+      elsif args.any? && kwargs.none?
+        args
+      elsif args.none? && kwargs.any?
+        [kwargs]
+      else
+        []
+      end
+      super
+    end
+  end
+
   included do
     attr_reader :key
+    attr_accessor :arguments_for_perform
 
     # Extend ActiveJob only once it has been loaded
-    ActiveSupport.on_load(:active_job) do
-      send(:include, ActiveJobExtension)
-    end
+    include ActiveJobExtension
+
+    # ...
+    prepend ParameterWrapper
   end
 
   # Number of seconds passed which we consider a held idempotency key lock to be
@@ -82,7 +99,12 @@ module AcidicJob
     # close proximity, one of the two will be aborted by Postgres because we're
     # using a transaction with SERIALIZABLE isolation level. It may not look
     # it, but this code is safe from races.
-    ensure_idempotency_key_record(job_id, defined_steps.first)
+    idempotency_key_value = if defined?(job_id)
+      job_id
+    elsif defined?(jid)
+      jid
+    end
+    ensure_idempotency_key_record(idempotency_key_value, defined_steps.first)
 
     # if the key record is already marked as finished, immediately return its result
     return @key.succeeded? if @key.finished?
@@ -147,7 +169,6 @@ module AcidicJob
                       else
                         :serializable
                       end
-    serialized_job_info = serialize
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
       @key = Key.find_by(idempotency_key: key_val)
@@ -155,7 +176,9 @@ module AcidicJob
       if @key
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
-        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != serialized_job_info["arguments"]
+        if @key.job_args != @arguments_for_perform
+          raise MismatchedIdempotencyKeyAndJobArguments
+        end
 
         # Only acquire a lock if the key is unlocked or its lock has expired
         # because the original job was long enough ago.
@@ -169,8 +192,8 @@ module AcidicJob
           locked_at: Time.current,
           last_run_at: Time.current,
           recovery_point: first_step,
-          job_name: serialized_job_info["job_class"],
-          job_args: serialized_job_info["arguments"]
+          job_name: self.class.name,
+          job_args: @arguments_for_perform
         )
       end
     end
