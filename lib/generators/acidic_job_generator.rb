@@ -3,11 +3,10 @@
 require "rails/generators"
 require "rails/generators/active_record"
 
-# This generator adds a migration for the {FriendlyId::History
-# FriendlyId::History} addon.
 class AcidicJobGenerator < ActiveRecord::Generators::Base
-  # ActiveRecord::Generators::Base inherits from Rails::Generators::NamedBase which requires a NAME parameter for the
-  # new table name. Our generator always uses 'acidic_job_keys', so we just set a random name here.
+  # ActiveRecord::Generators::Base inherits from Rails::Generators::NamedBase
+  # which requires a NAME parameter for the new table name.
+  # Our generator always uses "acidic_job_keys", so we just set a random name here.
   argument :name, type: :string, default: "random_name"
 
   source_root File.expand_path("templates", __dir__)
@@ -23,9 +22,14 @@ class AcidicJobGenerator < ActiveRecord::Generators::Base
   end
 
   # Copies the migration template to db/migrate.
-  def copy_files
-    migration_template "migration.rb.erb",
+  def copy_acidic_job_keys_migration_files
+    migration_template "create_acidic_job_keys_migration.rb.erb",
                        "db/migrate/create_acidic_job_keys.rb"
+  end
+
+  def copy_staged_acidic_jobs_migration_files
+    migration_template "create_staged_acidic_jobs_migration.rb.erb",
+                       "db/migrate/create_staged_acidic_jobs.rb"
   end
 
   protected
