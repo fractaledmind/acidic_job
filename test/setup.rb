@@ -127,8 +127,6 @@ module Stripe
   class StripeError < StandardError; end
 
   class Charge
-    extend AcidicJob::Deferrable::Behavior
-
     def self.create(params, _args)
       raise CardError, "Your card was declined." if params[:customer] == "tok_chargeCustomerFail"
 
