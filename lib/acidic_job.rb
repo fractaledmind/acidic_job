@@ -6,6 +6,8 @@ require_relative "acidic_job/recovery_point"
 require_relative "acidic_job/response"
 require_relative "acidic_job/key"
 require_relative "acidic_job/staged"
+require_relative "acidic_job/perform_wrapper"
+require_relative "acidic_job/perform_transactionally_extension"
 require "active_support/concern"
 
 # rubocop:disable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
@@ -22,53 +24,15 @@ module AcidicJob
 
   extend ActiveSupport::Concern
 
-  module ActiveJobExtension
-    extend ActiveSupport::Concern
-
-    class_methods do
-      def perform_transactionally(*args)
-        attributes = if self < ActiveJob::Base
-          {
-            adapter: "activejob",
-            job_name: self.name,
-            job_args: job_or_instantiate(*args).serialize
-          }
-        else
-          {
-            adapter: "sidekiq",
-            job_name: self.name,
-            job_args: args
-          }
-        end
-        AcidicJob::Staged.create!(attributes)
-      end
-    end
-  end
-
-  module ParameterWrapper
-    def perform(*args, **kwargs)
-      @arguments_for_perform = if args.any? && kwargs.any?
-        args + [kwargs]
-      elsif args.any? && kwargs.none?
-        args
-      elsif args.none? && kwargs.any?
-        [kwargs]
-      else
-        []
-      end
-      super
-    end
-  end
-
   included do
     attr_reader :key
     attr_accessor :arguments_for_perform
 
     # Extend ActiveJob with `perform_transactionally` class method
-    include ActiveJobExtension
+    include PerformTransactionallyExtension
 
     # Ensure our `perform` method always runs first to gather parameters
-    prepend ParameterWrapper
+    prepend PerformWrapper
   end
 
   # Number of seconds passed which we consider a held idempotency key lock to be
