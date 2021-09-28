@@ -23,6 +23,7 @@ module AcidicJob
       else
       end
 
+      # TODO: ensure successful enqueuing before deletion
       delete
     end
   end
