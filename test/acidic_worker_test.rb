@@ -325,6 +325,13 @@ class TestAcidicWorkers < Minitest::Test
 
       assert_equal "RideCreateWorker::SimulatedTestingFailure", key.error_object.class.name
     end
+
+    def test_successfully_handles_stripe_card_error
+      result = RideCreateWorker.new.perform(@invalid_user, @valid_params)
+      assert_equal 1, AcidicJob::Key.count
+      assert_equal true, result
+      assert_equal true, AcidicJob::Key.first.succeeded?
+    end
   end
 end
 # rubocop:enable Metrics/AbcSize, Metrics/MethodLength

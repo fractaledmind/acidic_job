@@ -6,7 +6,7 @@ class SendRideReceiptJob < ActiveJob::Base
   include AcidicJob
 
   def perform(amount:, currency:, user:)
-    { amount: amount, currency: currency, user: user }
+    # no op
   end
 end
 

@@ -3,7 +3,7 @@ class SendRideReceiptWorker
   include AcidicJob
 
   def perform(amount:, currency:, user_id:)
-    { amount: amount, currency: currency, user_id: user_id }
+    # no op
   end
 end
 
@@ -73,7 +73,7 @@ class RideCreateWorker
     rescue Stripe::CardError
       # Short circuits execution by sending execution right to 'finished'.
       # So, ends the job "successfully"
-      Response.new
+      safely_finish_acidic_job
     else
       # if there is some sort of failure here (like server downtime), what happens?
       ride.update_column(:stripe_charge_id, charge.id)
