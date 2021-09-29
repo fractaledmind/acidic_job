@@ -15,15 +15,25 @@ require "active_support/concern"
 module AcidicJob
   extend ActiveSupport::Concern
 
-  included do
-    attr_reader :key
-    attr_accessor :arguments_for_perform
+  def self.wire_everything_up(klass)
+    klass.attr_reader :key
+    klass.attr_accessor :arguments_for_perform
 
     # Extend ActiveJob with `perform_transactionally` class method
-    include PerformTransactionallyExtension
+    klass.include PerformTransactionallyExtension
 
     # Ensure our `perform` method always runs first to gather parameters
-    prepend PerformWrapper
+    klass.prepend PerformWrapper
+  end
+
+  included do
+    AcidicJob.wire_everything_up(self)
+  end
+
+  class_methods do
+    def inherited(subclass)
+      AcidicJob.wire_everything_up(subclass)
+    end
   end
 
   # Number of seconds passed which we consider a held idempotency key lock to be
