@@ -69,7 +69,7 @@ module AcidicJob
     return @key.succeeded? if @key.finished?
 
     # otherwise, we will enter a loop to process each required step of the job
-    100.times do
+    phases.size.times do
       # our `phases` hash uses Symbols for keys
       recovery_point = @key.recovery_point.to_sym
 
