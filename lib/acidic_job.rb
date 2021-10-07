@@ -178,12 +178,14 @@ module AcidicJob
       # but we should always update the value to match the current value
       instance_variable_set("@#{accessor}", value)
       # and we overwrite the setter to ensure any updates to an accessor update the `Key` stored value
-      self.class.define_method("#{accessor}=") do |value|
+      # Note: we must define the singleton method on the instance to avoid overwriting setters on other
+      # instances of the same class
+      self.define_singleton_method("#{accessor}=") do |value|
         instance_variable_set("@#{accessor}", value)
         key.attr_accessors[accessor] = value
         key.save!(validate: false)
         value
-      end unless respond_to?("#{accessor}=")
+      end
     end
 
     true
