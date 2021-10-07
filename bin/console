@@ -3,7 +3,8 @@
 
 require "bundler/setup"
 require "acidic_job"
-require_relative "../test/setup"
+require_relative "../test/support/setup"
+require_relative "../test/support/ride_create_job"
 
 # You can add fixtures and/or initialization code here to make experimenting
 # with your gem easier. You can also use a different console, if you like.
