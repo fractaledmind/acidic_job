@@ -27,6 +27,7 @@ ActiveRecord::Schema.define do
     t.datetime :locked_at, null: true
     t.string :recovery_point, null: false
     t.text :error_object
+    t.text :attr_accessors
     t.timestamps
 
     t.index %i[idempotency_key job_name job_args], unique: true,
