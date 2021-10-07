@@ -29,7 +29,7 @@ class RideCreateJob < ActiveJob::Base
 
   # rubocop:disable Metrics/MethodLength
   def create_ride_and_audit_record
-    @ride = Ride.create!(
+    self.ride = Ride.create!(
       origin_lat: params["origin_lat"],
       origin_lon: params["origin_lon"],
       target_lat: params["target_lat"],
@@ -51,8 +51,8 @@ class RideCreateJob < ActiveJob::Base
   # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def create_stripe_charge
     # retrieve a ride record if necessary (i.e. we're recovering)
-    if ride.nil?
-      @ride = Ride.find_by!(
+    if self.ride.nil?
+      self.ride = Ride.find_by!(
         origin_lat: params["origin_lat"],
         origin_lon: params["origin_lon"],
         target_lat: params["target_lat"],
@@ -80,7 +80,7 @@ class RideCreateJob < ActiveJob::Base
       safely_finish_acidic_job
     else
       # if there is some sort of failure here (like server downtime), what happens?
-      ride.update_column(:stripe_charge_id, charge.id)
+      self.ride.update_column(:stripe_charge_id, charge.id)
     end
   end
   # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
@@ -92,7 +92,7 @@ class RideCreateJob < ActiveJob::Base
     SendRideReceiptJob.perform_transactionally(
       amount: 20_00,
       currency: "usd",
-      user: user
+      user: self.user
     )
   end
 end
