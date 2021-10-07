@@ -148,10 +148,10 @@ class TestAcidicJobs < Minitest::Test
     end
 
     def test_continues_from_recovery_point_create_stripe_charge
-      key = create_key(recovery_point: :create_stripe_charge)
-      Ride.create(@valid_params.merge(
+      ride = Ride.create(@valid_params.merge(
                     user: @valid_user
                   ))
+      key = create_key(recovery_point: :create_stripe_charge, attr_accessors: { ride: ride })
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
           result = RideCreateJob.perform_now(@valid_user, @valid_params)
@@ -246,16 +246,15 @@ class TestAcidicJobs < Minitest::Test
 
     def test_throws_error_if_recovering_without_ride_record
       key = create_key(recovery_point: :create_stripe_charge)
-
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
-        assert_raises ActiveRecord::RecordNotFound do
+        assert_raises NoMethodError do
           RideCreateJob.perform_now(@valid_user, @valid_params)
         end
       end
       key.reload
       assert_nil key.locked_at
       assert_equal false, key.succeeded?
-      assert_equal "ActiveRecord::RecordNotFound", key.error_object.class.name
+      assert_equal "NoMethodError", key.error_object.class.name
     end
 
     def test_throws_error_with_unknown_recovery_point

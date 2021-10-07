@@ -52,16 +52,6 @@ class RideCreateJob < ActiveJob::Base
 
   # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def create_stripe_charge
-    # retrieve a ride record if necessary (i.e. we're recovering)
-    if ride.nil?
-      self.ride = Ride.find_by!(
-        origin_lat: params["origin_lat"],
-        origin_lon: params["origin_lon"],
-        target_lat: params["target_lat"],
-        target_lon: params["target_lon"]
-      )
-    end
-
     raise SimulatedTestingFailure if defined?(raise_error)
 
     begin
