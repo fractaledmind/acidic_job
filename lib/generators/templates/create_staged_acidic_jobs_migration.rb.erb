@@ -4,6 +4,7 @@ class CreateStagedAcidicJobs < <%= migration_class %>
       t.string :adapter, null: false
       t.string :job_name, null: false
       t.text :job_args, null: true
+      t.timestamps
     end
   end
 end
