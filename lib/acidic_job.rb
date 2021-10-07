@@ -166,10 +166,13 @@ module AcidicJob
   end
 
   def define_accessors_for_passed_arguments(passed_arguments, key)
-    # first, ensure that `Key#attr_accessors` is populated with initial values
-    key.update_column(:attr_accessors, passed_arguments)
+    # first, get the current state of all accessors for both previously persisted and initialized values
+    current_accessors = passed_arguments.stringify_keys.merge(key.attr_accessors)
 
-    passed_arguments.each do |accessor, value|
+    # next, ensure that `Key#attr_accessors` is populated with initial values
+    key.update_column(:attr_accessors, current_accessors)
+
+    current_accessors.each do |accessor, value|
       # the reader method may already be defined
       self.class.attr_reader accessor unless respond_to?(accessor)
       # but we should always update the value to match the current value
