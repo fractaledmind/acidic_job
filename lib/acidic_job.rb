@@ -44,10 +44,6 @@ module AcidicJob
 
   # takes a block
   def idempotently(with:)
-    # set accessors for each argument passed in to ensure they are available
-    # to the step methods the job will have written
-    define_accessors_for_passed_arguments(with)
-
     # execute the block to gather the info on what phases are defined for this job
     defined_steps = yield
     # [:create_ride_and_audit_record, :create_stripe_charge, :send_receipt]
@@ -67,6 +63,10 @@ module AcidicJob
 
     # if the key record is already marked as finished, immediately return its result
     return @key.succeeded? if @key.finished?
+
+    # set accessors for each argument passed in to ensure they are available
+    # to the step methods the job will have written
+    define_accessors_for_passed_arguments(with, @key)
 
     # otherwise, we will enter a loop to process each required step of the job
     phases.size.times do
@@ -168,12 +168,22 @@ module AcidicJob
     end
   end
 
-  def define_accessors_for_passed_arguments(passed_arguments)
+  def define_accessors_for_passed_arguments(passed_arguments, key)
+    # first, ensure that `Key#attr_accessors` is populated with initial values
+    key.update_column(:attr_accessors, passed_arguments)
+
     passed_arguments.each do |accessor, value|
       # the reader method may already be defined
       self.class.attr_reader accessor unless respond_to?(accessor)
       # but we should always update the value to match the current value
       instance_variable_set("@#{accessor}", value)
+      # and we overwrite the setter to ensure any updates to an accessor update the `Key` stored value
+      self.class.define_method("#{accessor}=") do |value|
+        instance_variable_set("@#{accessor}", value)
+        key.attr_accessors[accessor] = value
+        key.save!(validate: false)
+        value
+      end unless respond_to?("#{accessor}=")
     end
 
     true
