@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "active_job"
 
 ActiveJob::Base.logger = Logger.new(IO::NULL) # Logger.new($stdout)
@@ -29,7 +31,7 @@ class RideCreateJob < ActiveJob::Base
 
   # rubocop:disable Metrics/MethodLength
   def create_ride_and_audit_record
-    @ride = Ride.create!(
+    self.ride = Ride.create!(
       origin_lat: params["origin_lat"],
       origin_lon: params["origin_lon"],
       target_lat: params["target_lat"],
@@ -52,7 +54,7 @@ class RideCreateJob < ActiveJob::Base
   def create_stripe_charge
     # retrieve a ride record if necessary (i.e. we're recovering)
     if ride.nil?
-      @ride = Ride.find_by!(
+      self.ride = Ride.find_by!(
         origin_lat: params["origin_lat"],
         origin_lon: params["origin_lon"],
         target_lat: params["target_lat"],

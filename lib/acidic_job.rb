@@ -33,6 +33,7 @@ module AcidicJob
   class_methods do
     def inherited(subclass)
       AcidicJob.wire_everything_up(subclass)
+      super
     end
   end
 
@@ -44,10 +45,6 @@ module AcidicJob
 
   # takes a block
   def idempotently(with:)
-    # set accessors for each argument passed in to ensure they are available
-    # to the step methods the job will have written
-    define_accessors_for_passed_arguments(with)
-
     # execute the block to gather the info on what phases are defined for this job
     defined_steps = yield
     # [:create_ride_and_audit_record, :create_stripe_charge, :send_receipt]
@@ -67,6 +64,10 @@ module AcidicJob
 
     # if the key record is already marked as finished, immediately return its result
     return @key.succeeded? if @key.finished?
+
+    # set accessors for each argument passed in to ensure they are available
+    # to the step methods the job will have written
+    define_accessors_for_passed_arguments(with, @key)
 
     # otherwise, we will enter a loop to process each required step of the job
     phases.size.times do
@@ -115,16 +116,16 @@ module AcidicJob
       rescued_error = e
       raise e
     ensure
-      return unless rescued_error
-
-      # If we're leaving under an error condition, try to unlock the idempotency
-      # key right away so that another request can try again.3
-      begin
-        key.update_columns(locked_at: nil, error_object: rescued_error)
-      rescue StandardError => e
-        # We're already inside an error condition, so swallow any additional
-        # errors from here and just send them to logs.
-        puts "Failed to unlock key #{key.id} because of #{e}."
+      if rescued_error
+        # If we're leaving under an error condition, try to unlock the idempotency
+        # key right away so that another request can try again.3
+        begin
+          key.update_columns(locked_at: nil, error_object: rescued_error)
+        rescue StandardError => e
+          # We're already inside an error condition, so swallow any additional
+          # errors from here and just send them to logs.
+          puts "Failed to unlock key #{key.id} because of #{e}."
+        end
       end
     end
   end
@@ -143,15 +144,11 @@ module AcidicJob
       if @key
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
-        if @key.job_args != @arguments_for_perform
-          raise MismatchedIdempotencyKeyAndJobArguments
-        end
+        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != @arguments_for_perform
 
         # Only acquire a lock if the key is unlocked or its lock has expired
         # because the original job was long enough ago.
-        if @key.locked_at && @key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
-          raise LockedIdempotencyKey
-        end
+        raise LockedIdempotencyKey if @key.locked_at && @key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
 
         # Lock the key and update latest run unless the job is already finished.
         @key.update!(last_run_at: Time.current, locked_at: Time.current) unless @key.finished?
@@ -168,12 +165,24 @@ module AcidicJob
     end
   end
 
-  def define_accessors_for_passed_arguments(passed_arguments)
+  def define_accessors_for_passed_arguments(passed_arguments, key)
+    # first, ensure that `Key#attr_accessors` is populated with initial values
+    key.update_column(:attr_accessors, passed_arguments)
+
     passed_arguments.each do |accessor, value|
       # the reader method may already be defined
       self.class.attr_reader accessor unless respond_to?(accessor)
       # but we should always update the value to match the current value
       instance_variable_set("@#{accessor}", value)
+      # and we overwrite the setter to ensure any updates to an accessor update the `Key` stored value
+      # Note: we must define the singleton method on the instance to avoid overwriting setters on other
+      # instances of the same class
+      define_singleton_method("#{accessor}=") do |current_value|
+        instance_variable_set("@#{accessor}", current_value)
+        key.attr_accessors[accessor] = current_value
+        key.save!(validate: false)
+        current_value
+      end
     end
 
     true
@@ -201,7 +210,7 @@ module AcidicJob
     return job_id if defined?(job_id) && !job_id.nil?
     return jid if defined?(jid) && !jid.nil?
 
-    require 'securerandom'
+    require "securerandom"
     SecureRandom.hex
   end
 end
