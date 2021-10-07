@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "active_job"
 
 ActiveJob::Base.logger = Logger.new(IO::NULL) # Logger.new($stdout)
@@ -51,7 +53,7 @@ class RideCreateJob < ActiveJob::Base
   # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def create_stripe_charge
     # retrieve a ride record if necessary (i.e. we're recovering)
-    if self.ride.nil?
+    if ride.nil?
       self.ride = Ride.find_by!(
         origin_lat: params["origin_lat"],
         origin_lon: params["origin_lon"],
@@ -80,7 +82,7 @@ class RideCreateJob < ActiveJob::Base
       safely_finish_acidic_job
     else
       # if there is some sort of failure here (like server downtime), what happens?
-      self.ride.update_column(:stripe_charge_id, charge.id)
+      ride.update_column(:stripe_charge_id, charge.id)
     end
   end
   # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
@@ -92,7 +94,7 @@ class RideCreateJob < ActiveJob::Base
     SendRideReceiptJob.perform_transactionally(
       amount: 20_00,
       currency: "usd",
-      user: self.user
+      user: user
     )
   end
 end

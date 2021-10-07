@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module AcidicJob
   class Error < StandardError; end
 

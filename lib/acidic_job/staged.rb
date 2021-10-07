@@ -15,10 +15,11 @@ module AcidicJob
     after_create_commit :enqueue_job
 
     def enqueue_job
-      if adapter == "activejob"
+      case adapter
+      when "activejob"
         job = ActiveJob::Base.deserialize(job_args)
         job.enqueue
-      elsif adapter == "sidekiq"
+      when "sidekiq"
         Sidekiq::Client.push("class" => job_name, "args" => job_args)
       else
         raise UnknownJobAdapter.new(adapter: adapter)

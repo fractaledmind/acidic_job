@@ -144,7 +144,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, Audit.count
       assert_equal 0, AcidicJob::Staged.count
       assert_equal key.attr_accessors,
-                   {"user" => @valid_user, "params" => @valid_params, "ride" => Ride.first}
+                   { "user" => @valid_user, "params" => @valid_params, "ride" => Ride.first }
     end
 
     def test_continues_from_recovery_point_create_stripe_charge
@@ -166,7 +166,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 0, Audit.count
       assert_equal 0, AcidicJob::Staged.count
       assert_equal key.attr_accessors,
-                   {"user" => @valid_user, "params" => @valid_params, "ride" => Ride.first}
+                   { "user" => @valid_user, "params" => @valid_params, "ride" => Ride.first }
     end
 
     def test_continues_from_recovery_point_send_receipt
@@ -185,7 +185,7 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 0, Audit.count
       assert_equal 0, AcidicJob::Staged.count
       assert_equal key.attr_accessors,
-                   {"user" => @valid_user, "params" => @valid_params, "ride" => nil}
+                   { "user" => @valid_user, "params" => @valid_params, "ride" => nil }
     end
   end
 
