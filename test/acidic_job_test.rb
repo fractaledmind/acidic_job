@@ -187,6 +187,25 @@ class TestAcidicJobs < Minitest::Test
       assert_equal key.attr_accessors,
                    { "user" => @valid_user, "params" => @valid_params, "ride" => nil }
     end
+
+    def test_halts_execution_of_steps_when_safely_finish_acidic_job_returned
+      key = create_key(recovery_point: :send_receipt)
+      AcidicJob::Key.stub(:find_by, ->(*) { key }) do
+        assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
+          result = RideCreateJob.perform_now(@valid_user, @valid_params)
+          assert_equal true, result
+        end
+      end
+      key.reload
+
+      assert_equal true, key.succeeded?
+      assert_equal 1, AcidicJob::Key.count
+      assert_equal 0, Ride.count
+      assert_equal 0, Audit.count
+      assert_equal 0, AcidicJob::Staged.count
+      assert_equal key.attr_accessors,
+                   { "user" => @valid_user, "params" => @valid_params, "ride" => nil }
+    end
   end
 
   class FailuresTest < TestAcidicJobs
@@ -320,9 +339,12 @@ class TestAcidicJobs < Minitest::Test
     end
 
     def test_successfully_handles_stripe_card_error
-      result = RideCreateJob.perform_now(@invalid_user, @valid_params)
+      assert_no_enqueued_jobs only: SendRideReceiptJob do
+        result = RideCreateJob.perform_now(@invalid_user, @valid_params)
+        assert_equal true, result
+      end
+
       assert_equal 1, AcidicJob::Key.count
-      assert_equal true, result
       assert_equal true, AcidicJob::Key.first.succeeded?
     end
   end

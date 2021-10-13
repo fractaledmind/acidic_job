@@ -197,9 +197,11 @@ module AcidicJob
     {}.tap do |phases|
       defined_steps.each_cons(2).map do |enter_method, exit_method|
         phases[enter_method] = lambda do
-          method(enter_method).call
+          result = method(enter_method).call
 
-          if exit_method.to_s == Key::RECOVERY_POINT_FINISHED
+          if result.is_a?(Response)
+            result
+          elsif exit_method.to_s == Key::RECOVERY_POINT_FINISHED
             Response.new
           else
             RecoveryPoint.new(exit_method)
