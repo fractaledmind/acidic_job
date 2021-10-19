@@ -67,6 +67,7 @@ module AcidicJob
 
     # set accessors for each argument passed in to ensure they are available
     # to the step methods the job will have written
+    # THIS HAPPENS OUTSIDE OF ANY TRANSACTION
     define_accessors_for_passed_arguments(with, @key)
 
     # otherwise, we will enter a loop to process each required step of the job
@@ -141,7 +142,7 @@ module AcidicJob
     ActiveRecord::Base.transaction(isolation: isolation_level) do
       @key = Key.find_by(idempotency_key: key_val)
 
-      if @key
+      if @key.present?
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
         raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != @arguments_for_perform
