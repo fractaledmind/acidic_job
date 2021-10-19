@@ -18,7 +18,7 @@ class TestAcidicJobs < Minitest::Test
     @valid_user = User.find_by(stripe_customer_id: "tok_visa")
     @invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = { amount: 20_00, currency: "usd", user: @valid_user }
-    RideCreateJob.undef_method(:raise_error) if RideCreateJob.respond_to?(:raise_error)
+    RideCreateJob.undef_method(:error_in_create_stripe_charge) if RideCreateJob.respond_to?(:error_in_create_stripe_charge)
   end
 
   def before_setup
@@ -110,14 +110,15 @@ class TestAcidicJobs < Minitest::Test
     end
 
     def test_stores_results_for_a_permanent_failure
-      RideCreateJob.attr_reader(:raise_error)
+      RideCreateJob.define_method(:error_in_create_stripe_charge, -> { true })
       key = create_key
+
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises RideCreateJob::SimulatedTestingFailure do
           RideCreateJob.perform_now(@valid_user, @valid_params)
         end
       end
-      RideCreateJob.undef_method(:raise_error)
+      RideCreateJob.undef_method(:error_in_create_stripe_charge)
 
       assert_equal "RideCreateJob::SimulatedTestingFailure", key.error_object.class.name
       assert_equal 1, AcidicJob::Key.count
@@ -326,14 +327,14 @@ class TestAcidicJobs < Minitest::Test
     end
 
     def test_throws_appropriate_error_when_job_method_throws_exception
-      RideCreateJob.attr_reader(:raise_error)
+      RideCreateJob.define_method(:error_in_create_stripe_charge, -> { true })
       key = create_key
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises RideCreateJob::SimulatedTestingFailure do
           RideCreateJob.perform_now(@valid_user, @valid_params)
         end
       end
-      RideCreateJob.undef_method(:raise_error)
+      RideCreateJob.undef_method(:error_in_create_stripe_charge)
 
       assert_equal "RideCreateJob::SimulatedTestingFailure", key.error_object.class.name
     end

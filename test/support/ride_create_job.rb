@@ -40,6 +40,8 @@ class RideCreateJob < ActiveJob::Base
       user: user
     )
 
+    raise SimulatedTestingFailure if defined?(error_in_create_ride) && error_in_create_ride
+
     # in the same transaction insert an audit record for what happened
     Audit.create!(
       action: :AUDIT_RIDE_CREATED,
@@ -52,7 +54,7 @@ class RideCreateJob < ActiveJob::Base
 
   # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def create_stripe_charge
-    raise SimulatedTestingFailure if defined?(raise_error)
+    raise SimulatedTestingFailure if defined?(error_in_create_stripe_charge) && error_in_create_stripe_charge
 
     begin
       charge = Stripe::Charge.create({

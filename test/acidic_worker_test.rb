@@ -8,8 +8,6 @@ require_relative "support/ride_create_worker"
 
 # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
 class TestAcidicWorkers < Minitest::Test
-  include ActiveJob::TestHelper
-
   def setup
     @valid_params = {
       "origin_lat" => 0.0,
@@ -21,7 +19,8 @@ class TestAcidicWorkers < Minitest::Test
     @invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = [{ amount: 20_00, currency: "usd", user_id: @valid_user.id }.stringify_keys]
     @sidekiq_queue = Sidekiq::Queues["default"]
-    RideCreateWorker.undef_method(:raise_error) if RideCreateWorker.respond_to?(:raise_error)
+    RideCreateWorker.undef_method(:error_in_create_stripe_charge) if RideCreateWorker.respond_to?(:error_in_create_stripe_charge)
+    RideCreateWorker.undef_method(:error_in_create_ride) if RideCreateWorker.respond_to?(:error_in_create_ride)
   end
 
   def before_setup
@@ -122,14 +121,14 @@ class TestAcidicWorkers < Minitest::Test
     end
 
     def test_stores_results_for_a_permanent_failure
-      RideCreateWorker.attr_reader(:raise_error)
+      RideCreateWorker.define_method(:error_in_create_stripe_charge, -> { true })
       key = create_key
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises RideCreateWorker::SimulatedTestingFailure do
           RideCreateWorker.new.perform(@valid_user, @valid_params)
         end
       end
-      RideCreateWorker.undef_method(:raise_error)
+      RideCreateWorker.undef_method(:error_in_create_stripe_charge)
 
       assert_equal "RideCreateWorker::SimulatedTestingFailure", key.error_object.class.name
       assert_equal 1, AcidicJob::Key.count
@@ -158,10 +157,10 @@ class TestAcidicWorkers < Minitest::Test
     end
 
     def test_continues_from_recovery_point_create_stripe_charge
-      key = create_key(recovery_point: :create_stripe_charge)
-      Ride.create(@valid_params.merge(
+      ride = Ride.create(@valid_params.merge(
                     user: @valid_user
                   ))
+      key = create_key(recovery_point: :create_stripe_charge, attr_accessors: { ride: ride })
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         result = RideCreateWorker.new.perform(@valid_user, @valid_params)
         assert_equal true, result
@@ -254,14 +253,14 @@ class TestAcidicWorkers < Minitest::Test
       key = create_key(recovery_point: :create_stripe_charge)
 
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
-        assert_raises ActiveRecord::RecordNotFound do
+        assert_raises NoMethodError do
           RideCreateWorker.new.perform(@valid_user, @valid_params)
         end
       end
       key.reload
       assert_nil key.locked_at
       assert_equal false, key.succeeded?
-      assert_equal "ActiveRecord::RecordNotFound", key.error_object.class.name
+      assert_equal "NoMethodError", key.error_object.class.name
     end
 
     def test_throws_error_with_unknown_recovery_point
@@ -309,19 +308,19 @@ class TestAcidicWorkers < Minitest::Test
 
       assert_equal 1, AcidicJob::Key.count
       result = RideCreateWorker.new.perform(@valid_user, @valid_params)
-      assert_equal 2, AcidicJob::Key.count
+      assert_equal 1, AcidicJob::Key.count
       assert_equal true, result
     end
 
     def test_throws_appropriate_error_when_job_method_throws_exception
-      RideCreateWorker.attr_reader(:raise_error)
+      RideCreateWorker.define_method(:error_in_create_stripe_charge, -> { true })
       key = create_key
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_raises RideCreateWorker::SimulatedTestingFailure do
           RideCreateWorker.new.perform(@valid_user, @valid_params)
         end
       end
-      RideCreateWorker.undef_method(:raise_error)
+      RideCreateWorker.undef_method(:error_in_create_stripe_charge)
 
       assert_equal "RideCreateWorker::SimulatedTestingFailure", key.error_object.class.name
     end
@@ -331,6 +330,19 @@ class TestAcidicWorkers < Minitest::Test
       assert_equal 1, AcidicJob::Key.count
       assert_equal true, result
       assert_equal true, AcidicJob::Key.first.succeeded?
+    end
+
+    def test_error_in_first_step_rolls_back_step_transaction
+      RideCreateWorker.define_method(:error_in_create_ride, -> { true })
+
+      assert_raises RideCreateWorker::SimulatedTestingFailure do
+        RideCreateWorker.new.perform(@valid_user, @valid_params)
+      end
+
+      RideCreateWorker.undef_method(:error_in_create_ride)
+      assert_equal 1, AcidicJob::Key.count
+      assert_equal 0, Ride.count
+      assert_nil AcidicJob::Key.first.attr_accessors['ride']
     end
   end
 end

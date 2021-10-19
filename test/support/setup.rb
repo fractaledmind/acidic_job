@@ -115,7 +115,7 @@ end
 
 # LOGGING ----------------------------------------------------------------------
 
-ActiveRecord::Base.logger = Logger.new(IO::NULL) # Logger.new($stdout)
+ActiveRecord::Base.logger = Logger.new(IO::NULL) #Logger.new($stdout) #
 
 # MOCKS ------------------------------------------------------------------------
 
