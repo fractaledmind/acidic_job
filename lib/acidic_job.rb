@@ -215,8 +215,7 @@ module AcidicJob
     return job_id if defined?(job_id) && !job_id.nil?
     return jid if defined?(jid) && !jid.nil?
 
-    require "securerandom"
-    SecureRandom.hex
+    Digest::SHA1.hexdigest [self.class.name, arguments_for_perform].flatten.join
   end
 end
 # rubocop:enable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
