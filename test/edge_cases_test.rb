@@ -16,6 +16,7 @@ class WorkerWithRescueInPerform
       step :do_something
     end
   rescue CustomErrorForTesting
+    true
   end
 
   def do_something
@@ -45,9 +46,7 @@ class WorkerWithLogicInsideIdempotentlyBlock
 
   def perform(bool)
     idempotently with: {} do
-      if bool
-        step :do_something
-      end
+      step :do_something if bool
     end
   end
 

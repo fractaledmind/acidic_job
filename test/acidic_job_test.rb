@@ -18,7 +18,11 @@ class TestAcidicJobs < Minitest::Test
     @valid_user = User.find_by(stripe_customer_id: "tok_visa")
     @invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = { amount: 20_00, currency: "usd", user: @valid_user }
-    RideCreateJob.undef_method(:error_in_create_stripe_charge) if RideCreateJob.respond_to?(:error_in_create_stripe_charge)
+    # rubocop:disable Style/GuardClause
+    if RideCreateJob.respond_to?(:error_in_create_stripe_charge)
+      RideCreateJob.undef_method(:error_in_create_stripe_charge)
+    end
+    # rubocop:enable Style/GuardClause
   end
 
   def before_setup
@@ -41,19 +45,19 @@ class TestAcidicJobs < Minitest::Test
       job_args: [@valid_user, @valid_params],
       workflow: {
         "create_ride_and_audit_record" => {
-          "does"=>:create_ride_and_audit_record,
-          "awaits"=>[],
-          "then"=>:create_stripe_charge
+          "does" => :create_ride_and_audit_record,
+          "awaits" => [],
+          "then" => :create_stripe_charge
         },
         "create_stripe_charge" => {
-          "does"=>:create_stripe_charge,
-          "awaits"=>[],
-          "then"=>:send_receipt
+          "does" => :create_stripe_charge,
+          "awaits" => [],
+          "then" => :send_receipt
         },
         "send_receipt" => {
-          "does"=>:send_receipt,
-          "awaits"=>[],
-          "then"=>"FINISHED"
+          "does" => :send_receipt,
+          "awaits" => [],
+          "then" => "FINISHED"
         }
       }
     }.deep_merge(params))
@@ -167,8 +171,8 @@ class TestAcidicJobs < Minitest::Test
 
     def test_continues_from_recovery_point_create_stripe_charge
       ride = Ride.create(@valid_params.merge(
-                    user: @valid_user
-                  ))
+                           user: @valid_user
+                         ))
       key = create_key(recovery_point: :create_stripe_charge, attr_accessors: { ride: ride })
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
@@ -310,7 +314,7 @@ class TestAcidicJobs < Minitest::Test
     def test_swallows_error_when_trying_to_unlock_key_after_error
       key = create_key
       def key.update_columns(**kwargs)
-        raise StandardError if not kwargs.key?(:attr_accessors)
+        raise StandardError unless kwargs.key?(:attr_accessors)
 
         super
       end

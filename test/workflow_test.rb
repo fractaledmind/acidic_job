@@ -12,7 +12,7 @@ class WorkerWithEnqueueStep < Support::Sidekiq::Workflow
   include AcidicJob
 
   class AsyncWorker < Support::Sidekiq::StepWorker
-    def perform(key_id)
+    def perform(_key_id)
       call_batch_success_callback
     end
   end
@@ -28,7 +28,6 @@ class WorkerWithEnqueueStep < Support::Sidekiq::Workflow
     raise CustomErrorForTesting
   end
 end
-
 
 class TestWorkflows < Minitest::Test
   def setup

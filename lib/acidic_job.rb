@@ -87,7 +87,7 @@ module AcidicJob
       if recovery_point == Key::RECOVERY_POINT_FINISHED.to_s
         break
       elsif current_step.nil?
-        raise UnknownRecoveryPoint.new("Defined workflow does not reference this step: #{recovery_point}")
+        raise UnknownRecoveryPoint, "Defined workflow does not reference this step: #{recovery_point}"
       elsif (jobs = current_step.fetch("awaits", [])).any?
         acidic_step @key, current_step
         # THIS MUST BE DONE AFTER THE KEY RECOVERY POINT HAS BEEN UPDATED
@@ -239,23 +239,25 @@ module AcidicJob
     true
   end
 
+  # rubocop:disable Metrics/PerceivedComplexity
   def wrap_step_as_acidic_callable(step)
     # {:then=>:next_step, :does=>:enqueue_step, :awaits=>[WorkerWithEnqueueStep::FirstWorker]}
     current_step = step["does"]
     next_step = step["then"]
 
     callable = if respond_to? current_step, _include_private = true
-      method(current_step)
-    else
-      Proc.new { nil } # no-op
-    end
+                 method(current_step)
+               else
+                 proc {} # no-op
+               end
 
-    Proc.new do |key|
+    proc do |key|
       result = if callable.arity.zero?
                  callable.call
                elsif callable.arity == 1
                  callable.call(key)
                else
+                 # TODO
                  raise
                end
 
@@ -268,6 +270,7 @@ module AcidicJob
       end
     end
   end
+  # rubocop:enable Metrics/PerceivedComplexity
 
   def enqueue_step_parallel_jobs(jobs)
     # TODO: GIVE PROPER ERROR
@@ -283,7 +286,9 @@ module AcidicJob
         # NOTE: options are marshalled through JSON so use only basic types.
         { "key_id" => @key.id }
       )
-      # NOTE: The jobs method is atomic. All jobs created in the block are actually pushed atomically at the end of the block. If an error is raised, none of the jobs will go to Redis.
+      # NOTE: The jobs method is atomic.
+      # All jobs created in the block are actually pushed atomically at the end of the block.
+      # If an error is raised, none of the jobs will go to Redis.
       step_batch.jobs do
         jobs.each do |worker_name|
           worker = worker_name.is_a?(String) ? worker_name.constantize : worker_name
@@ -306,7 +311,7 @@ module AcidicJob
     Digest::SHA1.hexdigest [self.class.name, arguments_for_perform].flatten.join
   end
 
-  def step_done(status, options)
+  def step_done(_status, options)
     key = Key.find(options["key_id"])
     # when a batch of jobs for a step succeeds, we begin the key processing again
     process_key(key)
