@@ -17,8 +17,11 @@ module AcidicJob
 
     after_create_commit :enqueue_job
 
+    private
+
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def enqueue_job
-      gid = {"staged_job_gid" => self.to_global_id.to_s}
+      gid = { "staged_job_gid" => to_global_id.to_s }
 
       if job_args.is_a?(Hash) && job_args.key?("arguments")
         job_args["arguments"].concat([gid])
@@ -33,7 +36,7 @@ module AcidicJob
       when "sidekiq"
         Sidekiq::Client.push(
           "class" => job_name,
-          "args" => job_args,
+          "args" => job_args
         )
       else
         raise UnknownJobAdapter.new(adapter: adapter)
@@ -42,5 +45,6 @@ module AcidicJob
       # NOTE: record will be deleted after the job has successfully been performed
       true
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
   end
 end

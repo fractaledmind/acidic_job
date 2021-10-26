@@ -11,6 +11,15 @@ module AcidicJob
         @staged_job_gid = final_arg["staged_job_gid"]
       end
 
+      set_arguments_for_perform
+
+      super(*args, **kwargs)
+    end
+
+    private
+
+    # rubocop:disable Metrics/AbcSize
+    def set_arguments_for_perform
       # store arguments passed into `perform` so that we can later persist
       # them to `AcidicJob::Key#job_args` for both ActiveJob and Sidekiq::Worker
       @arguments_for_perform = if args.any? && kwargs.any?
@@ -22,8 +31,7 @@ module AcidicJob
                                else
                                  []
                                end
-
-      super(*args, **kwargs)
     end
+    # rubocop:enable Metrics/AbcSize
   end
 end

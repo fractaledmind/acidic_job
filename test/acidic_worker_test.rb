@@ -19,7 +19,9 @@ class TestAcidicWorkers < Minitest::Test
     @invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = [{ amount: 20_00, currency: "usd", user_id: @valid_user.id }.stringify_keys]
     @sidekiq_queue = Sidekiq::Queues["default"]
-    RideCreateWorker.undef_method(:error_in_create_stripe_charge) if RideCreateWorker.respond_to?(:error_in_create_stripe_charge)
+    if RideCreateWorker.respond_to?(:error_in_create_stripe_charge)
+      RideCreateWorker.undef_method(:error_in_create_stripe_charge)
+    end
     RideCreateWorker.undef_method(:error_in_create_ride) if RideCreateWorker.respond_to?(:error_in_create_ride)
   end
 
@@ -158,8 +160,8 @@ class TestAcidicWorkers < Minitest::Test
 
     def test_continues_from_recovery_point_create_stripe_charge
       ride = Ride.create(@valid_params.merge(
-                    user: @valid_user
-                  ))
+                           user: @valid_user
+                         ))
       key = create_key(recovery_point: :create_stripe_charge, attr_accessors: { ride: ride })
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
         result = RideCreateWorker.new.perform(@valid_user, @valid_params)
@@ -342,7 +344,7 @@ class TestAcidicWorkers < Minitest::Test
       RideCreateWorker.undef_method(:error_in_create_ride)
       assert_equal 1, AcidicJob::Key.count
       assert_equal 0, Ride.count
-      assert_nil AcidicJob::Key.first.attr_accessors['ride']
+      assert_nil AcidicJob::Key.first.attr_accessors["ride"]
     end
   end
 end
