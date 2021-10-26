@@ -42,7 +42,24 @@ class TestAcidicWorkers < Minitest::Test
       last_run_at: Time.current,
       recovery_point: :create_ride_and_audit_record,
       job_name: "RideCreateWorker",
-      job_args: [@valid_user, @valid_params]
+      job_args: [@valid_user, @valid_params],
+      workflow: {
+        "create_ride_and_audit_record" => {
+          "does"=>:create_ride_and_audit_record,
+          "awaits"=>[],
+          "then"=>:create_stripe_charge
+        },
+        "create_stripe_charge" => {
+          "does"=>:create_stripe_charge,
+          "awaits"=>[],
+          "then"=>:send_receipt
+        },
+        "send_receipt" => {
+          "does"=>:send_receipt,
+          "awaits"=>[],
+          "then"=>"FINISHED"
+        }
+      }
     }.deep_merge(params))
   end
 
