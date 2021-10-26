@@ -28,6 +28,8 @@ module AcidicJob
     klass.prepend PerformWrapper
 
     klass.prepend SidekiqCallbacks unless klass.respond_to?(:after_perform)
+
+    klass.after_perform :delete_staged_job_record, if: :staged_job_gid
   end
 
   included do
@@ -106,6 +108,16 @@ module AcidicJob
   end
 
   private
+
+  def delete_staged_job_record
+    return unless staged_job_gid
+
+    staged_job = GlobalID::Locator.locate(staged_job_gid)
+    staged_job.delete
+    true
+  rescue ActiveRecord::RecordNotFound
+    true
+  end
 
   def atomic_phase(key, proc = nil, &block)
     rescued_error = false
