@@ -18,7 +18,8 @@ module AcidicJob
 
   def self.wire_everything_up(klass)
     klass.attr_reader :key
-    klass.attr_accessor :arguments_for_perform
+    klass.attr_reader :staged_job_gid
+    klass.attr_reader :arguments_for_perform
 
     # Extend ActiveJob with `perform_transactionally` class method
     klass.include PerformTransactionallyExtension
