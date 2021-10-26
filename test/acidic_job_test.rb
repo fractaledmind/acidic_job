@@ -309,8 +309,10 @@ class TestAcidicJobs < Minitest::Test
 
     def test_swallows_error_when_trying_to_unlock_key_after_error
       key = create_key
-      def key.update_columns(**_kwargs)
-        raise StandardError
+      def key.update_columns(**kwargs)
+        raise StandardError if not kwargs.key?(:attr_accessors)
+
+        super
       end
       raises_exception = ->(_params, _args) { raise "Internal server error!" }
 
