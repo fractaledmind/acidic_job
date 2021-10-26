@@ -46,8 +46,9 @@ module AcidicJob
   # takes a block
   def idempotently(with:)
     # execute the block to gather the info on what phases are defined for this job
-    defined_steps = yield
-    # [:create_ride_and_audit_record, :create_stripe_charge, :send_receipt]
+    steps = yield || []
+
+    raise NoDefinedSteps if steps.empty?
 
     # convert the array of steps into a hash of recovery_points and callable actions
     phases = define_atomic_phases(defined_steps)

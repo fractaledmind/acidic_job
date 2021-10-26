@@ -14,4 +14,6 @@ module AcidicJob
   class SerializedTransactionConflict < Error; end
 
   class UnknownJobAdapter < Error; end
+
+  class NoDefinedSteps < Error; end
 end
