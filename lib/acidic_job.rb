@@ -9,6 +9,7 @@ require_relative "acidic_job/key"
 require_relative "acidic_job/staged"
 require_relative "acidic_job/perform_wrapper"
 require_relative "acidic_job/perform_transactionally_extension"
+require_relative "acidic_job/sidekiq_callbacks"
 require "active_support/concern"
 
 # rubocop:disable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
@@ -24,6 +25,8 @@ module AcidicJob
 
     # Ensure our `perform` method always runs first to gather parameters
     klass.prepend PerformWrapper
+
+    klass.prepend SidekiqCallbacks unless klass.respond_to?(:after_perform)
   end
 
   included do
