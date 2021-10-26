@@ -53,8 +53,8 @@ class TestAcidicWorkers < Minitest::Test
   def assert_enqueued_with(worker:, args:)
     assert_equal 1, @sidekiq_queue.size
     assert_equal worker.to_s, @sidekiq_queue.first["class"]
-    assert_equal args, @sidekiq_queue.first["args"]
-    @sidekiq_queue.clear
+    assert_equal args, @sidekiq_queue.first["args"][0..-2]
+    worker.drain
   end
 
   class IdempotencyKeysAndRecoveryTest < TestAcidicWorkers

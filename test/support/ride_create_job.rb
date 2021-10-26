@@ -7,7 +7,7 @@ ActiveJob::Base.logger = Logger.new(IO::NULL) # Logger.new($stdout)
 class SendRideReceiptJob < ActiveJob::Base
   include AcidicJob
 
-  def perform(amount:, currency:, user:)
+  def perform(context)
     # no op
   end
 end

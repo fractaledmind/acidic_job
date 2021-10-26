@@ -4,7 +4,7 @@ class SendRideReceiptWorker
   include Sidekiq::Worker
   include AcidicJob
 
-  def perform(amount:, currency:, user_id:)
+  def perform(options)
     # no op
   end
 end
