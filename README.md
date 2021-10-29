@@ -45,7 +45,19 @@ rails generate acidic_job
 
 ## Usage
 
-`AcidicJob` is a concern that you `include` into your operation jobs which provides two public methods to help you make your jobs idempotent and robust—`idempotently` and `step`. You can see them "in action" in the example job below:
+`AcidicJob` is a concern that you `include` into your operation jobs.
+
+```ruby
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+end
+```
+
+It provides a suite of functionality that empowers you to create complex, robust, and _acidic_ jobs.
+
+### Transactional Steps
+
+The first and foundational feature `acidic_job` provides is the `idempotently` method, which takes a block of transactional step methods (defined via the `step`) method:
 
 ```ruby
 class RideCreateJob < ActiveJob::Base
@@ -75,9 +87,75 @@ end
 
 `idempotently` takes only the `with:` named parameter and a block where you define the steps of this operation. `step` simply takes the name of a method available in the job. That's all!
 
-Additionally, it provides `perform_transactionally` and `deliver_transactionally` methods to "transactionally stage" enqueuing other jobs from within a step (whether another ActiveJob or a Sidekiq::Worker or an ActionMailer delivery). These methods will create a new `AcidicJob::Staged` record, but inside of the database transaction of the `step`. Upon commit of that transaction, a model callback pushes the job to your actual job queue. This helps ensure that you never enqueue a job inside of a transaction that rollbacks, and that you never enqueue a job that is picked up before the transaction commits and the records are made available to separate connections. Once the job has been successfully performed, the `AcidicJob::Staged` record is deleted so that this table doesn't grow unbounded and unnecessarily.
+Now, each execution of this job will find or create an `AcidicJob::Key` record, which we leverage to wrap every step in a database transaction. Moreover, this database record allows `acidic_job` to ensure that if your job fails on step 3, when it retries, it will simply jump right back to trying to execute the method defined for the 3rd step, and won't even execute the first two step methods. This means your step methods only need to be idempotent on failure, not on success, since they will never be run again if they succeed.
 
-So, how does `AcidicJob` make this operation idempotent and robust then? In simplest form, `AcidicJob` creates an "idempotency key" record for each job run, where it stores information about that job run, like the parameters passed in and the step the job is on. It then wraps each of your step methods in a database transaction to ensure that each step in the operation is transactionally secure. Finally, it handles a variety of edge-cases and error conditions for you as well. But, basically, by explicitly breaking your operation into steps and storing a record of each job run and updating its current step as it runs, we level up the `ActiveJob` retry mechanism to ensure that we don't retry already finished steps if something goes wrong and the job has to retry. Then, by wrapping each step in a transaction, we ensure each individual step is ACIDic. Taken together, these two strategies help us to ensure that our operational jobs are both idempotent and ACIDic.
+### Persisted Attributes
+
+Any objects passed to the `with` option on the `idempotently` method are not just made available to each of your step methods, they are made available across retries. This means that you can set an attribute in step 1, access it in step 2, have step 2 fail, have the job retry, jump directly back to step 2 on retry, and have that object still accessible. This is done by serializing all objects to a field on the `AcidicJob::Key` and manually providing getters and setters that sync with the database record.
+
+```ruby
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+
+  def perform(ride_params)
+    idempotently with: { ride: nil } do
+      step :create_ride_and_audit_record
+      step :create_stripe_charge
+      step :send_receipt
+    end
+  end
+
+  def create_ride_and_audit_record
+    self.ride = Ride.create!
+  end
+
+  def create_stripe_charge
+    Stripe::Charge.create(amount: 20_00, customer: @ride.user)
+  end
+
+  # ...
+end
+```
+
+**Note:** This does mean that you are restricted to objects that can be serialized by ActiveRecord, thus no Procs, for example.
+
+**Note:** You will note the use of `self.ride = ...` in the code sample above. In order to call the attribute setter method that will sync with the database record, you _must_ use this style. `@ride = ...` and/or `ride = ...` will both fail to sync the value with the datbase record.
+
+### Transactionally Staged Jobs
+
+A standard problem when inside of database transactions is enqueuing other jobs. On the one hand, you could enqueue a job inside of a transaction that then rollbacks, which would leave that job to fail and retry and fail. On the other hand, you could enqueue a job that is picked up before the transaction commits, which would mean the records are not yet available to this job.
+
+In order to mitigate against such issues without forcing you to use a database-backed job queue, `acidic_job` provides `perform_transactionally` and `deliver_transactionally` methods to "transactionally stage" enqueuing other jobs from within a step (whether another ActiveJob or a Sidekiq::Worker or an ActionMailer delivery). These methods will create a new `AcidicJob::Staged` record, but inside of the database transaction of the `step`. Upon commit of that transaction, a model callback pushes the job to your actual job queue.  Once the job has been successfully performed, the `AcidicJob::Staged` record is deleted so that this table doesn't grow unbounded and unnecessarily.
+
+```ruby
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+
+  def perform(ride_params)
+    idempotently with: { user: current_user, params: ride_params, ride: nil } do
+      step :create_ride_and_audit_record
+      step :create_stripe_charge
+      step :send_receipt
+    end
+  end
+
+  # ...
+
+  def send_receipt
+    RideMailer.with(ride: @ride, user: @user).confirm_charge.delivery_transactionally
+  end
+end
+```
+
+### Sidekiq Callbacks
+
+In order to ensure that `AcidicJob::Staged` records are only destroyed once the related job has been successfully performed, whether it is an ActiveJob or a Sidekiq Worker, `acidic_job` also extends Sidekiq to support the [ActiveJob callback interface](https://edgeguides.rubyonrails.org/active_job_basics.html#callbacks).
+
+This allows `acidic_job` to use an `after_perform` callback to delete the `AcidicJob::Staged` record, whether you are using the gem with ActiveJob or pure Sidekiq Workers. Of course, this means that you can add your own callbacks to any jobs or workers that include the `AcidicJob` module as well.
+
+### Sidekiq Batches
+
+One final feature for those of you using Sidekiq Pro: an integrated DSL for Sidekiq Batches. By simply adding the `awaits` option to your step declarations, you can attach any number of additional, asynchronous workers to your step. This is profoundly powerful, as it means that you can define a workflow where step 2 is started _if and only if_ step 1 succeeds, but step 1 can have 3 different workers enqueued on 3 different queues, each running in parallel. Once all 3 workers succeed, `acidic_job` will move on to step 2. That's right, by leveraging the power of Sidekiq Batches, you can have workers that are executed in parallel, on separate queues, and asynchronously, but are still blocking—as a group—the next step in your workflow! This unlocks incredible power and flexibility for defining and structuring complex workflows and operations, and in my mind is the number one selling point for Sidekiq Pro.
 
 ## Development
 
