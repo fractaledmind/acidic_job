@@ -13,6 +13,7 @@ class TestWorker
       step :do_something
     end
   rescue StandardError
+    true
   end
 
   def do_something
@@ -20,7 +21,6 @@ class TestWorker
   end
 end
 
-# rubocop:disable Metrics/AbcSize, Metrics/MethodLength
 class TestEdgeCases < Minitest::Test
   def before_setup
     super

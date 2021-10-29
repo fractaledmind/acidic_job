@@ -9,6 +9,7 @@ require_relative "acidic_job/key"
 require_relative "acidic_job/staged"
 require_relative "acidic_job/perform_wrapper"
 require_relative "acidic_job/perform_transactionally_extension"
+require_relative "acidic_job/sidekiq_callbacks"
 require "active_support/concern"
 
 # rubocop:disable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
@@ -17,7 +18,8 @@ module AcidicJob
 
   def self.wire_everything_up(klass)
     klass.attr_reader :key
-    klass.attr_accessor :arguments_for_perform
+    klass.attr_reader :staged_job_gid
+    klass.attr_reader :arguments_for_perform
 
     # Extend ActiveJob with `perform_transactionally` class method
     klass.include PerformTransactionallyExtension
@@ -26,6 +28,10 @@ module AcidicJob
 
     # Ensure our `perform` method always runs first to gather parameters
     klass.prepend PerformWrapper
+
+    klass.prepend SidekiqCallbacks unless klass.respond_to?(:after_perform)
+
+    klass.after_perform :delete_staged_job_record, if: :staged_job_gid
   end
 
   included do
@@ -104,6 +110,16 @@ module AcidicJob
   end
 
   private
+
+  def delete_staged_job_record
+    return unless staged_job_gid
+
+    staged_job = GlobalID::Locator.locate(staged_job_gid)
+    staged_job.delete
+    true
+  rescue ActiveRecord::RecordNotFound
+    true
+  end
 
   def atomic_phase(key, proc = nil, &block)
     rescued_error = false

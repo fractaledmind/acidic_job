@@ -18,7 +18,11 @@ class TestAcidicJobs < Minitest::Test
     @valid_user = User.find_by(stripe_customer_id: "tok_visa")
     @invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = { amount: 20_00, currency: "usd", user: @valid_user }
-    RideCreateJob.undef_method(:error_in_create_stripe_charge) if RideCreateJob.respond_to?(:error_in_create_stripe_charge)
+    # rubocop:disable Style/GuardClause
+    if RideCreateJob.respond_to?(:error_in_create_stripe_charge)
+      RideCreateJob.undef_method(:error_in_create_stripe_charge)
+    end
+    # rubocop:enable Style/GuardClause
   end
 
   def before_setup
@@ -48,7 +52,7 @@ class TestAcidicJobs < Minitest::Test
 
   class IdempotencyKeysAndRecoveryTest < TestAcidicJobs
     def test_passes_for_a_new_key
-      assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
+      assert_performed_with(job: SendRideReceiptJob) do
         result = RideCreateJob.perform_now(@valid_user, @valid_params)
         assert_equal true, result
       end
@@ -78,7 +82,7 @@ class TestAcidicJobs < Minitest::Test
     def test_passes_for_keys_that_are_unlocked
       key = create_key(locked_at: nil)
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
-        assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
+        assert_performed_with(job: SendRideReceiptJob) do
           result = RideCreateJob.perform_now(@valid_user, @valid_params)
           assert_equal true, result
         end
@@ -95,7 +99,7 @@ class TestAcidicJobs < Minitest::Test
     def test_passes_for_keys_with_a_stale_locked_at
       key = create_key(locked_at: Time.now - 1.hour - 1)
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
-        assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
+        assert_performed_with(job: SendRideReceiptJob) do
           result = RideCreateJob.perform_now(@valid_user, @valid_params)
           assert_equal true, result
         end
@@ -132,7 +136,7 @@ class TestAcidicJobs < Minitest::Test
     def test_continues_from_recovery_point_create_ride_and_audit_record
       key = create_key(recovery_point: :create_ride_and_audit_record)
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
-        assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
+        assert_performed_with(job: SendRideReceiptJob) do
           result = RideCreateJob.perform_now(@valid_user, @valid_params)
           assert_equal true, result
         end
@@ -150,11 +154,11 @@ class TestAcidicJobs < Minitest::Test
 
     def test_continues_from_recovery_point_create_stripe_charge
       ride = Ride.create(@valid_params.merge(
-                    user: @valid_user
-                  ))
+                           user: @valid_user
+                         ))
       key = create_key(recovery_point: :create_stripe_charge, attr_accessors: { ride: ride })
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
-        assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
+        assert_performed_with(job: SendRideReceiptJob) do
           result = RideCreateJob.perform_now(@valid_user, @valid_params)
           assert_equal true, result
         end
@@ -173,7 +177,7 @@ class TestAcidicJobs < Minitest::Test
     def test_continues_from_recovery_point_send_receipt
       key = create_key(recovery_point: :send_receipt)
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
-        assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
+        assert_performed_with(job: SendRideReceiptJob) do
           result = RideCreateJob.perform_now(@valid_user, @valid_params)
           assert_equal true, result
         end
@@ -192,7 +196,7 @@ class TestAcidicJobs < Minitest::Test
     def test_halts_execution_of_steps_when_safely_finish_acidic_job_returned
       key = create_key(recovery_point: :send_receipt)
       AcidicJob::Key.stub(:find_by, ->(*) { key }) do
-        assert_enqueued_with(job: SendRideReceiptJob, args: [@staged_job_params]) do
+        assert_performed_with(job: SendRideReceiptJob) do
           result = RideCreateJob.perform_now(@valid_user, @valid_params)
           assert_equal true, result
         end
