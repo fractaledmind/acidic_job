@@ -16,4 +16,10 @@ module AcidicJob
   class UnknownJobAdapter < Error; end
 
   class NoDefinedSteps < Error; end
+
+  class SidekiqBatchRequired < Error; end
+
+  class TooManyParametersForStepMethod < Error; end
+
+  class TooManyParametersForParallelJob < Error; end
 end

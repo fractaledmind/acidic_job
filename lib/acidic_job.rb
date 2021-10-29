@@ -277,8 +277,7 @@ module AcidicJob
                elsif callable.arity == 1
                  callable.call(key)
                else
-                 # TODO
-                 raise
+                 raise TooManyParametersForStepMethod
                end
 
       if result.is_a?(Response)
@@ -295,7 +294,7 @@ module AcidicJob
   def enqueue_step_parallel_jobs(jobs)
     # TODO: GIVE PROPER ERROR
     # `batch` is available from Sidekiq::Pro
-    raise unless defined?(Sidekiq::Batch)
+    raise SidekiqBatchRequired unless defined?(Sidekiq::Batch)
 
     batch.jobs do
       step_batch = Sidekiq::Batch.new
@@ -317,7 +316,7 @@ module AcidicJob
           elsif worker.instance_method(:perform).arity == 1
             worker.perform_async(key.id)
           else
-            raise
+            raise TooManyParametersForParallelJob
           end
         end
       end
