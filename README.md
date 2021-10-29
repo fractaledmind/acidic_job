@@ -1,8 +1,8 @@
 # AcidicJob
 
-### Idempotent operations for Rails apps, built on top of ActiveJob.
+### Idempotent operations for Rails apps (for ActiveJob or Sidekiq)
 
-At the conceptual heart of basically any software are "operations"—the discrete actions the software performs. Rails provides a powerful abstraction layer for building operations in the form of `ActiveJob`. With `ActiveJob`, we can easily trigger from other Ruby code throughout our Rails application (controller actions, model methods, model callbacks, etc.); we can run operations both synchronously (blocking execution and then returning its response to the caller) and asychronously (non-blocking and the caller doesn't know its response); and we can also retry a specific operation if needed seamlessly.
+At the conceptual heart of basically any software are "operations"—the discrete actions the software performs. Rails provides a powerful abstraction layer for building operations in the form of `ActiveJob`, or we Rubyists can use the tried and true power of pure `Sidekiq`. With either we can easily trigger from other Ruby code throughout our Rails application (controller actions, model methods, model callbacks, etc.); we can run operations both synchronously (blocking execution and then returning its response to the caller) and asychronously (non-blocking and the caller doesn't know its response); and we can also retry a specific operation if needed seamlessly.
 
 However, in order to ensure that our operational jobs are _robust_, we need to ensure that they are properly [idempotent and transactional](https://github.com/mperham/sidekiq/wiki/Best-Practices#2-make-your-job-idempotent-and-transactional). As stated in the [GitLab Sidekiq Style Guide](https://docs.gitlab.com/ee/development/sidekiq_style_guide.html#idempotent-jobs):
 
@@ -37,7 +37,7 @@ Or simply execute to install the gem yourself:
 
     $ bundle add acidic_job
 
-Then, use the following command to copy over the AcidicJobKey migration.
+Then, use the following command to copy over the `AcidicJob::Key` migration file as well as the `AcidicJob::Staged` migration file.
 
 ```
 rails generate acidic_job
@@ -74,6 +74,8 @@ end
 ```
 
 `idempotently` takes only the `with:` named parameter and a block where you define the steps of this operation. `step` simply takes the name of a method available in the job. That's all!
+
+Additionally, it provides `perform_transactionally` and `deliver_transactionally` methods to "transactionally stage" enqueuing other jobs from within a step (whether another ActiveJob or a Sidekiq::Worker or an ActionMailer delivery). These methods will create a new `AcidicJob::Staged` record, but inside of the database transaction of the `step`. Upon commit of that transaction, a model callback pushes the job to your actual job queue. This helps ensure that you never enqueue a job inside of a transaction that rollbacks, and that you never enqueue a job that is picked up before the transaction commits and the records are made available to separate connections.
 
 So, how does `AcidicJob` make this operation idempotent and robust then? In simplest form, `AcidicJob` creates an "idempotency key" record for each job run, where it stores information about that job run, like the parameters passed in and the step the job is on. It then wraps each of your step methods in a database transaction to ensure that each step in the operation is transactionally secure. Finally, it handles a variety of edge-cases and error conditions for you as well. But, basically, by explicitly breaking your operation into steps and storing a record of each job run and updating its current step as it runs, we level up the `ActiveJob` retry mechanism to ensure that we don't retry already finished steps if something goes wrong and the job has to retry. Then, by wrapping each step in a transaction, we ensure each individual step is ACIDic. Taken together, these two strategies help us to ensure that our operational jobs are both idempotent and ACIDic.
 
