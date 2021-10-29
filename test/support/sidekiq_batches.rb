@@ -27,7 +27,7 @@ module Support
       attr_reader :bid
 
       def initialize(bid = nil)
-        super
+        super()
         @bid = bid || SecureRandom.hex(8)
         @callbacks = []
       end
@@ -49,7 +49,7 @@ module Support
       attr_reader :bid
 
       def initialize(bid = SecureRandom.hex(8), callbacks = [])
-        super
+        super()
         @bid = bid
         @callbacks = callbacks
       end
