@@ -10,6 +10,7 @@ module AcidicJob
 
     serialize :error_object
     serialize :job_args
+    serialize :workflow
     store :attr_accessors
 
     validates :idempotency_key, presence: true, uniqueness: { scope: %i[job_name job_args] }

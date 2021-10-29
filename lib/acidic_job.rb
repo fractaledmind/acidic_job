@@ -24,7 +24,9 @@ module AcidicJob
     # Extend ActiveJob with `perform_transactionally` class method
     klass.include PerformTransactionallyExtension
 
-    ActionMailer::Parameterized::MessageDelivery.include DeliverTransactionallyExtension
+    if defined?(ActionMailer)
+      ActionMailer::Parameterized::MessageDelivery.include DeliverTransactionallyExtension
+    end
 
     # Ensure our `perform` method always runs first to gather parameters
     klass.prepend PerformWrapper
@@ -43,6 +45,14 @@ module AcidicJob
       AcidicJob.wire_everything_up(subclass)
       super
     end
+
+    def initiate(*args)
+      operation = Sidekiq::Batch.new
+      operation.on(:success, self, *args)
+      operation.jobs do
+        perform_async
+      end
+    end
   end
 
   # Number of seconds passed which we consider a held idempotency key lock to be
@@ -53,43 +63,54 @@ module AcidicJob
 
   # takes a block
   def idempotently(with:)
-    # execute the block to gather the info on what phases are defined for this job
-    defined_steps = yield
-    # [:create_ride_and_audit_record, :create_stripe_charge, :send_receipt]
+    # execute the block to gather the info on what steps are defined for this job workflow
+    steps = yield || []
 
-    # convert the array of steps into a hash of recovery_points and callable actions
-    phases = define_atomic_phases(defined_steps)
-    # { create_ride_and_audit_record: <#Method >, ... }
+    raise NoDefinedSteps if steps.empty?
 
-    # find or create an Key record (our idempotency key) to store all information about this job
-    # side-effect: will set the @key instance variable
+    # convert the array of steps into a hash of recovery_points and next steps
+    workflow = define_workflow(steps)
+
+    # find or create a Key record (our idempotency key) to store all information about this job
     #
     # A key concept here is that if two requests try to insert or update within
     # close proximity, one of the two will be aborted by Postgres because we're
     # using a transaction with SERIALIZABLE isolation level. It may not look
     # it, but this code is safe from races.
-    ensure_idempotency_key_record(idempotency_key_value, defined_steps.first)
+    key = ensure_idempotency_key_record(idempotency_key_value, workflow, with)
+
+    # begin the workflow
+    process_key(key)
+  end
+
+  def process_key(key)
+    @key = key
 
     # if the key record is already marked as finished, immediately return its result
     return @key.succeeded? if @key.finished?
 
-    # set accessors for each argument passed in to ensure they are available
-    # to the step methods the job will have written
-    # THIS HAPPENS OUTSIDE OF ANY TRANSACTION
-    define_accessors_for_passed_arguments(with, @key)
+    # otherwise, we will enter a loop to process each step of the workflow
+    @key.workflow.size.times do
+      recovery_point = @key.recovery_point.to_s
+      current_step = @key.workflow[recovery_point]
 
-    # otherwise, we will enter a loop to process each required step of the job
-    phases.size.times do
-      # our `phases` hash uses Symbols for keys
-      recovery_point = @key.recovery_point.to_sym
-
-      case recovery_point
-      when Key::RECOVERY_POINT_FINISHED.to_sym
+      if recovery_point == Key::RECOVERY_POINT_FINISHED.to_s
         break
+      elsif current_step.nil?
+        raise UnknownRecoveryPoint, "Defined workflow does not reference this step: #{recovery_point}"
+      elsif (jobs = current_step.fetch("awaits", [])).any?
+        acidic_step @key, current_step
+        # THIS MUST BE DONE AFTER THE KEY RECOVERY POINT HAS BEEN UPDATED
+        enqueue_step_parallel_jobs(jobs)
+        # after processing the current step, break the processing loop
+        # and stop this method from blocking in the primary worker
+        # as it will continue once the background workers all succeed
+        # so we want to keep the primary worker queue free to process new work
+        # this CANNOT ever be `break` as that wouldn't exit the parent job,
+        # only this step in the workflow, blocking as it awaits the next step
+        return true
       else
-        raise UnknownRecoveryPoint unless phases.key? recovery_point
-
-        atomic_phase @key, phases[recovery_point]
+        acidic_step @key, current_step
       end
     end
 
@@ -97,9 +118,14 @@ module AcidicJob
     @key.succeeded?
   end
 
-  def step(method_name)
+  def step(method_name, awaits: [])
     @_steps ||= []
-    @_steps << method_name
+
+    @_steps << {
+      "does" => method_name.to_s,
+      "awaits" => awaits
+    }
+
     @_steps
   end
 
@@ -121,16 +147,74 @@ module AcidicJob
     true
   end
 
-  def atomic_phase(key, proc = nil, &block)
+  def define_workflow(steps)
+    steps << { "does" => Key::RECOVERY_POINT_FINISHED }
+
+    {}.tap do |workflow|
+      steps.each_cons(2).map do |enter_step, exit_step|
+        enter_name = enter_step["does"]
+        workflow[enter_name] = {
+          "then" => exit_step["does"]
+        }.merge(enter_step)
+      end
+    end
+  end
+
+  def ensure_idempotency_key_record(key_val, workflow, accessors)
+    isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
+                      when :sqlite
+                        :read_uncommitted
+                      else
+                        :serializable
+                      end
+
+    ActiveRecord::Base.transaction(isolation: isolation_level) do
+      key = Key.find_by(idempotency_key: key_val)
+
+      if key.present?
+        # Programs enqueuing multiple jobs with different parameters but the
+        # same idempotency key is a bug.
+        raise MismatchedIdempotencyKeyAndJobArguments if key.job_args != @arguments_for_perform
+
+        # Only acquire a lock if the key is unlocked or its lock has expired
+        # because the original job was long enough ago.
+        raise LockedIdempotencyKey if key.locked_at && key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
+
+        # Lock the key and update latest run unless the job is already finished.
+        key.update!(last_run_at: Time.current, locked_at: Time.current) unless key.finished?
+      else
+        key = Key.create!(
+          idempotency_key: key_val,
+          locked_at: Time.current,
+          last_run_at: Time.current,
+          recovery_point: workflow.first.first,
+          job_name: self.class.name,
+          job_args: @arguments_for_perform,
+          workflow: workflow
+        )
+      end
+
+      # set accessors for each argument passed in to ensure they are available
+      # to the step methods the job will have written
+      define_accessors_for_passed_arguments(accessors, key)
+
+      # NOTE: we must return the `key` object from this transaction block
+      # so that it can be returned from this method to the caller
+      key
+    end
+  end
+
+  def acidic_step(key, step)
     rescued_error = false
-    phase_callable = (proc || block)
+    step_callable = wrap_step_as_acidic_callable step
 
     begin
       key.with_lock do
-        phase_result = phase_callable.call
+        step_result = step_callable.call(key)
 
-        phase_result.call(key: key)
+        step_result.call(key: key)
       end
+    # QUESTION: Can an error not inherit from StandardError
     rescue StandardError => e
       rescued_error = e
       raise e
@@ -145,41 +229,6 @@ module AcidicJob
           # errors from here and just send them to logs.
           puts "Failed to unlock key #{key.id} because of #{e}."
         end
-      end
-    end
-  end
-
-  def ensure_idempotency_key_record(key_val, first_step)
-    isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
-                      when :sqlite
-                        :read_uncommitted
-                      else
-                        :serializable
-                      end
-
-    ActiveRecord::Base.transaction(isolation: isolation_level) do
-      @key = Key.find_by(idempotency_key: key_val)
-
-      if @key.present?
-        # Programs enqueuing multiple jobs with different parameters but the
-        # same idempotency key is a bug.
-        raise MismatchedIdempotencyKeyAndJobArguments if @key.job_args != @arguments_for_perform
-
-        # Only acquire a lock if the key is unlocked or its lock has expired
-        # because the original job was long enough ago.
-        raise LockedIdempotencyKey if @key.locked_at && @key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
-
-        # Lock the key and update latest run unless the job is already finished.
-        @key.update!(last_run_at: Time.current, locked_at: Time.current) unless @key.finished?
-      else
-        @key = Key.create!(
-          idempotency_key: key_val,
-          locked_at: Time.current,
-          last_run_at: Time.current,
-          recovery_point: first_step,
-          job_name: self.class.name,
-          job_args: @arguments_for_perform
-        )
       end
     end
   end
@@ -210,20 +259,65 @@ module AcidicJob
     true
   end
 
-  def define_atomic_phases(defined_steps)
-    defined_steps << Key::RECOVERY_POINT_FINISHED
+  # rubocop:disable Metrics/PerceivedComplexity
+  def wrap_step_as_acidic_callable(step)
+    # {:then=>:next_step, :does=>:enqueue_step, :awaits=>[WorkerWithEnqueueStep::FirstWorker]}
+    current_step = step["does"]
+    next_step = step["then"]
 
-    {}.tap do |phases|
-      defined_steps.each_cons(2).map do |enter_method, exit_method|
-        phases[enter_method] = lambda do
-          result = method(enter_method).call
+    callable = if respond_to? current_step, _include_private = true
+                 method(current_step)
+               else
+                 proc {} # no-op
+               end
 
-          if result.is_a?(Response)
-            result
-          elsif exit_method.to_s == Key::RECOVERY_POINT_FINISHED
-            Response.new
+    proc do |key|
+      result = if callable.arity.zero?
+                 callable.call
+               elsif callable.arity == 1
+                 callable.call(key)
+               else
+                 # TODO
+                 raise
+               end
+
+      if result.is_a?(Response)
+        result
+      elsif next_step.to_s == Key::RECOVERY_POINT_FINISHED
+        Response.new
+      else
+        RecoveryPoint.new(next_step)
+      end
+    end
+  end
+  # rubocop:enable Metrics/PerceivedComplexity
+
+  def enqueue_step_parallel_jobs(jobs)
+    # TODO: GIVE PROPER ERROR
+    # `batch` is available from Sidekiq::Pro
+    raise unless defined?(Sidekiq::Batch)
+
+    batch.jobs do
+      step_batch = Sidekiq::Batch.new
+      # step_batch.description = "AcidicJob::Workflow Step: #{step}"
+      step_batch.on(
+        :success,
+        "#{self.class.name}#step_done",
+        # NOTE: options are marshalled through JSON so use only basic types.
+        { "key_id" => @key.id }
+      )
+      # NOTE: The jobs method is atomic.
+      # All jobs created in the block are actually pushed atomically at the end of the block.
+      # If an error is raised, none of the jobs will go to Redis.
+      step_batch.jobs do
+        jobs.each do |worker_name|
+          worker = worker_name.is_a?(String) ? worker_name.constantize : worker_name
+          if worker.instance_method(:perform).arity.zero?
+            worker.perform_async
+          elsif worker.instance_method(:perform).arity == 1
+            worker.perform_async(key.id)
           else
-            RecoveryPoint.new(exit_method)
+            raise
           end
         end
       end
@@ -235,6 +329,12 @@ module AcidicJob
     return jid if defined?(jid) && !jid.nil?
 
     Digest::SHA1.hexdigest [self.class.name, arguments_for_perform].flatten.join
+  end
+
+  def step_done(_status, options)
+    key = Key.find(options["key_id"])
+    # when a batch of jobs for a step succeeds, we begin the key processing again
+    process_key(key)
   end
 end
 # rubocop:enable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
