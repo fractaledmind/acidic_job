@@ -9,6 +9,7 @@ require_relative "acidic_job/key"
 require_relative "acidic_job/staged"
 require_relative "acidic_job/perform_wrapper"
 require_relative "acidic_job/perform_transactionally_extension"
+require_relative "acidic_job/deliver_transactionally_extension"
 require_relative "acidic_job/sidekiq_callbacks"
 require "active_support/concern"
 
