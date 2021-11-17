@@ -17,10 +17,6 @@ ActiveRecord::Base.establish_connection(
 
 GlobalID.app = :test
 
-require "database_cleaner/active_record"
-DatabaseCleaner.strategy = [:deletion, { except: %w[users] }]
-DatabaseCleaner.clean
-
 # rubocop:disable Metrics/BlockLength
 ActiveRecord::Schema.define do
   create_table :acidic_job_keys, force: true do |t|
@@ -101,6 +97,10 @@ end
 class Ride < ApplicationRecord
   belongs_to :user
 end
+
+require "database_cleaner/active_record"
+DatabaseCleaner.strategy = [:deletion, { except: %w[users] }]
+DatabaseCleaner.clean
 
 # SEEDS ------------------------------------------------------------------------
 
