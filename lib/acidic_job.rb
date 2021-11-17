@@ -25,9 +25,7 @@ module AcidicJob
     # Extend ActiveJob with `perform_transactionally` class method
     klass.include PerformTransactionallyExtension
 
-    if defined?(ActionMailer)
-      ActionMailer::Parameterized::MessageDelivery.include DeliverTransactionallyExtension
-    end
+    ActionMailer::Parameterized::MessageDelivery.include DeliverTransactionallyExtension if defined?(ActionMailer)
 
     # Ensure our `perform` method always runs first to gather parameters
     klass.prepend PerformWrapper
@@ -95,7 +93,7 @@ module AcidicJob
       recovery_point = @key.recovery_point.to_s
       current_step = @key.workflow[recovery_point]
 
-      if recovery_point == Key::RECOVERY_POINT_FINISHED.to_s
+      if recovery_point == Key::RECOVERY_POINT_FINISHED.to_s # rubocop:disable Style/GuardClause
         break
       elsif current_step.nil?
         raise UnknownRecoveryPoint, "Defined workflow does not reference this step: #{recovery_point}"

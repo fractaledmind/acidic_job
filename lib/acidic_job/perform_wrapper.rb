@@ -18,7 +18,6 @@ module AcidicJob
 
     private
 
-    # rubocop:disable Metrics/AbcSize
     def set_arguments_for_perform(*args, **kwargs)
       # store arguments passed into `perform` so that we can later persist
       # them to `AcidicJob::Key#job_args` for both ActiveJob and Sidekiq::Worker
@@ -32,6 +31,5 @@ module AcidicJob
                                  []
                                end
     end
-    # rubocop:enable Metrics/AbcSize
   end
 end
