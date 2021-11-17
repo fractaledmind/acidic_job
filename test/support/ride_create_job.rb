@@ -20,7 +20,7 @@ class RideCreateJob < ActiveJob::Base
   class SimulatedTestingFailure < StandardError; end
 
   def perform(user, ride_params)
-    idempotently with: { user: user, params: ride_params, ride: nil } do
+    with_acidity given: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt

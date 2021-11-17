@@ -18,7 +18,7 @@ class WorkerWithEnqueueStep < Support::Sidekiq::Workflow
   end
 
   def perform
-    idempotently with: {} do
+    with_acidity given: {} do
       step :enqueue_step, awaits: [AsyncWorker]
       step :next_step
     end

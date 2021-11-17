@@ -12,7 +12,7 @@ class WorkerWithRescueInPerform
   include AcidicJob
 
   def perform
-    idempotently with: {} do
+    with_acidity given: {} do
       step :do_something
     end
   rescue CustomErrorForTesting
@@ -29,7 +29,7 @@ class WorkerWithErrorInsidePhaseTransaction
   include AcidicJob
 
   def perform
-    idempotently with: { accessor: nil } do
+    with_acidity given: { accessor: nil } do
       step :do_something
     end
   end
@@ -40,12 +40,12 @@ class WorkerWithErrorInsidePhaseTransaction
   end
 end
 
-class WorkerWithLogicInsideIdempotentlyBlock
+class WorkerWithLogicInsideAcidicBlock
   include Sidekiq::Worker
   include AcidicJob
 
   def perform(bool)
-    idempotently with: {} do
+    with_acidity given: {} do
       step :do_something if bool
     end
   end
@@ -85,13 +85,13 @@ class TestEdgeCases < Minitest::Test
     assert_equal AcidicJob::Key.first.attr_accessors, { "accessor" => nil }
   end
 
-  def test_logic_inside_idempotently_block_is_executed_appropriately
+  def test_logic_inside_acidic_block_is_executed_appropriately
     assert_raises CustomErrorForTesting do
-      WorkerWithLogicInsideIdempotentlyBlock.new.perform(true)
+      WorkerWithLogicInsideAcidicBlock.new.perform(true)
     end
 
     assert_raises AcidicJob::NoDefinedSteps do
-      WorkerWithLogicInsideIdempotentlyBlock.new.perform(false)
+      WorkerWithLogicInsideAcidicBlock.new.perform(false)
     end
 
     assert_equal 1, AcidicJob::Key.count
