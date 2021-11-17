@@ -61,7 +61,7 @@ module AcidicJob
   IDEMPOTENCY_KEY_LOCK_TIMEOUT = 90
 
   # takes a block
-  def idempotently(with:)
+  def with_acidity(given:)
     # execute the block to gather the info on what steps are defined for this job workflow
     steps = yield || []
 
@@ -76,7 +76,7 @@ module AcidicJob
     # close proximity, one of the two will be aborted by Postgres because we're
     # using a transaction with SERIALIZABLE isolation level. It may not look
     # it, but this code is safe from races.
-    key = ensure_idempotency_key_record(idempotency_key_value, workflow, with)
+    key = ensure_idempotency_key_record(idempotency_key_value, workflow, given)
 
     # begin the workflow
     process_key(key)
