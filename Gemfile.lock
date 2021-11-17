@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    acidic_job (0.7.1)
+    acidic_job (0.7.2)
       activerecord (>= 4.0.0)
       activesupport
 
@@ -61,8 +61,6 @@ GEM
     minitest (5.14.4)
     nokogiri (1.12.3)
       mini_portile2 (~> 2.6.1)
-      racc (~> 1.4)
-    nokogiri (1.12.3-x86_64-darwin)
       racc (~> 1.4)
     parallel (1.20.1)
     parser (3.0.1.1)
