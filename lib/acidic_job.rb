@@ -81,7 +81,11 @@ module AcidicJob
     # begin the workflow
     process_key(key)
   end
-  alias_method :idempotently, :with_acidity
+  
+  # DEPRECATED
+  def idempotently(with:)
+    with_acidity(given: with)
+  end 
 
   def process_key(key)
     @key = key
