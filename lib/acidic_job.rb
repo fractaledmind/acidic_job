@@ -81,6 +81,7 @@ module AcidicJob
     # begin the workflow
     process_key(key)
   end
+  alias_method :idempotently, :with_acidity
 
   def process_key(key)
     @key = key
