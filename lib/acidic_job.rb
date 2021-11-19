@@ -180,7 +180,7 @@ module AcidicJob
         raise LockedIdempotencyKey if key.locked_at && key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
 
         # Lock the key and update latest run unless the job is already finished.
-        key.update!(last_run_at: Time.current, locked_at: Time.current) unless key.finished?
+        key.update!(last_run_at: Time.current, locked_at: Time.current, workflow: workflow) unless key.finished?
       else
         key = Key.create!(
           idempotency_key: key_val,
