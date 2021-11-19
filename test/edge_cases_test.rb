@@ -55,6 +55,21 @@ class WorkerWithLogicInsideAcidicBlock
   end
 end
 
+class WorkerWithOldSyntax
+    include Sidekiq::Worker
+    include AcidicJob
+  
+    def perform
+      idempotently with: {} do
+        step :do_something
+      end
+    end
+  
+    def do_something
+      raise CustomErrorForTesting
+    end
+  end
+
 class TestEdgeCases < Minitest::Test
   def before_setup
     super
@@ -94,6 +109,14 @@ class TestEdgeCases < Minitest::Test
       WorkerWithLogicInsideAcidicBlock.new.perform(false)
     end
 
+    assert_equal 1, AcidicJob::Key.count
+  end
+  
+  def test_logic_inside_acidic_block_is_executed_appropriately
+    assert_raises CustomErrorForTesting do
+      WorkerWithOldSyntax.new.perform
+    end
+  
     assert_equal 1, AcidicJob::Key.count
   end
 end

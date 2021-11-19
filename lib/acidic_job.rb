@@ -83,8 +83,8 @@ module AcidicJob
   end
   
   # DEPRECATED
-  def idempotently(with:)
-    with_acidity(given: with)
+  def idempotently(with:, &blk)
+    with_acidity(given: with, &blk)
   end 
 
   def process_key(key)
