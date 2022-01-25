@@ -110,7 +110,7 @@ class RideCreateJob < ActiveJob::Base
   end
 
   def create_stripe_charge
-    Stripe::Charge.create(amount: 20_00, customer: @ride.user)
+    Stripe::Charge.create(amount: 20_00, customer: self.ride.user)
   end
 
   # ...
@@ -158,6 +158,29 @@ This allows `acidic_job` to use an `after_perform` callback to delete the `Acidi
 One final feature for those of you using Sidekiq Pro: an integrated DSL for Sidekiq Batches. By simply adding the `awaits` option to your step declarations, you can attach any number of additional, asynchronous workers to your step. This is profoundly powerful, as it means that you can define a workflow where step 2 is started _if and only if_ step 1 succeeds, but step 1 can have 3 different workers enqueued on 3 different queues, each running in parallel. Once all 3 workers succeed, `acidic_job` will move on to step 2. That's right, by leveraging the power of Sidekiq Batches, you can have workers that are executed in parallel, on separate queues, and asynchronously, but are still blocking—as a group—the next step in your workflow! This unlocks incredible power and flexibility for defining and structuring complex workflows and operations, and in my mind is the number one selling point for Sidekiq Pro.
 
 In my opinion, any commercial software using Sidekiq should get Sidekiq Pro; it is _absolutely_ worth the money. If, however, you are using `acidic_job` in a non-commercial application, you could use the open-source dropin replacement for this functionality: https://github.com/breamware/sidekiq-batch
+
+```ruby
+# TODO: write code sample
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+
+  def perform(ride_params)
+    with_acidity given: { user: current_user, params: ride_params, ride: nil } do
+      step :create_ride_and_audit_record, awaits: [SomeJob]
+      step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
+      step :send_receipt
+    end
+  end
+
+  # ...
+
+  def send_receipt
+    RideMailer.with(ride: @ride, user: @user).confirm_charge.delivery_transactionally
+  rescue RescuableError
+    safely_finish_acidic_job
+  end
+end
+```
 
 ## Development
 
