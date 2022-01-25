@@ -26,6 +26,7 @@ module AcidicJob
     klass.include PerformTransactionallyExtension
 
     ActionMailer::Parameterized::MessageDelivery.include DeliverTransactionallyExtension if defined?(ActionMailer)
+    Noticed::Base.include AcidicJob::NotifyTransactionallyExtension if defined?(Noticed)
 
     # Ensure our `perform` method always runs first to gather parameters
     klass.prepend PerformWrapper
