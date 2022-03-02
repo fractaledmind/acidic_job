@@ -64,7 +64,7 @@ class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
   def perform(ride_params)
-    with_acidity given: { user: current_user, params: ride_params, ride: nil } do
+    with_acidity given: { params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -132,7 +132,7 @@ class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
   def perform(ride_params)
-    with_acidity given: { user: current_user, params: ride_params, ride: nil } do
+    with_acidity given: { params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -142,7 +142,7 @@ class RideCreateJob < ActiveJob::Base
   # ...
 
   def send_receipt
-    RideMailer.with(ride: @ride, user: @user).confirm_charge.delivery_transactionally
+    RideMailer.with(ride: @ride).confirm_charge.delivery_transactionally
   end
 end
 ```
@@ -165,7 +165,7 @@ class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
   def perform(ride_params)
-    with_acidity given: { user: current_user, params: ride_params, ride: nil } do
+    with_acidity given: { params: ride_params, ride: nil } do
       step :create_ride_and_audit_record, awaits: [SomeJob]
       step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
       step :send_receipt
@@ -175,7 +175,7 @@ class RideCreateJob < ActiveJob::Base
   # ...
 
   def send_receipt
-    RideMailer.with(ride: @ride, user: @user).confirm_charge.delivery_transactionally
+    RideMailer.with(ride: @ride).confirm_charge.delivery_transactionally
   rescue RescuableError
     safely_finish_acidic_job
   end
