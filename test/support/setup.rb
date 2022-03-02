@@ -19,27 +19,24 @@ GlobalID.app = :test
 
 # rubocop:disable Metrics/BlockLength
 ActiveRecord::Schema.define do
-  create_table :acidic_job_keys, force: true do |t|
-    t.string :idempotency_key, null: false
-    t.string :job_name, null: false
-    t.text :job_args, null: true
-    t.datetime :last_run_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
-    t.datetime :locked_at, null: true
-    t.string :recovery_point, null: false
-    t.text :error_object
-    t.text :attr_accessors
-    t.text :workflow
+  create_table :acidic_job_runs, force: true do |t|
+    t.boolean 	:staged, 					null: false, 	default: -> { false }
+    t.string 		:idempotency_key, null: false
+    t.text 			:serialized_job, 	null: false
+    t.string 		:job_class, 			null: false
+    t.datetime 	:last_run_at, 		null: true, 	default: -> { "CURRENT_TIMESTAMP" }
+    t.datetime 	:locked_at, 			null: true
+    t.string 		:recovery_point, 	null: true
+    t.text 			:error_object, 		null: true
+    t.text 			:attr_accessors, 	null: true
+    t.text 			:workflow, 				null: true
+    
     t.timestamps
-
-    t.index %i[idempotency_key job_name job_args], unique: true,
-                                                   name: "idx_acidic_job_keys_on_idempotency_key_n_job_name_n_job_args"
+  
+    t.index :idempotency_key, unique: true
   end
 
-  create_table :staged_acidic_jobs, force: true do |t|
-    t.string :adapter, null: false
-    t.string :job_name, null: false
-    t.text :job_args, null: true
-  end
+  # -----------------------------------------------------------------------
 
   create_table :audits, force: true do |t|
     t.references :auditable, polymorphic: true
