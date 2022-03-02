@@ -4,7 +4,6 @@ require "test_helper"
 require_relative "support/setup"
 require_relative "support/ride_create_job"
 
-# rubocop:disable Metrics/AbcSize, Metrics/MethodLength
 class TestAcidicJobs < Minitest::Test
   include ActiveJob::TestHelper
 
@@ -43,16 +42,16 @@ class TestAcidicJobs < Minitest::Test
       recovery_point: :create_ride_and_audit_record,
       job_class: "RideCreateJob",
       serialized_job: {
-        "job_class"=>"RideCreateJob", 
-        "job_id"=>nil, 
-        "provider_job_id"=>nil, 
-        "queue_name"=>"default", 
-        "priority"=>nil, 
-        "arguments"=>[@valid_user.id, @valid_params.merge("_aj_symbol_keys"=>[])], 
-        "executions"=>1, 
-        "exception_executions"=>{}, 
-        "locale"=>"en", 
-        "timezone"=>nil, 
+        "job_class" => "RideCreateJob",
+        "job_id" => nil,
+        "provider_job_id" => nil,
+        "queue_name" => "default",
+        "priority" => nil,
+        "arguments" => [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => [])],
+        "executions" => 1,
+        "exception_executions" => {},
+        "locale" => "en",
+        "timezone" => nil
       },
       workflow: {
         "create_ride_and_audit_record" => {
@@ -384,4 +383,3 @@ class TestAcidicJobs < Minitest::Test
     end
   end
 end
-# rubocop:enable Metrics/AbcSize, Metrics/MethodLength

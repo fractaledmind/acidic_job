@@ -6,7 +6,6 @@ require "sidekiq/testing"
 require_relative "support/setup"
 require_relative "support/ride_create_worker"
 
-# rubocop:disable Metrics/AbcSize, Metrics/MethodLength
 class TestAcidicWorkers < Minitest::Test
   def setup
     @valid_params = {
@@ -371,4 +370,3 @@ class TestAcidicWorkers < Minitest::Test
     end
   end
 end
-# rubocop:enable Metrics/AbcSize, Metrics/MethodLength

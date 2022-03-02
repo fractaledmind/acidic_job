@@ -58,7 +58,6 @@ module Support
         0
       end
 
-      # rubocop:disable Metrics/MethodLength
       def join
         ::Sidekiq::Worker.drain_all
 
@@ -76,7 +75,6 @@ module Support
           end
         end
       end
-      # rubocop:enable Metrics/MethodLength
 
       def total
         ::Sidekiq::Worker.jobs.size

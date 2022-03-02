@@ -25,7 +25,6 @@ class RideCreateWorker
 
   private
 
-  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def create_ride_and_audit_record
     self.ride = Ride.create!(
       origin_lat: params["origin_lat"],
@@ -46,9 +45,7 @@ class RideCreateWorker
       audited_changes: params
     )
   end
-  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
-  # rubocop:disable Metrics/MethodLength
   def create_stripe_charge
     raise SimulatedTestingFailure if defined?(error_in_create_stripe_charge) && error_in_create_stripe_charge
 
@@ -74,7 +71,6 @@ class RideCreateWorker
       ride.update_column(:stripe_charge_id, charge.id)
     end
   end
-  # rubocop:enable Metrics/MethodLength
 
   def send_receipt
     # Send a receipt asynchronously by adding an entry to the staged_jobs
