@@ -37,7 +37,7 @@ Or simply execute to install the gem yourself:
 
     $ bundle add acidic_job
 
-Then, use the following command to copy over the `AcidicJob::Key` migration file as well as the `AcidicJob::Staged` migration file.
+Then, use the following command to copy over the `AcidicJob::Run` migration file as well as the `AcidicJob::Staged` migration file.
 
 ```
 rails generate acidic_job
@@ -87,11 +87,11 @@ end
 
 `with_acidity` takes only the `given:` named parameter and a block where you define the steps of this operation. `step` simply takes the name of a method available in the job. That's all!
 
-Now, each execution of this job will find or create an `AcidicJob::Key` record, which we leverage to wrap every step in a database transaction. Moreover, this database record allows `acidic_job` to ensure that if your job fails on step 3, when it retries, it will simply jump right back to trying to execute the method defined for the 3rd step, and won't even execute the first two step methods. This means your step methods only need to be idempotent on failure, not on success, since they will never be run again if they succeed.
+Now, each execution of this job will find or create an `AcidicJob::Run` record, which we leverage to wrap every step in a database transaction. Moreover, this database record allows `acidic_job` to ensure that if your job fails on step 3, when it retries, it will simply jump right back to trying to execute the method defined for the 3rd step, and won't even execute the first two step methods. This means your step methods only need to be idempotent on failure, not on success, since they will never be run again if they succeed.
 
 ### Persisted Attributes
 
-Any objects passed to the `given` option on the `with_acidity` method are not just made available to each of your step methods, they are made available across retries. This means that you can set an attribute in step 1, access it in step 2, have step 2 fail, have the job retry, jump directly back to step 2 on retry, and have that object still accessible. This is done by serializing all objects to a field on the `AcidicJob::Key` and manually providing getters and setters that sync with the database record.
+Any objects passed to the `given` option on the `with_acidity` method are not just made available to each of your step methods, they are made available across retries. This means that you can set an attribute in step 1, access it in step 2, have step 2 fail, have the job retry, jump directly back to step 2 on retry, and have that object still accessible. This is done by serializing all objects to a field on the `AcidicJob::Run` and manually providing getters and setters that sync with the database record.
 
 ```ruby
 class RideCreateJob < ActiveJob::Base

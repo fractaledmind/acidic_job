@@ -2,9 +2,24 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
-require "acidic_job"
-require_relative "../test/support/setup"
-require_relative "../test/support/ride_create_job"
+# require "acidic_job"
+require "sidekiq"
+require "sidekiq/testing"
+# Sidekiq::Testing.inline!
+Sidekiq.logger.level = Logger::DEBUG
+require "active_support/concern"
+require "active_record"
+require "global_id"
+require "active_support/core_ext/module/concerning"
+require "active_support/core_ext/object/with_options"
+
+# THOUGHT: SHOULD WE EXPOSE THE RUN RECORD TO USERS, AS THEY MIGHT FUCK IT UP??? 
+# CONSIDER: What is a good DSL for passing along args and kwargs to steps and parallel jobs?
+
+# NOTE
+#######################
+# ActiveJob must be included into any and all jobs that you want to either make acidic or enqueue acidicly. 
+# We recommend that you `include AcidicJob` in your `ApplicationJob`
 
 # You can add fixtures and/or initialization code here to make experimenting
 # with your gem easier. You can also use a different console, if you like.
@@ -12,6 +27,1295 @@ require_relative "../test/support/ride_create_job"
 # (If you use this, don't forget to add pry to your Gemfile!)
 # require "pry"
 # Pry.start
+
+module AcidicJob
+	extend ActiveSupport::Concern
+	
+	Error = Class.new(StandardError)
+	SidekiqBatchRequired = Class.new(Error)
+	NoDefinedSteps = Class.new(Error)
+	MismatchedIdempotencyKeyAndJobArguments = Class.new(Error)
+	LockedIdempotencyKey = Class.new(Error)
+	UnknownRecoveryPoint = Class.new(Error)
+	
+	# Number of seconds passed which we consider a held idempotency key lock to be
+	# defunct and eligible to be locked again by a different job run. We try to
+	# unlock keys on our various failure conditions, but software is buggy, and
+	# this might not happen 100% of the time, so this is a hedge against it.
+	IDEMPOTENCY_KEY_LOCK_TIMEOUT = 90
+	
+	class Run < ActiveRecord::Base
+		include GlobalID::Identification
+
+		FINISHED_RECOVERY_POINT = "FINISHED"
+	
+		self.table_name = "acidic_job_runs"
+
+		after_create_commit :enqueue_staged_job, if: :staged?
+	
+		serialize :error_object
+		serialize :serialized_job
+		serialize :workflow
+		store :attr_accessors
+	
+		validates :staged, inclusion: { in: [true, false] } # uses database default
+		validates :serialized_job, presence: true
+		validates :idempotency_key, presence: true, uniqueness: true
+		validates :job_class, presence: true
+		
+		scope :staged, -> { where(staged: true) }
+		scope :unstaged, -> { where(staged: false) }
+		scope :finished, -> { where(recovery_point: FINISHED_RECOVERY_POINT) }
+		scope :running, -> { where.not(recovery_point: FINISHED_RECOVERY_POINT) }
+
+		with_options unless: :staged? do
+			validates :last_run_at, presence: true
+			validates :recovery_point, presence: true
+			validates :workflow, presence: true
+		end
+	
+		def finished?
+			recovery_point == FINISHED_RECOVERY_POINT
+		end
+	
+		def succeeded?
+			finished? && !failed?
+		end
+	
+		def failed?
+			error_object.present?
+		end
+
+		private
+
+		def enqueue_staged_job
+			return unless staged?
+
+			# encode the identifier for this record in the job ID
+			# base64 encoding for minimal security
+			global_id = to_global_id.to_s.remove("gid://")
+			encoded_global_id = Base64.encode64(global_id).strip
+			staged_job_id = "STG_#{idempotency_key}__#{encoded_global_id}"
+
+			serialized_staged_job = if serialized_job.key?("jid")
+				serialized_job.merge("jid" => staged_job_id)
+			elsif serialized_job.key?("job_id")
+				serialized_job.merge("job_id" => staged_job_id)
+			else
+				raise
+			end
+
+			job = job_class.constantize.deserialize_job(serialized_staged_job)
+
+			job.enqueue_staged_job
+		
+			# NOTE: record will be deleted after the job has successfully been performed
+			true
+		end
+	end
+	
+	class Enqueuer
+		def initialize(run)
+			@run = run
+			@job_class = run.job_class.constantize
+		end
+
+		def enqueue_job()
+		end
+
+		private
+
+		def is_sk_job?
+			defined?(Sidekiq) && @job_class.include?(Sidekiq::Worker)
+		end
+		
+		def is_aj_job?
+			defined?(ActiveJob) && @job_class < ActiveJob::Base
+		end
+	end
+
+	concern :SidekiqSerialization do
+		class_methods do
+			# called only from `AcidicJob::Run#enqueue_staged_job`
+			def deserialize(serialized_job_hash)
+				klass = serialized_job_hash["class"].constantize
+				worker = klass.new
+				worker.jid = serialized_job_hash["jid"]
+				worker.instance_variable_set(:@args, serialized_job_hash["args"])
+				
+				worker
+			end
+			
+			# called only from `AcidicJob::PerformAcidicly#perform_acidicly` and `AcidicJob::DeliverAcidicly#deliver_acidicly`
+			def serialize_with_arguments(args = [], kwargs = nil)
+				# THIS IS A HACK THAT ESSENTIALLY COPIES THE CODE FROM THE SIDEKIQ CODEBASE TO MIMIC THE BEHAVIOR 
+				args = Array[args]
+				normalized_args = ::Sidekiq.load_json(::Sidekiq.dump_json(args))
+				item = { "class" => self, "args" => normalized_args }
+				dummy_sidekiq_client = ::Sidekiq::Client.new
+				normed = dummy_sidekiq_client.send :normalize_item, item
+				payload = dummy_sidekiq_client.send :process_single, item["class"], normed
+
+				payload
+			end
+		end
+		
+		def serialize(args = [], kwargs = nil)
+			# `@args` is only set via `deserialize`; it is not a standard Sidekiq thing
+			arguments = args || @args
+			normalized_args = ::Sidekiq.load_json(::Sidekiq.dump_json(arguments))
+			item = { "class" => self.class, "args" => normalized_args, "jid" => jid }
+			sidekiq_options = sidekiq_options_hash || {}
+
+			sidekiq_options.merge(item)
+		end
+		
+		# called only from `AcidicJob::Run#enqueue_staged_job`
+		def enqueue()
+			Sidekiq::Client.push(
+				"class" => self.class, 
+				"args" => @args, 
+				"jid" => @jid
+			)
+		end
+	end
+	
+	concern :ActiveJobAdapter do
+		class_methods do
+			def serialize_with_arguments(*args, **kwargs)
+				job_or_instantiate(*args, **kwargs).serialize
+			end
+		end
+		
+		def serialize_job(*args, **kwargs)
+			serialize
+		end
+	end
+	
+	# NOTE: it is essential that this be a bare module and not an ActiveSupport::Concern
+	module PerformWrapper
+		def perform(*args, **kwargs)
+			super_method = method(:perform).super_method
+
+			# we don't want to run the `perform` callbacks twice, since ActiveJob already handles that for us
+			if is_aj_job?
+				__acidic_job_perform_for_aj(super_method, *args, **kwargs)
+			elsif is_sk_job?
+				__acidic_job_perform_for_sk(super_method, *args, **kwargs)
+			else
+				raise UnknownJobAdapter
+			end
+		end
+
+		private
+
+		# don't run `perform` callbacks, as ActiveJob already does this
+		def __acidic_job_perform_for_aj(super_method, *args, **kwargs)
+			__acidic_job_perform_base(super_method, *args, **kwargs)
+		end
+
+		# ensure to run `perform` callbacks
+		def __acidic_job_perform_for_sk(super_method, *args, **kwargs)
+			run_callbacks :perform do
+				__acidic_job_perform_base(super_method, *args, **kwargs)
+			end
+		end
+
+		# capture arguments passed to `perform` to be used by AcidicJob later
+		def __acidic_job_perform_base(super_method, *args, **kwargs)
+			@__acidic_job_args = args
+			@__acidic_job_kwargs = kwargs
+			
+			super_method.call(*args, **kwargs)
+		end
+		
+		def is_sk_job?
+			defined?(Sidekiq) && self.class.include?(Sidekiq::Worker)
+		end
+		
+		def is_aj_job?
+			defined?(ActiveJob) && self.class < ActiveJob::Base
+		end
+	end
+	
+	# for Sidekiq, to balance `perform_async` class method 
+	concern :SidekiqPerformSync do
+		class_methods do
+			def perform_sync(*args, **kwargs)
+				new.perform(*args, **kwargs)
+			end
+		end
+	end
+	
+	concerning :Awaiting do
+		class_methods do
+			# TODO: Allow the `perform` method to be used to kick off Sidekiq Batch powered workflows 
+			def initiate(*args)
+				raise SidekiqBatchRequired unless defined?(Sidekiq::Batch)
+
+				top_level_workflow = Sidekiq::Batch.new
+				# top_level_workflow.on(:success, self, *args)
+				top_level_workflow.jobs do
+					perform_async
+				end
+			end
+		end
+		
+		def enqueue_step_parallel_jobs(jobs, run)
+			# `batch` is available from Sidekiq::Pro
+			raise SidekiqBatchRequired unless defined?(Sidekiq::Batch)
+		
+			batch.jobs do
+				step_batch = Sidekiq::Batch.new
+				# step_batch.description = "AcidicJob::Workflow Step: #{step}"
+				step_batch.on(
+					:success,
+					"#{self.class.name}#step_done",
+					# NOTE: options are marshalled through JSON so use only basic types.
+					{ "run_id" => run.id }
+				)
+				# NOTE: The jobs method is atomic.
+				# All jobs created in the block are actually pushed atomically at the end of the block.
+				# If an error is raised, none of the jobs will go to Redis.
+				step_batch.jobs do
+					jobs.each do |worker_name|
+						# TODO: handle Symbols as well 
+						worker = worker_name.is_a?(String) ? worker_name.constantize : worker_name
+						if worker.instance_method(:perform).arity.zero?
+							worker.perform_async
+						elsif worker.instance_method(:perform).arity == 1
+							worker.perform_async(run.id)
+						else
+							raise TooManyParametersForParallelJob
+						end
+					end
+				end
+			end
+		end
+		
+		def step_done(_status, options)
+			run = Run.find(options["run_id"])
+			
+			recovery_point = run.recovery_point.to_s
+			current_step = run.workflow[recovery_point]
+			
+			step = Step.new(current_step, run, self)
+			
+			# --- 
+			# TODO: WRITE REGRESSION TESTS FOR PARALLEL JOB FAILING AND RETRYING THE ORIGINAL STEP 
+			# TODO: WILL FAIL AS `@step_result` WILL BE NIL
+			step.progress
+			# when a batch of jobs for a step succeeds, we begin processing the `AcidicJob::Run` record again
+			process_run(run)
+		end
+	end
+	
+	class IdempotencyKey
+		def self.value_for(hash_or_job, *args, **kwargs)
+			return hash_or_job.job_id if hash_or_job.respond_to?(:job_id) && !hash_or_job.job_id.nil?
+			return hash_or_job.jid if hash_or_job.respond_to?(:jid) && !hash_or_job.jid.nil?
+			
+			return hash_or_job["job_id"] if hash_or_job.is_a?(Hash) && hash_or_job.key?("job_id") && !hash_or_job["job_id"].nil?
+			return hash_or_job["jid"] if hash_or_job.is_a?(Hash) && hash_or_job.key?("jid") && !hash_or_job["jid"].nil?
+			
+			worker_class = case hash_or_job
+				when Hash
+					hash_or_job["worker"] || hash_or_job["job_class"]
+				else
+					hash_or_job.class.name
+				end
+			
+			Digest::SHA1.hexdigest [worker_class, args, kwargs].flatten.join
+		end
+	end
+
+	class RecoveryPoint
+		def initialize(name)
+			@name = name
+		end
+
+		def call(run:)
+			# Skip AR callbacks as there are none on the model
+			run.update_column(:recovery_point, @name)
+		end
+	end
+
+	class FinishedPoint
+		def call(run:)
+			# Skip AR callbacks as there are none on the model
+			run.update_columns(
+				locked_at: nil,
+				recovery_point: Run::FINISHED_RECOVERY_POINT
+			)
+		end
+	end
+
+	class Step
+		def initialize(step, run, job)
+			@step = step
+			@run = run
+			@job = job
+			@step_result = nil
+		end
+		
+		def execute()
+			rescued_error = false
+			step_callable = wrap_step_as_acidic_callable @step
+		
+			begin
+				@run.with_lock do
+					@step_result = step_callable.call(@run)
+				end
+			# QUESTION: Can an error not inherit from StandardError
+			rescue StandardError => e
+				rescued_error = e
+				raise e
+			ensure
+				if rescued_error
+					# If we're leaving under an error condition, try to unlock the idempotency
+					# run right away so that another request can try again.
+					begin
+						@run.update_columns(locked_at: nil, error_object: rescued_error)
+					rescue StandardError => e
+						# We're already inside an error condition, so swallow any additional
+						# errors from here and just send them to logs.
+						puts "Failed to unlock AcidicJob::Run #{@run.id} because of #{e}."
+					end
+				end
+			end
+		end
+		
+		def progress()
+			@run.with_lock do
+				@step_result.call(run: @run)
+			end
+		end
+		
+		private
+		
+		def wrap_step_as_acidic_callable(step) # rubocop:disable Metrics/PerceivedComplexity
+			# {:then=>:next_step, :does=>:enqueue_step, :awaits=>[WorkerWithEnqueueStep::FirstWorker]}
+			current_step = step["does"]
+			next_step = step["then"]
+		
+			callable = @job.respond_to?(current_step, _include_private=true) ?
+									 @job.method(current_step)
+								 :
+									 proc {} # no-op
+		
+			proc do |run|
+				result = if callable.arity.zero?
+									 callable.call
+								 elsif callable.arity == 1
+									 callable.call(run)
+								 else
+									 raise TooManyParametersForStepMethod
+								 end
+		
+				if result.is_a?(FinishedPoint)
+					result
+				elsif next_step.to_s == Run::FINISHED_RECOVERY_POINT
+					FinishedPoint.new
+				else
+					RecoveryPoint.new(next_step)
+				end
+			end
+		end
+	end
+	
+	concerning :Staging do
+		def delete_staged_job_record
+			return unless was_staged_job?
+
+			staged_job_run.delete
+			true
+		rescue ActiveRecord::RecordNotFound
+			true
+		end
+		
+		def was_staged_job?
+			identifier.start_with? "STG_"
+		end
+		
+		def staged_job_run
+			# "STG_#{idempotency_key}__#{encoded_global_id}"
+			encoded_global_id = identifier.split("__").last
+			staged_job_gid = "gid://" + Base64.decode64(encoded_global_id)
+
+			GlobalID::Locator.locate(staged_job_gid)
+		end
+	end
+	
+	concern :PerformAcidicly do
+		class_methods do
+			def perform_acidicly(*args, **kwargs)
+				serialized_job = self.instantiate_and_serialize_job(*args, **kwargs)
+		
+				AcidicJob::Run.create!(
+					staged: true,
+					serialized_job: serialized_job, 
+					idempotency_key: IdempotencyKey.value_for(serialized_job),
+					job_class: self.name,
+				)
+			end
+			alias_method :perform_transactionally, :perform_acidicly
+		end
+	end
+	
+	concern :DeliverAcidicly do
+		class_methods do
+			def deliver_acidicly(_options = {})
+				# TODO: implement
+				serialized_job = self.instantiate_and_serialize_job(*args, **kwargs)
+
+				AcidicJob::Run.create!(
+					staged: true,
+					serialized_job: serialized_job, 
+					idempotency_key: IdempotencyKey.value_for(serialized_job),
+					job_class: self.name,
+				)
+
+				job = delivery_job_class
+				job_args = if job <= ActionMailer::Parameterized::MailDeliveryJob
+										 [@mailer_class.name, @action.to_s, "deliver_now", { params: @params, args: @args }]
+									 else
+										 [@mailer_class.name, @action.to_s, "deliver_now", @params, *@args]
+									 end
+				serialized_job = job.new(job_args).serialize
+	
+				AcidicJob::Run.create!(
+					staged: true,
+					job_class: job.name,
+					serialized_job: serialized_job,
+					idempotency_key: IdempotencyKey.value_for(serialized_job)
+				)
+			end
+		end
+	end
+	
+	def self.wire_everything_up(klass)
+		# Ensure our `perform` method always runs first to gather parameters
+		klass.prepend PerformWrapper
+		
+		# Add `deliver_acidicly` to ActionMailer
+		ActionMailer::Parameterized::MessageDelivery.include DeliverAcidicly if defined?(ActionMailer)
+	
+		if defined?(ActiveJob) && klass < ActiveJob::Base
+			klass.send(:include, PerformAcidicly)
+			klass.send(:include, ActiveJobAdapter)
+	  elsif defined?(Sidekiq) && klass.include?(Sidekiq::Worker)
+			klass.send(:include, PerformAcidicly)
+			klass.send(:include, SidekiqSerialization)
+			klass.send(:include, SidekiqPerformSync)
+			
+			klass.include ActiveSupport::Callbacks
+			klass.define_callbacks :perform
+			# klass.prepend SidekiqCallbacks unless klass.respond_to?(:after_perform)
+	  else
+			raise UnknownJobAdapter
+	  end
+		
+		klass.set_callback :perform, :after, :delete_staged_job_record#, if: :was_staged_job?
+	end
+	
+	included do
+		AcidicJob.wire_everything_up(self)
+	end
+	
+	class_methods do
+		def inherited(subclass)
+			AcidicJob.wire_everything_up(subclass)
+			super
+		end
+	end
+	
+	def with_acidity(given: {})
+		# execute the block to gather the info on what steps are defined for this job workflow
+		@__acidic_job_steps = []
+		steps = yield || []
+
+		# check that the block actually defined at least one step
+		# TODO: WRITE TESTS FOR FAULTY BLOCK VALUES 
+		raise NoDefinedSteps if @__acidic_job_steps.nil? || @__acidic_job_steps.empty?
+
+		# convert the array of steps into a hash of recovery_points and next steps
+		workflow = define_workflow(steps)
+
+		# determine the idempotency key value for this job run (`job_id` or `jid`)
+		# might be defined already in `identifier` method
+		# TODO: allow idempotency to be defined by args OR job id
+		@__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
+
+		run = ensure_run_record(@__acidic_job_idempotency_key, workflow, given)
+
+		# begin the workflow
+		process_run(run)
+	end
+	
+	# DEPRECATED
+	def idempotently(with:, &blk)
+		with_acidity(given: with, &blk)
+	end 
+	
+	def safely_finish_acidic_job()
+		# Short circuits execution by sending execution right to 'finished'.
+		# So, ends the job "successfully"
+		AcidicJob::FinishedPoint.new
+	end
+	
+	def idempotency_key()
+		return @__acidic_job_idempotency_key if defined? @__acidic_job_idempotency_key
+		
+		@__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
+	end
+	
+	private
+	
+	def process_run(run)
+		# if the run record is already marked as finished, immediately return its result
+		return run.succeeded? if run.finished?
+	
+		# otherwise, we will enter a loop to process each step of the workflow
+		run.workflow.size.times do
+			recovery_point = run.recovery_point.to_s
+			current_step = run.workflow[recovery_point]
+	
+			# if any step calls `safely_finish_acidic_job` or the workflow has simply completed,
+			# be sure to break out of the loop
+			if recovery_point == Run::FINISHED_RECOVERY_POINT.to_s # rubocop:disable Style/GuardClause
+				break
+			elsif current_step.nil?
+				raise UnknownRecoveryPoint, "Defined workflow does not reference this step: #{recovery_point}"
+			elsif (jobs = current_step.fetch("awaits", [])).any?
+				step = Step.new(current_step, run, self)
+				# Only execute the current step, without yet progressing the recovery_point to the next step.
+				# This ensures that any failures in parallel jobs will have this step retried in the main workflow
+				step.execute
+				# We allow the `#step_done` method to manage progressing the recovery_point to the next step,
+				# and then calling `process_run` to restart the main workflow on the next step. 
+				enqueue_step_parallel_jobs(jobs, run)
+				# after processing the current step, break the processing loop
+				# and stop this method from blocking in the primary worker
+				# as it will continue once the background workers all succeed
+				# so we want to keep the primary worker queue free to process new work
+				# this CANNOT ever be `break` as that wouldn't exit the parent job,
+				# only this step in the workflow, blocking as it awaits the next step
+				return true
+			else
+				step = Step.new(current_step, run, self) 
+				step.execute
+				# As this step does not await any parallel jobs, we can immediately progress to the next step
+				step.progress
+			end
+		end
+	
+		# the loop will break once the job is finished, so simply report the status
+		run.succeeded?
+	end
+	
+	def step(method_name, awaits: [])
+		@__acidic_job_steps ||= []
+	
+		@__acidic_job_steps << {
+			"does" => method_name.to_s,
+			"awaits" => awaits
+		}
+	
+		@__acidic_job_steps
+	end
+	
+	def define_workflow(steps)
+		# [ { does: "step 1", awaits: [] }, { does: "step 2", awaits: [] }, ... ]
+		steps << { "does" => Run::FINISHED_RECOVERY_POINT }
+	
+		{}.tap do |workflow|
+			steps.each_cons(2).map do |enter_step, exit_step|
+				enter_name = enter_step["does"]
+				workflow[enter_name] = enter_step.merge("then" => exit_step["does"])
+			end
+		end
+		# { "step 1": { does: "step 1", awaits: [], then: "step 2" }, ...  }
+	end
+	
+	def ensure_run_record(key_val, workflow, accessors)
+		isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
+											when :sqlite
+												:read_uncommitted
+											else
+												:serializable
+											end
+	
+		ActiveRecord::Base.transaction(isolation: isolation_level) do
+			run = Run.find_by(idempotency_key: key_val)
+			serialized_job = self.serialize_job(@__acidic_job_args, @__acidic_job_kwargs)
+	
+			if run.present?
+				# Programs enqueuing multiple jobs with different parameters but the
+				# same idempotency key is a bug.
+				# NOTE: WOULD THE ENQUEUED_AT OR CREATED_AT FIELD BE NECESSARILY DIFFERENT?
+				raise MismatchedIdempotencyKeyAndJobArguments if run.serialized_job != serialized_job
+	
+				# Only acquire a lock if the key is unlocked or its lock has expired
+				# because the original job was long enough ago.
+				raise LockedIdempotencyKey if run.locked_at && run.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
+	
+				# Lock the run and update latest run unless the job is already finished.
+				run.update!(last_run_at: Time.current, locked_at: Time.current, workflow: workflow) unless run.finished?
+			else
+				run = Run.create!(
+					staged: false,
+					idempotency_key: key_val,
+					job_class: self.class.name,
+					locked_at: Time.current,
+					last_run_at: Time.current,
+					recovery_point: workflow.first.first,
+					workflow: workflow,
+					serialized_job: serialized_job
+				)
+			end
+	
+			# set accessors for each argument passed in to ensure they are available
+			# to the step methods the job will have written
+			define_accessors_for_passed_arguments(accessors, run)
+	
+			# NOTE: we must return the `key` object from this transaction block
+			# so that it can be returned from this method to the caller
+			run
+		end
+	end
+	
+	def define_accessors_for_passed_arguments(passed_arguments, run)
+		# first, get the current state of all accessors for both previously persisted and initialized values
+		current_accessors = passed_arguments.stringify_keys.merge(run.attr_accessors)
+	
+		# next, ensure that `Run#attr_accessors` is populated with initial values
+		run.update_column(:attr_accessors, current_accessors)
+	
+		current_accessors.each do |accessor, value|
+			# the reader method may already be defined
+			self.class.attr_reader accessor unless respond_to?(accessor)
+			# but we should always update the value to match the current value
+			instance_variable_set("@#{accessor}", value)
+			# and we overwrite the setter to ensure any updates to an accessor update the `Key` stored value
+			# Note: we must define the singleton method on the instance to avoid overwriting setters on other
+			# instances of the same class
+			define_singleton_method("#{accessor}=") do |current_value|
+				instance_variable_set("@#{accessor}", current_value)
+				run.attr_accessors[accessor] = current_value
+				run.save!(validate: false)
+				current_value
+			end
+		end
+	
+		true
+	end
+	
+	def around_perform()
+		trace = TracePoint.new(:b_return) do |tp|
+			next unless tp.defined_class == self.class
+			next unless tp.method_id == :perform
+			next if defined?(@parameters_for_perform) && !@parameters_for_perform.nil?
+			
+			@parameters_for_perform = method(:perform).parameters.map do |type, name|
+				[type, name, tp.binding.local_variable_get(name)]
+			rescue NameError
+				nil
+			end
+		end
+	
+		trace.enable do
+			yield
+		end
+	end
+	
+	def identifier()
+		return jid if defined?(jid) && !jid.nil?
+		return job_id if defined?(job_id) && !job_id.nil?
+
+		# might be defined already in `with_acidity` method
+		@__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
+		
+		@__acidic_job_idempotency_key
+	end
+end
+
+require "logger"
+require "sqlite3"
+require "active_job"
+
+# DATABASE AND MODELS ----------------------------------------------------------
+ActiveRecord::Base.establish_connection(
+	adapter: "sqlite3",
+	database: "test/database.sqlite",
+	flags: SQLite3::Constants::Open::READWRITE |
+				 SQLite3::Constants::Open::CREATE |
+				 SQLite3::Constants::Open::SHAREDCACHE
+)
+stdout_logger = Logger.new($stdout)
+null_logger = Logger.new(IO::NULL)
+
+ActiveRecord::Base.logger = stdout_logger 
+ActiveJob::Base.logger = stdout_logger
+Sidekiq.logger = stdout_logger
+
+GlobalID.app = :test
+SignedGlobalID.verifier = begin
+	GlobalID::Verifier.new('$3kr_t')
+rescue ArgumentError
+	nil
+end
+
+ActiveRecord::Schema.define do
+	create_table :acidic_job_runs, force: true do |t|
+		t.boolean 	:staged, 					null: false, 	default: -> { false }
+		t.string 		:idempotency_key, null: false
+		t.text 			:serialized_job, 	null: false
+		t.string 		:job_class, 			null: false
+		t.datetime 	:last_run_at, 		null: true, 	default: -> { "CURRENT_TIMESTAMP" }
+		t.datetime 	:locked_at, 			null: true
+		t.string 		:recovery_point, 	null: true
+		t.text 			:error_object, 		null: true
+		t.text 			:attr_accessors, 	null: true
+		t.text 			:workflow, 				null: true
+		
+		t.timestamps
+	
+		t.index :idempotency_key, unique: true
+	end
+end
+
+class ApplicationWorker
+	include Sidekiq::Worker
+	include AcidicJob
+end
+class SomeWorker < ApplicationWorker
+	sidekiq_options queue: 'some_other', retry_queue: 'bulk', retry: 5, backtrace: 10, tags: ['alpha', '🥇']
+	
+	def perform(required_positional,
+							optional_positional = "OPTIONAL POSITIONAL",
+							*splat_args)
+		with_acidity do
+			step :do_something
+		end
+	end
+	
+	def do_something
+		OtherWorker.perform_acidicly
+	end
+end
+class OtherWorker < ApplicationWorker
+	def perform
+		p 'SIDEKIQ' + '#' * 100
+		p 'OtherWorker#perform'
+	end
+end
+
+
+class ApplicationJob < ActiveJob::Base
+	include AcidicJob
+end
+class SomeJob < ApplicationJob
+	queue_as 'some_other'
+	retry_on StandardError, attempts: 1, queue: 'bulk'
+	
+	def perform(required_positional,
+							optional_positional = "OPTIONAL POSITIONAL",
+							*splat_args,
+							required_keyword:,
+							optional_keyword: "OPTIONAL KEYWORD",
+							**double_splat_args)
+		with_acidity do
+			step :do_something
+		end
+	end
+	
+	def do_something
+		OtherJob.perform_acidicly
+	end
+end
+class OtherJob < ApplicationJob	
+	def perform
+		p 'ACTIVEJOB' + '#' * 100
+		p 'OtherJob#perform'
+	rescue StandardError => e
+		binding.irb
+	end
+end
+	
+# ---------------------------------------------------------------------------------------------------------------------
+# TESTING
+require "minitest"
+require "minitest/spec"
+require "database_cleaner/active_record"
+DatabaseCleaner.strategy = [:deletion, { except: %w[users] }]
+
+class CustomErrorForTesting < StandardError; end
+
+class AcidicJobTest < Minitest::Test
+	def before_setup
+		super
+		DatabaseCleaner.start
+		Sidekiq::Queues.clear_all
+	end
+	
+	def after_teardown
+		Sidekiq::Queues.clear_all
+		DatabaseCleaner.clean
+		super
+	end
+	
+	def assert_enqueued_with(worker:, args:)
+		assert_equal 1, @sidekiq_queue.size
+		assert_equal worker.to_s, @sidekiq_queue.first["class"]
+		assert_equal args, @sidekiq_queue.first["args"]
+		worker.drain
+	end
+	
+	def create_run(params = {})
+		AcidicJob::Run.create!({
+			idempotency_key: "XXXX_IDEMPOTENCY_KEY",
+			locked_at: nil,
+			last_run_at: Time.current,
+			recovery_point: :create_ride_and_audit_record,
+			job_class: "RideCreateWorker",
+			serialized_job: {
+				"class" => RideCreateWorker,
+				"args" => [@valid_user.id, @valid_params],
+				"jid" => nil
+			},
+			workflow: {
+				"create_ride_and_audit_record" => {
+					"does" => :create_ride_and_audit_record,
+					"awaits" => [],
+					"then" => :create_stripe_charge
+				},
+				"create_stripe_charge" => {
+					"does" => :create_stripe_charge,
+					"awaits" => [],
+					"then" => :send_receipt
+				},
+				"send_receipt" => {
+					"does" => :send_receipt,
+					"awaits" => [],
+					"then" => "FINISHED"
+				}
+			}
+		}.deep_merge(params))
+	end
+end
+
+class TestWorkerWithRescueInPerform < AcidicJobTest
+	class WorkerWithRescueInPerform
+		include Sidekiq::Worker
+		include AcidicJob
+	
+		def perform
+			with_acidity given: {} do
+				step :do_something
+			end
+		rescue CustomErrorForTesting
+			true
+		end
+	
+		def do_something
+			raise CustomErrorForTesting
+		end
+	end
+	
+	def test_rescued_error_in_perform_does_not_prevent_error_object_from_being_stored
+		WorkerWithRescueInPerform.perform_sync
+	
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal CustomErrorForTesting, AcidicJob::Run.first.error_object.class
+	end
+end
+	
+class TestWorkerWithErrorInsidePhaseTransaction < AcidicJobTest
+	class WorkerWithErrorInsidePhaseTransaction
+		include Sidekiq::Worker
+		include AcidicJob
+	
+		def perform
+			with_acidity given: { accessor: nil } do
+				step :do_something
+			end
+		end
+	
+		def do_something
+			self.accessor = "value"
+			raise CustomErrorForTesting
+		end
+	end
+		
+	def test_error_in_first_step_rolls_back_step_transaction
+		assert_raises CustomErrorForTesting do
+			WorkerWithErrorInsidePhaseTransaction.new.perform
+		end
+	
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal CustomErrorForTesting, AcidicJob::Run.first.error_object.class
+		assert_equal AcidicJob::Run.first.attr_accessors, { "accessor" => nil }
+	end
+end
+
+class TestWorkerWithLogicInsideAcidicBlock < AcidicJobTest
+	class WorkerWithLogicInsideAcidicBlock
+		include Sidekiq::Worker
+		include AcidicJob
+	
+		def perform(bool)
+			with_acidity given: {} do
+				step :do_something if bool
+			end
+		end
+	
+		def do_something
+			raise CustomErrorForTesting
+		end
+	end
+		
+	def test_logic_inside_acidic_block_is_executed_appropriately
+		assert_raises CustomErrorForTesting do
+			WorkerWithLogicInsideAcidicBlock.new.perform(true)
+		end
+	
+		assert_raises AcidicJob::NoDefinedSteps do
+			WorkerWithLogicInsideAcidicBlock.new.perform(false)
+		end
+	
+		assert_equal 1, AcidicJob::Run.count
+	end
+end
+	
+class TestWorkerWithOldSyntax < AcidicJobTest
+	class WorkerWithOldSyntax
+		include Sidekiq::Worker
+		include AcidicJob
+	
+		def perform()
+			idempotently(with: {}) do
+				step :do_something
+			end
+		end
+	
+		def do_something()
+			raise CustomErrorForTesting
+		end
+	end
+	
+	def test_worker_with_old_syntax_still_functions
+		assert_raises CustomErrorForTesting do
+			WorkerWithOldSyntax.new.perform
+		end
+	
+		assert_equal 1, AcidicJob::Run.count
+	end
+end
+	
+require_relative "../test/support/setup"
+require_relative "../test/support/ride_create_worker"
+require_relative "../test/support/ride_create_job"
+
+class TestAcidicWorkers < AcidicJobTest
+	def setup
+		@valid_params = {
+			"origin_lat" => 0.0,
+			"origin_lon" => 0.0,
+			"target_lat" => 0.0,
+			"target_lon" => 0.0
+		}.freeze
+		@valid_user = User.find_by(stripe_customer_id: "tok_visa")
+		@invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
+		@staged_job_params = [{ amount: 20_00, currency: "usd", user_id: @valid_user.id }.stringify_keys]
+		@sidekiq_queue = Sidekiq::Queues["default"]
+		RideCreateWorker.instance_variable_set(:@error_in_create_stripe_charge, false)
+		RideCreateWorker.instance_variable_set(:@error_in_create_ride, false)
+	end
+end
+
+class IdempotencyKeysAndRecoveryTest < TestAcidicWorkers
+	def test_passes_for_a_new_key
+		result = RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+		assert_equal true, result
+
+		assert_enqueued_with(worker: SendRideReceiptWorker, args: @staged_job_params)
+
+		assert_equal true, AcidicJob::Run.first.succeeded?
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal 1, Ride.count
+		assert_equal 1, Audit.count
+	end
+
+	def test_returns_a_stored_result
+		key = create_run(recovery_point: :FINISHED)
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			result = RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			assert_equal true, result
+		end
+		key.reload
+
+		assert_equal true, key.succeeded?
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal 0, Ride.count
+		assert_equal 0, Audit.count
+	end
+
+	def test_passes_for_keys_that_are_unlocked
+		key = create_run(locked_at: nil)
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			result = RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			assert_equal true, result
+		end
+		key.reload
+
+		assert_enqueued_with(worker: SendRideReceiptWorker, args: @staged_job_params)
+
+		assert_equal true, key.succeeded?
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal 1, Ride.count
+		assert_equal 1, Audit.count
+	end
+
+	def test_passes_for_keys_with_a_stale_locked_at
+		key = create_run(locked_at: Time.now - 1.hour - 1)
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			result = RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			assert_equal true, result
+		end
+		key.reload
+
+		assert_enqueued_with(worker: SendRideReceiptWorker, args: @staged_job_params)
+
+		assert_equal true, key.succeeded?
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal 1, Ride.count
+		assert_equal 1, Audit.count
+	end
+
+	def test_stores_results_for_a_permanent_failure
+		RideCreateWorker.instance_variable_set(:@error_in_create_stripe_charge, true)
+		key = create_run
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			assert_raises RideCreateWorker::SimulatedTestingFailure do
+				RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			end
+		end
+		RideCreateWorker.instance_variable_set(:@error_in_create_stripe_charge, false)
+
+		assert_equal "RideCreateWorker::SimulatedTestingFailure", key.error_object.class.name
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal 1, Ride.count
+		assert_equal 1, Audit.count
+	end
+end
+
+class AtomicPhasesAndRecoveryPointsTest < TestAcidicWorkers
+	def test_continues_from_recovery_point_create_ride_and_audit_record
+		key = create_run(recovery_point: :create_ride_and_audit_record)
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			result = RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			assert_equal true, result
+		end
+		key.reload
+
+		assert_enqueued_with(worker: SendRideReceiptWorker, args: @staged_job_params)
+
+		assert_equal true, key.succeeded?
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal 1, Ride.count
+		assert_equal 1, Audit.count
+	end
+
+	def test_continues_from_recovery_point_create_stripe_charge
+		ride = Ride.create(@valid_params.merge(
+												 user: @valid_user
+											 ))
+		key = create_run(recovery_point: :create_stripe_charge, attr_accessors: { ride: ride })
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			result = RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			assert_equal true, result
+		end
+		key.reload
+
+		assert_enqueued_with(worker: SendRideReceiptWorker, args: @staged_job_params)
+
+		assert_equal true, key.succeeded?
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal 1, Ride.count
+		assert_equal 0, Audit.count
+	end
+
+	def test_continues_from_recovery_point_send_receipt
+		key = create_run(recovery_point: :send_receipt)
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			result = RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			assert_equal true, result
+		end
+		key.reload
+
+		assert_enqueued_with(worker: SendRideReceiptWorker, args: @staged_job_params)
+
+		assert_equal true, key.succeeded?
+		assert_equal 1, AcidicJob::Run.count
+		assert_equal 0, Ride.count
+		assert_equal 0, Audit.count
+	end
+end
+
+class FailuresTest < TestAcidicWorkers
+	def test_denies_requests_where_parameters_dont_match_on_an_existing_key
+		key = create_run
+
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			assert_raises AcidicJob::MismatchedIdempotencyKeyAndJobArguments do
+				RideCreateWorker.new.perform(@valid_user.id, @valid_params.merge("origin_lat" => 10.0))
+			end
+		end
+	end
+
+	def test_denies_requests_that_have_an_equivalent_in_flight
+		key = create_run(locked_at: Time.now)
+
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			assert_raises AcidicJob::LockedIdempotencyKey do
+				RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			end
+		end
+	end
+
+	def test_unlocks_a_key_on_a_serialization_failure
+		key = create_run
+		raises_exception = ->(_params, _args) { raise ActiveRecord::SerializationFailure, "Serialization failure." }
+
+		Stripe::Charge.stub(:create, raises_exception) do
+			AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+				assert_raises ActiveRecord::SerializationFailure do
+					RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+				end
+			end
+		end
+
+		key.reload
+		assert_nil key.locked_at
+		assert_equal "ActiveRecord::SerializationFailure", key.error_object.class.name
+	end
+
+	def test_unlocks_a_key_on_an_internal_error
+		key = create_run
+		raises_exception = ->(_params, _args) { raise "Internal server error!" }
+
+		Stripe::Charge.stub(:create, raises_exception) do
+			AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+				assert_raises StandardError do
+					RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+				end
+			end
+		end
+
+		key.reload
+		assert_nil key.locked_at
+		assert_equal false, key.succeeded?
+	end
+
+	def test_throws_error_if_recovering_without_ride_record
+		key = create_run(recovery_point: :create_stripe_charge)
+
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			assert_raises NoMethodError do
+				RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			end
+		end
+		key.reload
+		assert_nil key.locked_at
+		assert_equal false, key.succeeded?
+		assert_equal "NoMethodError", key.error_object.class.name
+	end
+
+	def test_throws_error_with_unknown_recovery_point
+		key = create_run(recovery_point: :SOME_UNKNOWN_POINT)
+
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			assert_raises AcidicJob::UnknownRecoveryPoint do
+				RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			end
+		end
+		key.reload
+		assert !key.locked_at.nil?
+		assert_equal false, key.succeeded?
+	end
+
+	def test_swallows_error_when_trying_to_unlock_key_after_error
+		key = create_run
+		def key.update_columns(**kwargs)
+			raise StandardError unless kwargs.key?(:attr_accessors)
+
+			super
+		end
+		raises_exception = ->(_params, _args) { raise "Internal server error!" }
+
+		Stripe::Charge.stub(:create, raises_exception) do
+			AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+				assert_raises StandardError do
+					RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+				end
+			end
+		end
+		key.reload
+		assert !key.locked_at.nil?
+		assert_equal false, key.succeeded?
+	end
+end
+
+class SpecificTest < TestAcidicWorkers
+	def test_successfully_performs_synchronous_job_with_unique_idempotency_key
+		result = RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+		assert_equal 1, AcidicJob::Run.unstaged.count
+		assert_equal true, result
+	end
+
+	def test_successfully_performs_synchronous_job_with_duplicate_idempotency_key
+		RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+
+		assert_equal 1, AcidicJob::Run.unstaged.count
+		result = RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+		assert_equal 1, AcidicJob::Run.unstaged.count
+		assert_equal true, result
+	end
+
+	def test_throws_appropriate_error_when_job_method_throws_exception
+		RideCreateWorker.instance_variable_set(:@error_in_create_stripe_charge, true)
+		key = create_run
+		AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+			assert_raises RideCreateWorker::SimulatedTestingFailure do
+				RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+			end
+		end
+		RideCreateWorker.instance_variable_set(:@error_in_create_stripe_charge, false)
+
+		assert_equal "RideCreateWorker::SimulatedTestingFailure", key.error_object.class.name
+	end
+
+	def test_successfully_handles_stripe_card_error
+		result = RideCreateWorker.new.perform(@invalid_user.id, @valid_params)
+		assert_equal 1, AcidicJob::Run.unstaged.count
+		assert_equal true, result
+		assert_equal true, AcidicJob::Run.first.succeeded?
+	end
+
+	def test_error_in_first_step_rolls_back_step_transaction
+		RideCreateWorker.instance_variable_set(:@error_in_create_ride, true)
+		assert_raises RideCreateWorker::SimulatedTestingFailure do
+			RideCreateWorker.new.perform(@valid_user.id, @valid_params)
+		end
+		RideCreateWorker.instance_variable_set(:@error_in_create_ride, false)
+
+		assert_equal 1, AcidicJob::Run.unstaged.count
+		assert_equal 0, Ride.count
+		assert_nil AcidicJob::Run.first.attr_accessors["ride"]
+	end
+end
+
+Minitest.run
 
 require "irb"
 IRB.start(__FILE__)

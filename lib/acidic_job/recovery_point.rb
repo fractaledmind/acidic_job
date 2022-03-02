@@ -7,12 +7,16 @@ module AcidicJob
     attr_accessor :name
 
     def initialize(name)
-      self.name = name
+      @name = name
+    end
+    
+    def call(run:)
+      # Skip AR callbacks as there are none on the model
+      run.update_column(:recovery_point, @name)
     end
 
-    def call(key:)
-      # Skip AR callbacks as there are none on the model
-      key.update_column(:recovery_point, name)
+    def attributes
+      [@name]
     end
   end
 end

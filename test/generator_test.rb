@@ -15,19 +15,11 @@ class AcidicJobGeneratorTest < Rails::Generators::TestCase
     super
   end
 
-  test "should generate a migration for acidic_job keys" do
+  test "should generate a migration for acidic_job runs" do
     run_generator
-    migration_contents = File.read(migration_file_name("db/migrate/create_acidic_job_keys"))
+    migration_contents = File.read(migration_file_name("db/migrate/create_acidic_job_runs"))
 
-    assert_migration "db/migrate/create_acidic_job_keys"
-    assert_match "create_table :acidic_job_keys", migration_contents
-  end
-
-  test "should generate a migration for staged acidic_jobs" do
-    run_generator
-    migration_contents = File.read(migration_file_name("db/migrate/create_staged_acidic_jobs"))
-
-    assert_migration "db/migrate/create_staged_acidic_jobs"
-    assert_match "create_table :staged_acidic_job", migration_contents
+    assert_migration "db/migrate/create_acidic_job_runs"
+    assert_match "create_table :acidic_job_runs", migration_contents
   end
 end

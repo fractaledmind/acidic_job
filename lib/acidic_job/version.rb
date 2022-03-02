@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module AcidicJob
-  VERSION = "0.7.7"
+  VERSION = "1.0.0-alpha"
 end

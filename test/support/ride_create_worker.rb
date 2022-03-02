@@ -15,8 +15,8 @@ class RideCreateWorker
 
   class SimulatedTestingFailure < StandardError; end
 
-  def perform(user, ride_params)
-    with_acidity given: { user: user, params: ride_params, ride: nil } do
+  def perform(user_id, ride_params)
+    with_acidity given: { user_id: user_id, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -33,7 +33,7 @@ class RideCreateWorker
       target_lat: params["target_lat"],
       target_lon: params["target_lon"],
       stripe_charge_id: nil, # no charge created yet
-      user: user
+      user_id: user_id
     )
 
     raise SimulatedTestingFailure if defined?(error_in_create_ride) && error_in_create_ride
@@ -42,7 +42,7 @@ class RideCreateWorker
     Audit.create!(
       action: :AUDIT_RIDE_CREATED,
       auditable: ride,
-      user: user,
+      user_id: user_id,
       audited_changes: params
     )
   end
@@ -53,6 +53,7 @@ class RideCreateWorker
     raise SimulatedTestingFailure if defined?(error_in_create_stripe_charge) && error_in_create_stripe_charge
 
     begin
+      user = User.find_by(id: user_id)
       charge = Stripe::Charge.create({
                                        amount: 20_00,
                                        currency: "usd",
@@ -62,7 +63,7 @@ class RideCreateWorker
                                        # Pass through our own unique ID rather than the value
                                        # transmitted to us so that we can guarantee uniqueness to Stripe
                                        # across all Rocket Rides accounts.
-                                       idempotency_key: "rocket-rides-atomic-#{key.id}"
+                                       idempotency_key: "rocket-rides-atomic-#{@run.id}"
                                      })
     rescue Stripe::CardError
       # Short circuits execution by sending execution right to 'finished'.
@@ -82,7 +83,7 @@ class RideCreateWorker
     SendRideReceiptWorker.perform_transactionally(
       amount: 20_00,
       currency: "usd",
-      user_id: user.id
+      user_id: user_id
     )
   end
 end
