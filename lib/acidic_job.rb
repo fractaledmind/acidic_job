@@ -14,6 +14,7 @@ require_relative "acidic_job/extensions/sidekiq"
 require_relative "acidic_job/extensions/action_mailer"
 require_relative "acidic_job/extensions/active_job"
 require_relative "acidic_job/extensions/noticed"
+require_relative "acidic_job/upgrade_service"
 
 require "active_support/concern"
 
