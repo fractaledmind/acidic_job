@@ -56,7 +56,7 @@ module AcidicJob
       run = Run.find(options["run_id"])
       current_step = run.workflow[run.recovery_point.to_s]
       # re-hydrate the `step_result` object
-      step_result = YAML.safe_load(options["step_result_yaml"])
+      step_result = YAML.safe_load(options["step_result_yaml"], permitted_classes: [RecoveryPoint, FinishedPoint])
       step = Step.new(current_step, run, self, step_result)
 
       # TODO: WRITE REGRESSION TESTS FOR PARALLEL JOB FAILING AND RETRYING THE ORIGINAL STEP
