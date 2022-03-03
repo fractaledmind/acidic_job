@@ -37,7 +37,7 @@ Or simply execute to install the gem yourself:
 
     $ bundle add acidic_job
 
-Then, use the following command to copy over the `AcidicJob::Run` migration file as well as the `AcidicJob::Staged` migration file.
+Then, use the following command to copy over the `AcidicJob::Run` migration file.
 
 ```
 rails generate acidic_job
@@ -45,15 +45,27 @@ rails generate acidic_job
 
 ## Usage
 
-`AcidicJob` is a concern that you `include` into your operation jobs.
+`AcidicJob` is a concern that you `include` into your base `ApplicationJob`.
 
 ```ruby
-class RideCreateJob < ActiveJob::Base
+class ApplicationJob < ActiveJob::Base
   include AcidicJob
 end
 ```
 
+This is useful because the module needs to be mixed into any and all jobs that you want to either make acidic or enqueue acidicly.
+
 It provides a suite of functionality that empowers you to create complex, robust, and _acidic_ jobs.
+
+### TL;DR
+
+#### Key Features
+
+* Transactional Steps — break your job into a series of steps, each of which will be run within an acidic database transaction, allowing retries to jump back to the last "recovery point".
+* Persisted Attributes — when retrying jobs at later steps, we need to ensure that data created in previous steps is still available to later steps on retry.
+* Transactionally Staged Jobs — enqueue additional jobs within the acidic transaction safely
+* Sidekiq Callbacks — bring ActiveJob-like callbacks into your pure Sidekiq Workers
+* Sidekiq Batches — leverage the power of Sidekiq Pro's `batch` functionality without the hassle
 
 ### Transactional Steps
 
@@ -63,8 +75,10 @@ The first and foundational feature `acidic_job` provides is the `with_acidity` m
 class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
-  def perform(ride_params)
-    with_acidity given: { params: ride_params, ride: nil } do
+  def perform(user_id, ride_params)
+    user = User.find(user_id)
+
+    with_acidity given: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -119,20 +133,22 @@ end
 
 **Note:** This does mean that you are restricted to objects that can be serialized by ActiveRecord, thus no Procs, for example.
 
-**Note:** You will note the use of `self.ride = ...` in the code sample above. In order to call the attribute setter method that will sync with the database record, you _must_ use this style. `@ride = ...` and/or `ride = ...` will both fail to sync the value with the datbase record.
+**Note:** You will note the use of `self.ride = ...` in the code sample above. In order to call the attribute setter method that will sync with the database record, you _must_ use this style. `@ride = ...` and/or `ride = ...` will both fail to sync the value with the database record.
 
 ### Transactionally Staged Jobs
 
 A standard problem when inside of database transactions is enqueuing other jobs. On the one hand, you could enqueue a job inside of a transaction that then rollbacks, which would leave that job to fail and retry and fail. On the other hand, you could enqueue a job that is picked up before the transaction commits, which would mean the records are not yet available to this job.
 
-In order to mitigate against such issues without forcing you to use a database-backed job queue, `acidic_job` provides `perform_transactionally` and `deliver_transactionally` methods to "transactionally stage" enqueuing other jobs from within a step (whether another ActiveJob or a Sidekiq::Worker or an ActionMailer delivery). These methods will create a new `AcidicJob::Staged` record, but inside of the database transaction of the `step`. Upon commit of that transaction, a model callback pushes the job to your actual job queue.  Once the job has been successfully performed, the `AcidicJob::Staged` record is deleted so that this table doesn't grow unbounded and unnecessarily.
+In order to mitigate against such issues without forcing you to use a database-backed job queue, `acidic_job` provides `perform_acidicly` and `deliver_acidicly` methods to "transactionally stage" enqueuing other jobs from within a step (whether another ActiveJob or a Sidekiq::Worker or an ActionMailer delivery). These methods will create a new `AcidicJob::Run` record, but inside of the database transaction of the `step`. Upon commit of that transaction, a model callback pushes the job to your actual job queue.  Once the job has been successfully performed, the `AcidicJob::Run` record is deleted so that this table doesn't grow unbounded and unnecessarily.
 
 ```ruby
 class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
-  def perform(ride_params)
-    with_acidity given: { params: ride_params, ride: nil } do
+  def perform(user_id, ride_params)
+    user = User.find(user_id)
+    
+    with_acidity given: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -142,7 +158,7 @@ class RideCreateJob < ActiveJob::Base
   # ...
 
   def send_receipt
-    RideMailer.with(ride: @ride).confirm_charge.delivery_transactionally
+    RideMailer.with(user: @user, ride: @ride).confirm_charge.delivery_acidicly
   end
 end
 ```
@@ -155,7 +171,7 @@ This allows `acidic_job` to use an `after_perform` callback to delete the `Acidi
 
 ### Sidekiq Batches
 
-One final feature for those of you using Sidekiq Pro: an integrated DSL for Sidekiq Batches. By simply adding the `awaits` option to your step declarations, you can attach any number of additional, asynchronous workers to your step. This is profoundly powerful, as it means that you can define a workflow where step 2 is started _if and only if_ step 1 succeeds, but step 1 can have 3 different workers enqueued on 3 different queues, each running in parallel. Once all 3 workers succeed, `acidic_job` will move on to step 2. That's right, by leveraging the power of Sidekiq Batches, you can have workers that are executed in parallel, on separate queues, and asynchronously, but are still blocking—as a group—the next step in your workflow! This unlocks incredible power and flexibility for defining and structuring complex workflows and operations, and in my mind is the number one selling point for Sidekiq Pro.
+One final feature for those of you using Sidekiq Pro: an integrated DSL for Sidekiq Batches. By simply adding the `awaits` option to your step declarations, you can attach any number of additional, asynchronous workers to your step. This is profoundly powerful, as it means that you can define a workflow where step 2 is started _if and only if_ step 1 succeeds, but step 1 can have 3 different workers enqueued on 3 different queues, each running in parallel. Once all 3 workers succeed, `acidic_job` will move on to step 2. That's right, by leveraging the power of Sidekiq Batches, you can have workers that are _executed in parallel_, **on separate queues**, and _asynchronously_, but are still **blocking**—as a group—the next step in your workflow! This unlocks incredible power and flexibility for defining and structuring complex workflows and operations, and in my mind is the number one selling point for Sidekiq Pro.
 
 In my opinion, any commercial software using Sidekiq should get Sidekiq Pro; it is _absolutely_ worth the money. If, however, you are using `acidic_job` in a non-commercial application, you could use the open-source dropin replacement for this functionality: https://github.com/breamware/sidekiq-batch
 
@@ -164,20 +180,14 @@ In my opinion, any commercial software using Sidekiq should get Sidekiq Pro; it 
 class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
-  def perform(ride_params)
-    with_acidity given: { params: ride_params, ride: nil } do
+  def perform(user_id, ride_params)
+    user = User.find(user_id)
+
+    with_acidity given: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record, awaits: [SomeJob]
       step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
       step :send_receipt
     end
-  end
-
-  # ...
-
-  def send_receipt
-    RideMailer.with(ride: @ride).confirm_charge.delivery_transactionally
-  rescue RescuableError
-    safely_finish_acidic_job
   end
 end
 ```

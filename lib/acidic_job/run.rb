@@ -63,7 +63,7 @@ module AcidicJob
                               elsif serialized_job.key?("job_id")
                                 serialized_job.merge("job_id" => staged_job_id)
                               else
-                                raise
+                                raise UnknownSerializedJobIdentifier
                               end
 
       job = job_class.constantize.deserialize(serialized_staged_job)

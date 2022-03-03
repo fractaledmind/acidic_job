@@ -18,10 +18,6 @@ class TestAcidicWorkers < Minitest::Test
     @invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = [{ amount: 20_00, currency: "usd", user_id: @valid_user.id }.stringify_keys]
     @sidekiq_queue = Sidekiq::Queues["default"]
-    if RideCreateWorker.respond_to?(:error_in_create_stripe_charge)
-      RideCreateWorker.undef_method(:error_in_create_stripe_charge)
-    end
-    RideCreateWorker.undef_method(:error_in_create_ride) if RideCreateWorker.respond_to?(:error_in_create_ride)
   end
 
   def before_setup
@@ -39,6 +35,7 @@ class TestAcidicWorkers < Minitest::Test
   def create_key(params = {})
     AcidicJob::Run.create!({
       idempotency_key: "XXXX_IDEMPOTENCY_KEY",
+      staged: false,
       locked_at: nil,
       last_run_at: Time.current,
       recovery_point: :create_ride_and_audit_record,

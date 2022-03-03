@@ -22,4 +22,6 @@ module AcidicJob
   class TooManyParametersForStepMethod < Error; end
 
   class TooManyParametersForParallelJob < Error; end
+
+  class UnknownSerializedJobIdentifier < Error; end
 end

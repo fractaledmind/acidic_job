@@ -30,7 +30,9 @@ module AcidicJob
     klass.include Awaiting
 
     # Add `deliver_acidicly` to ActionMailer
-    ActionMailer::Parameterized::MessageDelivery.include DeliverAcidicly if defined?(ActionMailer)
+    ActionMailer::Parameterized::MessageDelivery.include Extensions::ActionMailer if defined?(ActionMailer)
+    # Add `deliver_acidicly` to Noticed
+    Noticed::Base.include Extensions::Noticed if defined?(Noticed)
 
     if defined?(ActiveJob) && klass < ActiveJob::Base
       klass.send(:include, Extensions::ActiveJob)
@@ -38,12 +40,11 @@ module AcidicJob
       klass.send(:include, Extensions::Sidekiq)
       klass.include ActiveSupport::Callbacks
       klass.define_callbacks :perform
-      # klass.prepend SidekiqCallbacks unless klass.respond_to?(:after_perform)
     else
       raise UnknownJobAdapter
     end
 
-    klass.set_callback :perform, :after, :delete_staged_job_record # , if: :was_staged_job?
+    klass.set_callback :perform, :after, :delete_staged_job_record, if: :was_staged_job?
   end
 
   included do
@@ -88,7 +89,7 @@ module AcidicJob
   def safely_finish_acidic_job
     # Short circuits execution by sending execution right to 'finished'.
     # So, ends the job "successfully"
-    AcidicJob::FinishedPoint.new
+    FinishedPoint.new
   end
 
   # rubocop:disable Naming/MemoizedInstanceVariableName

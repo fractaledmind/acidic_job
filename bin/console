@@ -4,16 +4,11 @@
 require "bundler/setup"
 require "acidic_job"
 
-# THOUGHT: SHOULD WE EXPOSE THE RUN RECORD TO USERS, AS THEY MIGHT FUCK IT UP???
-# CONSIDER: What is a good DSL for passing along args and kwargs to steps and parallel jobs?
-
-# NOTE
-#######################
-# ActiveJob must be included into any and all jobs that you want to either make acidic or enqueue acidicly.
-# We recommend that you `include AcidicJob` in your `ApplicationJob`
-
 # You can add fixtures and/or initialization code here to make experimenting
 # with your gem easier. You can also use a different console, if you like.
+
+require_relative "../test/support/setup"
+require_relative "../test/support/ride_create_job"
 
 # (If you use this, don't forget to add pry to your Gemfile!)
 # require "pry"

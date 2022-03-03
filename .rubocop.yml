@@ -33,3 +33,6 @@ Metrics/CyclomaticComplexity:
   
 Metrics/PerceivedComplexity:
   Enabled: false
+
+Metrics/ClassLength:
+  Enabled: false
