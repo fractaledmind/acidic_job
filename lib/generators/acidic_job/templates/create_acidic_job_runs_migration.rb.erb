@@ -1,4 +1,4 @@
-class CreateAcidicJobRuns < <%= migration_class %>
+class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version %>
   def change
     create_table :acidic_job_runs do |t|
       t.boolean 	:staged, 					null: false, 	default: -> { false }

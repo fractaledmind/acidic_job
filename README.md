@@ -40,7 +40,7 @@ Or simply execute to install the gem yourself:
 Then, use the following command to copy over the `AcidicJob::Run` migration file.
 
 ```
-rails generate acidic_job
+rails generate acidic_job:install
 ```
 
 ## Usage
