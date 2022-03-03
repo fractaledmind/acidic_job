@@ -2,17 +2,16 @@
 
 require "sidekiq/testing"
 
-unless defined? Sidekiq::Batch
-  module Sidekiq
-    class Batch
-      class Status; end # rubocop:disable Lint/EmptyClass
-    end
+module Sidekiq
+  class Batch
+    class Status; end # rubocop:disable Lint/EmptyClass
   end
 end
 
 module Support
   module Sidekiq
     class NullObject
+      # :nocov:
       def method_missing(*_args)
         self
       end
@@ -20,6 +19,7 @@ module Support
       def respond_to_missing?(*_args)
         true
       end
+      # :nocov:
     end
 
     class NullBatch < NullObject
@@ -54,6 +54,7 @@ module Support
         @callbacks = callbacks
       end
 
+      # :nocov:
       def failures
         0
       end
@@ -79,6 +80,7 @@ module Support
       def total
         ::Sidekiq::Worker.jobs.size
       end
+      # :nocov:
     end
 
     class Workflow
