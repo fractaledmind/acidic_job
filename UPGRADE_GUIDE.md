@@ -9,7 +9,7 @@
 
 result:
 ```
-Installing acidic_job 1.0.0.pre1 (was 0.7.7)
+Installing acidic_job 1.0.0.pre4 (was 0.7.7)
 Bundle updated!
 ```
 
@@ -67,5 +67,15 @@ Once you have successfully migrated everything over and the new system has been 
 
 ```bash
 rails generate acidic_job:drop_tables
+```
+
+result:
+```
+create  db/migrate/#{yyyymmddhhmmss}_drop_old_acidic_job_tables.rb
+```
+
+You can then run the migration to have those tables removed:
+
+```bash
 rails db:migrate
 ```
