@@ -3,7 +3,6 @@
 require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
-require_relative "support/setup"
 
 class CustomErrorForTesting < StandardError; end
 
@@ -118,5 +117,13 @@ class TestEdgeCases < Minitest::Test
     end
 
     assert_equal 1, AcidicJob::Run.count
+  end
+
+  def test_invalid_worker_raise_error
+    assert_raises AcidicJob::UnknownJobAdapter do
+      Class.new do
+        include AcidicJob
+      end
+    end
   end
 end

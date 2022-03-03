@@ -28,3 +28,5 @@ gem "simplecov"
 gem "pry"
 
 gem "sidekiq"
+
+gem "noticed"

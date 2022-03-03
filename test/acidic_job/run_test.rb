@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../support/setup"
 
 class MyJob
   def self.deserialize; end
@@ -22,45 +21,6 @@ class TestAcidicJobRun < Minitest::Test
   def after_teardown
     DatabaseCleaner.clean
     super
-  end
-
-  def create_run(params = {})
-    AcidicJob::Run.create!({
-      idempotency_key: "XXXX_IDEMPOTENCY_KEY",
-      locked_at: nil,
-      last_run_at: Time.current,
-      recovery_point: :create_ride_and_audit_record,
-      job_class: "RideCreateJob",
-      serialized_job: {
-        "job_class" => "RideCreateJob",
-        "job_id" => nil,
-        "provider_job_id" => nil,
-        "queue_name" => "default",
-        "priority" => nil,
-        "arguments" => [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => [])],
-        "executions" => 1,
-        "exception_executions" => {},
-        "locale" => "en",
-        "timezone" => nil
-      },
-      workflow: {
-        "create_ride_and_audit_record" => {
-          "does" => :create_ride_and_audit_record,
-          "awaits" => [],
-          "then" => :create_stripe_charge
-        },
-        "create_stripe_charge" => {
-          "does" => :create_stripe_charge,
-          "awaits" => [],
-          "then" => :send_receipt
-        },
-        "send_receipt" => {
-          "does" => :send_receipt,
-          "awaits" => [],
-          "then" => "FINISHED"
-        }
-      }
-    }.deep_merge(params))
   end
 
   def test_that_it_validates_serialized_job_present

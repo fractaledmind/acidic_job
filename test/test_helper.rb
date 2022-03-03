@@ -12,6 +12,4 @@ end
 
 require "acidic_job"
 require "minitest/autorun"
-require "database_cleaner/active_record"
-
-DatabaseCleaner.strategy = [:deletion, { except: %w[users] }]
+require_relative "support/setup"

@@ -14,9 +14,5 @@ module AcidicJob
       # Skip AR callbacks as there are none on the model
       run.update_column(:recovery_point, @name)
     end
-
-    def attributes
-      [@name]
-    end
   end
 end

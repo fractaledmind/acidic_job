@@ -3,7 +3,6 @@
 require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
-require_relative "support/setup"
 require_relative "support/ride_create_worker"
 
 class TestAcidicWorkers < Minitest::Test

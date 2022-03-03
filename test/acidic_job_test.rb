@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "support/setup"
 require_relative "support/ride_create_job"
 
 class TestAcidicJobs < Minitest::Test
@@ -152,6 +151,26 @@ class TestAcidicJobs < Minitest::Test
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
       assert_equal 0, AcidicJob::Run.staged.count
+    end
+
+    def test_idempotency_key_method_returns_job_id
+      key = create_run
+      AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+        job = RideCreateJob.new
+        idempotency_key = job.idempotency_key
+
+        assert_equal idempotency_key, job.job_id
+      end
+    end
+
+    def test_idempotency_key_method_returns_job_id_memoized
+      key = create_run
+      AcidicJob::Run.stub(:find_by, ->(*) { key }) do
+        job = RideCreateJob.new
+        idempotency_key = job.idempotency_key
+
+        assert_equal idempotency_key, job.idempotency_key
+      end
     end
   end
 

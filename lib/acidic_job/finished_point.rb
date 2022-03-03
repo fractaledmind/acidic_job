@@ -12,9 +12,5 @@ module AcidicJob
         recovery_point: Run::FINISHED_RECOVERY_POINT
       )
     end
-
-    def attributes
-      []
-    end
   end
 end

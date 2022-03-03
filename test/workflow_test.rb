@@ -2,7 +2,6 @@
 
 require "test_helper"
 require "sidekiq"
-require_relative "./support/setup"
 require_relative "./support/sidekiq_batches"
 
 class CustomErrorForTesting < StandardError; end
