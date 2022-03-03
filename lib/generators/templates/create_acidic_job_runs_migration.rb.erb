@@ -1,6 +1,6 @@
-class CreateAcidicJobKeys < <%= migration_class %>
+class CreateAcidicJobRuns < <%= migration_class %>
   def change
-    create_table :acidic_job_runs, force: true do |t|
+    create_table :acidic_job_runs do |t|
       t.boolean 	:staged, 					null: false, 	default: -> { false }
       t.string 		:idempotency_key, null: false
       t.text 			:serialized_job, 	null: false
