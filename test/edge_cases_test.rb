@@ -116,7 +116,7 @@ class TestEdgeCases < Minitest::Test
       WorkerWithOldSyntax.new.perform
     end
 
-    assert_equal 1, AcidicJob::Run.count
+    assert_equal 1, AcidicJob::Run.unstaged.count
   end
 
   def test_invalid_worker_raise_error
