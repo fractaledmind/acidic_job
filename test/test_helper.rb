@@ -10,8 +10,12 @@ SimpleCov.start do
   primary_coverage :branch
 end
 
+require "warning"
+Warning.ignore(%i[not_reached unused_var])
+
 require "acidic_job"
 require "minitest/autorun"
-require "database_cleaner/active_record"
-
-DatabaseCleaner.strategy = [:deletion, { except: %w[users] }]
+require "combustion"
+Combustion.path = "test/dummy"
+Combustion.initialize! :action_mailer
+require_relative "support/setup"

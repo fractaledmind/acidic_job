@@ -3,7 +3,6 @@
 require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
-require_relative "support/setup"
 
 class CustomErrorForTesting < StandardError; end
 
@@ -56,19 +55,19 @@ class WorkerWithLogicInsideAcidicBlock
 end
 
 class WorkerWithOldSyntax
-    include Sidekiq::Worker
-    include AcidicJob
-  
-    def perform
-      idempotently with: {} do
-        step :do_something
-      end
-    end
-  
-    def do_something
-      raise CustomErrorForTesting
+  include Sidekiq::Worker
+  include AcidicJob
+
+  def perform
+    idempotently with: {} do
+      step :do_something
     end
   end
+
+  def do_something
+    raise CustomErrorForTesting
+  end
+end
 
 class TestEdgeCases < Minitest::Test
   def before_setup
@@ -86,8 +85,8 @@ class TestEdgeCases < Minitest::Test
   def test_rescued_error_in_perform_does_not_prevent_error_object_from_being_stored
     WorkerWithRescueInPerform.new.perform
 
-    assert_equal 1, AcidicJob::Key.count
-    assert_equal CustomErrorForTesting, AcidicJob::Key.first.error_object.class
+    assert_equal 1, AcidicJob::Run.count
+    assert_equal CustomErrorForTesting, AcidicJob::Run.first.error_object.class
   end
 
   def test_error_in_first_step_rolls_back_step_transaction
@@ -95,9 +94,9 @@ class TestEdgeCases < Minitest::Test
       WorkerWithErrorInsidePhaseTransaction.new.perform
     end
 
-    assert_equal 1, AcidicJob::Key.count
-    assert_equal CustomErrorForTesting, AcidicJob::Key.first.error_object.class
-    assert_equal AcidicJob::Key.first.attr_accessors, { "accessor" => nil }
+    assert_equal 1, AcidicJob::Run.count
+    assert_equal CustomErrorForTesting, AcidicJob::Run.first.error_object.class
+    assert_equal AcidicJob::Run.first.attr_accessors, { "accessor" => nil }
   end
 
   def test_logic_inside_acidic_block_is_executed_appropriately
@@ -109,14 +108,22 @@ class TestEdgeCases < Minitest::Test
       WorkerWithLogicInsideAcidicBlock.new.perform(false)
     end
 
-    assert_equal 1, AcidicJob::Key.count
+    assert_equal 1, AcidicJob::Run.count
   end
-  
-  def test_logic_inside_acidic_block_is_executed_appropriately
+
+  def test_deprecated_syntax_still_works
     assert_raises CustomErrorForTesting do
       WorkerWithOldSyntax.new.perform
     end
-  
-    assert_equal 1, AcidicJob::Key.count
+
+    assert_equal 1, AcidicJob::Run.unstaged.count
+  end
+
+  def test_invalid_worker_raise_error
+    assert_raises AcidicJob::UnknownJobAdapter do
+      Class.new do
+        include AcidicJob
+      end
+    end
   end
 end

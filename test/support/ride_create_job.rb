@@ -19,8 +19,8 @@ class RideCreateJob < ActiveJob::Base
 
   class SimulatedTestingFailure < StandardError; end
 
-  def perform(user, ride_params)
-    with_acidity given: { user: user, params: ride_params, ride: nil } do
+  def perform(user_id, ride_params)
+    with_acidity given: { user_id: user_id, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -29,7 +29,6 @@ class RideCreateJob < ActiveJob::Base
 
   private
 
-  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def create_ride_and_audit_record
     self.ride = Ride.create!(
       origin_lat: params["origin_lat"],
@@ -37,7 +36,7 @@ class RideCreateJob < ActiveJob::Base
       target_lat: params["target_lat"],
       target_lon: params["target_lon"],
       stripe_charge_id: nil, # no charge created yet
-      user: user
+      user_id: user_id
     )
 
     raise SimulatedTestingFailure if defined?(error_in_create_ride) && error_in_create_ride
@@ -46,17 +45,16 @@ class RideCreateJob < ActiveJob::Base
     Audit.create!(
       action: :AUDIT_RIDE_CREATED,
       auditable: ride,
-      user: user,
+      user_id: user_id,
       audited_changes: params
     )
   end
-  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
-  # rubocop:disable Metrics/MethodLength
   def create_stripe_charge
     raise SimulatedTestingFailure if defined?(error_in_create_stripe_charge) && error_in_create_stripe_charge
 
     begin
+      user = User.find_by(id: user_id)
       charge = Stripe::Charge.create({
                                        amount: 20_00,
                                        currency: "usd",
@@ -66,7 +64,7 @@ class RideCreateJob < ActiveJob::Base
                                        # Pass through our own unique ID rather than the value
                                        # transmitted to us so that we can guarantee uniqueness to Stripe
                                        # across all Rocket Rides accounts.
-                                       idempotency_key: "rocket-rides-atomic-#{key.id}"
+                                       idempotency_key: "rocket-rides-atomic-#{@run.id}"
                                      })
     rescue Stripe::CardError
       # Short circuits execution by sending execution right to 'finished'.
@@ -77,7 +75,6 @@ class RideCreateJob < ActiveJob::Base
       ride.update_column(:stripe_charge_id, charge.id)
     end
   end
-  # rubocop:enable Metrics/MethodLength
 
   def send_receipt
     # Send a receipt asynchronously by adding an entry to the staged_jobs
@@ -86,7 +83,7 @@ class RideCreateJob < ActiveJob::Base
     SendRideReceiptJob.perform_transactionally(
       amount: 20_00,
       currency: "usd",
-      user: user
+      user_id: user_id
     )
   end
 end

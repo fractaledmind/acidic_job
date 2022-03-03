@@ -28,3 +28,9 @@ gem "simplecov"
 gem "pry"
 
 gem "sidekiq"
+
+gem "noticed"
+
+gem "combustion"
+
+gem "warning"

@@ -1,35 +1,49 @@
 # frozen_string_literal: true
 
 module AcidicJob
+  # NOTE: it is essential that this be a bare module and not an ActiveSupport::Concern
   module PerformWrapper
     def perform(*args, **kwargs)
-      # extract the `staged_job_gid` if present
-      # so that we can later delete the record in an `after_perform` callback
-      final_arg = args.last
-      if final_arg.is_a?(Hash) && final_arg.key?("staged_job_gid")
-        args = args[0..-2]
-        @staged_job_gid = final_arg["staged_job_gid"]
+      super_method = method(:perform).super_method
+
+      # we don't want to run the `perform` callbacks twice, since ActiveJob already handles that for us
+      if aj_job?
+        __acidic_job_perform_for_aj(super_method, *args, **kwargs)
+      elsif sk_job?
+        __acidic_job_perform_for_sk(super_method, *args, **kwargs)
+      else
+        raise UnknownJobAdapter
       end
+    end
 
-      set_arguments_for_perform(*args, **kwargs)
+    def sk_job?
+      defined?(Sidekiq) && self.class.include?(Sidekiq::Worker)
+    end
 
-      super(*args, **kwargs)
+    def aj_job?
+      defined?(ActiveJob) && self.class < ActiveJob::Base
     end
 
     private
 
-    def set_arguments_for_perform(*args, **kwargs)
-      # store arguments passed into `perform` so that we can later persist
-      # them to `AcidicJob::Key#job_args` for both ActiveJob and Sidekiq::Worker
-      @arguments_for_perform = if args.any? && kwargs.any?
-                                 args + [kwargs]
-                               elsif args.any? && kwargs.none?
-                                 args
-                               elsif args.none? && kwargs.any?
-                                 [kwargs]
-                               else
-                                 []
-                               end
+    # don't run `perform` callbacks, as ActiveJob already does this
+    def __acidic_job_perform_for_aj(super_method, *args, **kwargs)
+      __acidic_job_perform_base(super_method, *args, **kwargs)
+    end
+
+    # ensure to run `perform` callbacks
+    def __acidic_job_perform_for_sk(super_method, *args, **kwargs)
+      run_callbacks :perform do
+        __acidic_job_perform_base(super_method, *args, **kwargs)
+      end
+    end
+
+    # capture arguments passed to `perform` to be used by AcidicJob later
+    def __acidic_job_perform_base(super_method, *args, **kwargs)
+      @__acidic_job_args = args
+      @__acidic_job_kwargs = kwargs
+
+      super_method.call(*args, **kwargs)
     end
   end
 end

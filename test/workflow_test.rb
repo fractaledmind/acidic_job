@@ -2,7 +2,6 @@
 
 require "test_helper"
 require "sidekiq"
-require_relative "./support/setup"
 require_relative "./support/sidekiq_batches"
 
 class CustomErrorForTesting < StandardError; end
@@ -70,7 +69,7 @@ class TestWorkflows < Minitest::Test
       end
     end
 
-    assert_equal 1, AcidicJob::Key.count
-    assert_equal CustomErrorForTesting, AcidicJob::Key.first.error_object.class
+    assert_equal 1, AcidicJob::Run.count
+    assert_equal CustomErrorForTesting, AcidicJob::Run.first.error_object.class
   end
 end

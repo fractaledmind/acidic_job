@@ -4,12 +4,12 @@
 # idempotency key). One  possible option for a return from an #atomic_phase
 # block.
 module AcidicJob
-  class Response
-    def call(key:)
+  class FinishedPoint
+    def call(run:)
       # Skip AR callbacks as there are none on the model
-      key.update_columns(
+      run.update_columns(
         locked_at: nil,
-        recovery_point: Key::RECOVERY_POINT_FINISHED
+        recovery_point: Run::FINISHED_RECOVERY_POINT
       )
     end
   end

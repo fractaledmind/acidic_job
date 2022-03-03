@@ -2,38 +2,49 @@
 
 require_relative "acidic_job/version"
 require_relative "acidic_job/errors"
-require_relative "acidic_job/no_op"
 require_relative "acidic_job/recovery_point"
-require_relative "acidic_job/response"
-require_relative "acidic_job/key"
-require_relative "acidic_job/staged"
+require_relative "acidic_job/finished_point"
+require_relative "acidic_job/run"
+require_relative "acidic_job/step"
+require_relative "acidic_job/staging"
+require_relative "acidic_job/awaiting"
 require_relative "acidic_job/perform_wrapper"
-require_relative "acidic_job/perform_transactionally_extension"
-require_relative "acidic_job/deliver_transactionally_extension"
-require_relative "acidic_job/sidekiq_callbacks"
+require_relative "acidic_job/idempotency_key"
+require_relative "acidic_job/extensions/sidekiq"
+require_relative "acidic_job/extensions/action_mailer"
+require_relative "acidic_job/extensions/active_job"
+require_relative "acidic_job/extensions/noticed"
+
 require "active_support/concern"
 
-# rubocop:disable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength
 module AcidicJob
   extend ActiveSupport::Concern
 
+  IDEMPOTENCY_KEY_LOCK_TIMEOUT = 90
+
   def self.wire_everything_up(klass)
-    klass.attr_reader :key
-    klass.attr_reader :staged_job_gid
-    klass.attr_reader :arguments_for_perform
-
-    # Extend ActiveJob with `perform_transactionally` class method
-    klass.include PerformTransactionallyExtension
-
-    ActionMailer::Parameterized::MessageDelivery.include DeliverTransactionallyExtension if defined?(ActionMailer)
-    Noticed::Base.include AcidicJob::NotifyTransactionallyExtension if defined?(Noticed)
-
     # Ensure our `perform` method always runs first to gather parameters
     klass.prepend PerformWrapper
 
-    klass.prepend SidekiqCallbacks unless klass.respond_to?(:after_perform)
+    klass.include Staging
+    klass.include Awaiting
 
-    klass.after_perform :delete_staged_job_record, if: :staged_job_gid
+    # Add `deliver_acidicly` to ActionMailer
+    ActionMailer::Parameterized::MessageDelivery.include Extensions::ActionMailer if defined?(ActionMailer)
+    # Add `deliver_acidicly` to Noticed
+    Noticed::Base.include Extensions::Noticed if defined?(Noticed)
+
+    if defined?(ActiveJob) && klass < ActiveJob::Base
+      klass.send(:include, Extensions::ActiveJob)
+    elsif defined?(Sidekiq) && klass.include?(Sidekiq::Worker)
+      klass.send(:include, Extensions::Sidekiq)
+      klass.include ActiveSupport::Callbacks
+      klass.define_callbacks :perform
+    else
+      raise UnknownJobAdapter
+    end
+
+    klass.set_callback :perform, :after, :delete_staged_job_record, if: :was_staged_job?
   end
 
   included do
@@ -45,68 +56,77 @@ module AcidicJob
       AcidicJob.wire_everything_up(subclass)
       super
     end
-
-    def initiate(*args)
-      operation = Sidekiq::Batch.new
-      operation.on(:success, self, *args)
-      operation.jobs do
-        perform_async
-      end
-    end
   end
 
-  # Number of seconds passed which we consider a held idempotency key lock to be
-  # defunct and eligible to be locked again by a different job run. We try to
-  # unlock keys on our various failure conditions, but software is buggy, and
-  # this might not happen 100% of the time, so this is a hedge against it.
-  IDEMPOTENCY_KEY_LOCK_TIMEOUT = 90
-
-  # takes a block
-  def with_acidity(given:)
+  def with_acidity(given: {})
     # execute the block to gather the info on what steps are defined for this job workflow
+    @__acidic_job_steps = []
     steps = yield || []
 
-    raise NoDefinedSteps if steps.empty?
+    # check that the block actually defined at least one step
+    # TODO: WRITE TESTS FOR FAULTY BLOCK VALUES
+    raise NoDefinedSteps if @__acidic_job_steps.nil? || @__acidic_job_steps.empty?
 
     # convert the array of steps into a hash of recovery_points and next steps
     workflow = define_workflow(steps)
 
-    # find or create a Key record (our idempotency key) to store all information about this job
-    #
-    # A key concept here is that if two requests try to insert or update within
-    # close proximity, one of the two will be aborted by Postgres because we're
-    # using a transaction with SERIALIZABLE isolation level. It may not look
-    # it, but this code is safe from races.
-    key = ensure_idempotency_key_record(idempotency_key_value, workflow, given)
+    # determine the idempotency key value for this job run (`job_id` or `jid`)
+    # might be defined already in `identifier` method
+    # TODO: allow idempotency to be defined by args OR job id
+    @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
+
+    @run = ensure_run_record(@__acidic_job_idempotency_key, workflow, given)
 
     # begin the workflow
-    process_key(key)
+    process_run(@run)
   end
-  
+
   # DEPRECATED
   def idempotently(with:, &blk)
     with_acidity(given: with, &blk)
-  end 
+  end
 
-  def process_key(key)
-    @key = key
+  def safely_finish_acidic_job
+    # Short circuits execution by sending execution right to 'finished'.
+    # So, ends the job "successfully"
+    FinishedPoint.new
+  end
 
-    # if the key record is already marked as finished, immediately return its result
-    return @key.succeeded? if @key.finished?
+  # rubocop:disable Naming/MemoizedInstanceVariableName
+  def idempotency_key
+    return @__acidic_job_idempotency_key if defined? @__acidic_job_idempotency_key
+
+    @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
+  end
+  # rubocop:enable Naming/MemoizedInstanceVariableName
+
+  private
+
+  def process_run(run)
+    # if the run record is already marked as finished, immediately return its result
+    return run.succeeded? if run.finished?
 
     # otherwise, we will enter a loop to process each step of the workflow
-    @key.workflow.size.times do
-      recovery_point = @key.recovery_point.to_s
-      current_step = @key.workflow[recovery_point]
+    run.workflow.size.times do
+      recovery_point = run.recovery_point.to_s
+      current_step = run.workflow[recovery_point]
 
-      if recovery_point == Key::RECOVERY_POINT_FINISHED.to_s # rubocop:disable Style/GuardClause
+      # if any step calls `safely_finish_acidic_job` or the workflow has simply completed,
+      # be sure to break out of the loop
+      if recovery_point == Run::FINISHED_RECOVERY_POINT.to_s # rubocop:disable Style/GuardClause
         break
       elsif current_step.nil?
         raise UnknownRecoveryPoint, "Defined workflow does not reference this step: #{recovery_point}"
       elsif (jobs = current_step.fetch("awaits", [])).any?
-        acidic_step @key, current_step
-        # THIS MUST BE DONE AFTER THE KEY RECOVERY POINT HAS BEEN UPDATED
-        enqueue_step_parallel_jobs(jobs)
+        step = Step.new(current_step, run, self)
+        # Only execute the current step, without yet progressing the recovery_point to the next step.
+        # This ensures that any failures in parallel jobs will have this step retried in the main workflow
+        step_result = step.execute
+        # We allow the `#step_done` method to manage progressing the recovery_point to the next step,
+        # and then calling `process_run` to restart the main workflow on the next step.
+        # We pass the `step_result` so that the async callback called after the step-parallel-jobs complete
+        # can move on to the appropriate next stage in the workflow.
+        enqueue_step_parallel_jobs(jobs, run, step_result)
         # after processing the current step, break the processing loop
         # and stop this method from blocking in the primary worker
         # as it will continue once the background workers all succeed
@@ -115,57 +135,42 @@ module AcidicJob
         # only this step in the workflow, blocking as it awaits the next step
         return true
       else
-        acidic_step @key, current_step
+        step = Step.new(current_step, run, self)
+        step.execute
+        # As this step does not await any parallel jobs, we can immediately progress to the next step
+        step.progress
       end
     end
 
     # the loop will break once the job is finished, so simply report the status
-    @key.succeeded?
+    run.succeeded?
   end
 
   def step(method_name, awaits: [])
-    @_steps ||= []
+    @__acidic_job_steps ||= []
 
-    @_steps << {
+    @__acidic_job_steps << {
       "does" => method_name.to_s,
       "awaits" => awaits
     }
 
-    @_steps
-  end
-
-  def safely_finish_acidic_job
-    # Short circuits execution by sending execution right to 'finished'.
-    # So, ends the job "successfully"
-    AcidicJob::Response.new
-  end
-
-  private
-
-  def delete_staged_job_record
-    return unless staged_job_gid
-
-    staged_job = GlobalID::Locator.locate(staged_job_gid)
-    staged_job.delete
-    true
-  rescue ActiveRecord::RecordNotFound
-    true
+    @__acidic_job_steps
   end
 
   def define_workflow(steps)
-    steps << { "does" => Key::RECOVERY_POINT_FINISHED }
+    # [ { does: "step 1", awaits: [] }, { does: "step 2", awaits: [] }, ... ]
+    steps << { "does" => Run::FINISHED_RECOVERY_POINT }
 
     {}.tap do |workflow|
       steps.each_cons(2).map do |enter_step, exit_step|
         enter_name = enter_step["does"]
-        workflow[enter_name] = {
-          "then" => exit_step["does"]
-        }.merge(enter_step)
+        workflow[enter_name] = enter_step.merge("then" => exit_step["does"])
       end
     end
+    # { "step 1": { does: "step 1", awaits: [], then: "step 2" }, ...  }
   end
 
-  def ensure_idempotency_key_record(key_val, workflow, accessors)
+  def ensure_run_record(key_val, workflow, accessors)
     isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
                       when :sqlite
                         :read_uncommitted
@@ -174,76 +179,53 @@ module AcidicJob
                       end
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
-      key = Key.find_by(idempotency_key: key_val)
+      run = Run.find_by(idempotency_key: key_val)
+      serialized_job = serialize_job(@__acidic_job_args, @__acidic_job_kwargs)
 
-      if key.present?
+      if run.present?
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
-        raise MismatchedIdempotencyKeyAndJobArguments if key.job_args != @arguments_for_perform
+        # NOTE: WOULD THE ENQUEUED_AT OR CREATED_AT FIELD BE NECESSARILY DIFFERENT?
+        if run.serialized_job.except("jid", "job_id",
+                                     "enqueued_at") != serialized_job.except("jid", "job_id", "enqueued_at")
+          raise MismatchedIdempotencyKeyAndJobArguments
+        end
 
         # Only acquire a lock if the key is unlocked or its lock has expired
         # because the original job was long enough ago.
-        raise LockedIdempotencyKey if key.locked_at && key.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
+        raise LockedIdempotencyKey if run.locked_at && run.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
 
-        # Lock the key and update latest run unless the job is already finished.
-        key.update!(last_run_at: Time.current, locked_at: Time.current, workflow: workflow) unless key.finished?
+        # Lock the run and update latest run unless the job is already finished.
+        run.update!(last_run_at: Time.current, locked_at: Time.current, workflow: workflow) unless run.finished?
       else
-        key = Key.create!(
+        run = Run.create!(
+          staged: false,
           idempotency_key: key_val,
+          job_class: self.class.name,
           locked_at: Time.current,
           last_run_at: Time.current,
           recovery_point: workflow.first.first,
-          job_name: self.class.name,
-          job_args: @arguments_for_perform,
-          workflow: workflow
+          workflow: workflow,
+          serialized_job: serialized_job
         )
       end
 
       # set accessors for each argument passed in to ensure they are available
       # to the step methods the job will have written
-      define_accessors_for_passed_arguments(accessors, key)
+      define_accessors_for_passed_arguments(accessors, run)
 
       # NOTE: we must return the `key` object from this transaction block
       # so that it can be returned from this method to the caller
-      key
+      run
     end
   end
 
-  def acidic_step(key, step)
-    rescued_error = false
-    step_callable = wrap_step_as_acidic_callable step
-
-    begin
-      key.with_lock do
-        step_result = step_callable.call(key)
-
-        step_result.call(key: key)
-      end
-    # QUESTION: Can an error not inherit from StandardError
-    rescue StandardError => e
-      rescued_error = e
-      raise e
-    ensure
-      if rescued_error
-        # If we're leaving under an error condition, try to unlock the idempotency
-        # key right away so that another request can try again.3
-        begin
-          key.update_columns(locked_at: nil, error_object: rescued_error)
-        rescue StandardError => e
-          # We're already inside an error condition, so swallow any additional
-          # errors from here and just send them to logs.
-          puts "Failed to unlock key #{key.id} because of #{e}."
-        end
-      end
-    end
-  end
-
-  def define_accessors_for_passed_arguments(passed_arguments, key)
+  def define_accessors_for_passed_arguments(passed_arguments, run)
     # first, get the current state of all accessors for both previously persisted and initialized values
-    current_accessors = passed_arguments.stringify_keys.merge(key.attr_accessors)
+    current_accessors = passed_arguments.stringify_keys.merge(run.attr_accessors)
 
-    # next, ensure that `Key#attr_accessors` is populated with initial values
-    key.update_column(:attr_accessors, current_accessors)
+    # next, ensure that `Run#attr_accessors` is populated with initial values
+    run.update_column(:attr_accessors, current_accessors)
 
     current_accessors.each do |accessor, value|
       # the reader method may already be defined
@@ -255,8 +237,8 @@ module AcidicJob
       # instances of the same class
       define_singleton_method("#{accessor}=") do |current_value|
         instance_variable_set("@#{accessor}", current_value)
-        key.attr_accessors[accessor] = current_value
-        key.save!(validate: false)
+        run.attr_accessors[accessor] = current_value
+        run.save!(validate: false)
         current_value
       end
     end
@@ -264,81 +246,13 @@ module AcidicJob
     true
   end
 
-  # rubocop:disable Metrics/PerceivedComplexity
-  def wrap_step_as_acidic_callable(step)
-    # {:then=>:next_step, :does=>:enqueue_step, :awaits=>[WorkerWithEnqueueStep::FirstWorker]}
-    current_step = step["does"]
-    next_step = step["then"]
-
-    callable = if respond_to? current_step, _include_private = true
-                 method(current_step)
-               else
-                 proc {} # no-op
-               end
-
-    proc do |key|
-      result = if callable.arity.zero?
-                 callable.call
-               elsif callable.arity == 1
-                 callable.call(key)
-               else
-                 raise TooManyParametersForStepMethod
-               end
-
-      if result.is_a?(Response)
-        result
-      elsif next_step.to_s == Key::RECOVERY_POINT_FINISHED
-        Response.new
-      else
-        RecoveryPoint.new(next_step)
-      end
-    end
-  end
-  # rubocop:enable Metrics/PerceivedComplexity
-
-  def enqueue_step_parallel_jobs(jobs)
-    # TODO: GIVE PROPER ERROR
-    # `batch` is available from Sidekiq::Pro
-    raise SidekiqBatchRequired unless defined?(Sidekiq::Batch)
-
-    batch.jobs do
-      step_batch = Sidekiq::Batch.new
-      # step_batch.description = "AcidicJob::Workflow Step: #{step}"
-      step_batch.on(
-        :success,
-        "#{self.class.name}#step_done",
-        # NOTE: options are marshalled through JSON so use only basic types.
-        { "key_id" => @key.id }
-      )
-      # NOTE: The jobs method is atomic.
-      # All jobs created in the block are actually pushed atomically at the end of the block.
-      # If an error is raised, none of the jobs will go to Redis.
-      step_batch.jobs do
-        jobs.each do |worker_name|
-          worker = worker_name.is_a?(String) ? worker_name.constantize : worker_name
-          if worker.instance_method(:perform).arity.zero?
-            worker.perform_async
-          elsif worker.instance_method(:perform).arity == 1
-            worker.perform_async(key.id)
-          else
-            raise TooManyParametersForParallelJob
-          end
-        end
-      end
-    end
-  end
-
-  def idempotency_key_value
-    return job_id if defined?(job_id) && !job_id.nil?
+  def identifier
     return jid if defined?(jid) && !jid.nil?
+    return job_id if defined?(job_id) && !job_id.nil?
 
-    Digest::SHA1.hexdigest [self.class.name, arguments_for_perform].flatten.join
-  end
+    # might be defined already in `with_acidity` method
+    @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
 
-  def step_done(_status, options)
-    key = Key.find(options["key_id"])
-    # when a batch of jobs for a step succeeds, we begin the key processing again
-    process_key(key)
+    @__acidic_job_idempotency_key
   end
 end
-# rubocop:enable Metrics/ModuleLength, Metrics/AbcSize, Metrics/MethodLength

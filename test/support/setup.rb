@@ -17,29 +17,24 @@ ActiveRecord::Base.establish_connection(
 
 GlobalID.app = :test
 
-# rubocop:disable Metrics/BlockLength
 ActiveRecord::Schema.define do
-  create_table :acidic_job_keys, force: true do |t|
+  create_table :acidic_job_runs, force: true do |t|
+    t.boolean :staged, null: false,	default: -> { false }
     t.string :idempotency_key, null: false
-    t.string :job_name, null: false
-    t.text :job_args, null: true
-    t.datetime :last_run_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
-    t.datetime :locked_at, null: true
-    t.string :recovery_point, null: false
-    t.text :error_object
-    t.text :attr_accessors
-    t.text :workflow
+    t.text :serialized_job,	null: false
+    t.string :job_class,	null: false
+    t.datetime :last_run_at,	null: true,	default: -> { "CURRENT_TIMESTAMP" }
+    t.datetime :locked_at,	null: true
+    t.string :recovery_point,	null: true
+    t.text :error_object,	null: true
+    t.text :attr_accessors,	null: true
+    t.text :workflow,	null: true
     t.timestamps
 
-    t.index %i[idempotency_key job_name job_args], unique: true,
-                                                   name: "idx_acidic_job_keys_on_idempotency_key_n_job_name_n_job_args"
+    t.index :idempotency_key, unique: true
   end
 
-  create_table :staged_acidic_jobs, force: true do |t|
-    t.string :adapter, null: false
-    t.string :job_name, null: false
-    t.text :job_args, null: true
-  end
+  # -----------------------------------------------------------------------
 
   create_table :audits, force: true do |t|
     t.references :auditable, polymorphic: true
@@ -75,8 +70,17 @@ ActiveRecord::Schema.define do
     t.references :user, foreign_key: true, on_delete: :restrict
     t.timestamps
   end
+
+  create_table :notifications, force: :cascade do |t|
+    t.string :recipient_type, null: false
+    t.bigint :recipient_id, null: false
+    t.string :type
+    t.json :params
+    t.datetime :read_at
+    t.timestamps
+    t.index %i[recipient_type recipient_id], name: "index_notifications_on_recipient_type_and_recipient_id"
+  end
 end
-# rubocop:enable Metrics/BlockLength
 
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
@@ -90,12 +94,18 @@ class Audit < ApplicationRecord
 end
 
 class User < ApplicationRecord
+  has_many :notifications, as: :recipient
+
   validates :email, presence: true
   validates :stripe_customer_id, presence: true
 end
 
 class Ride < ApplicationRecord
   belongs_to :user
+end
+
+class Notification < ApplicationRecord
+  include Noticed::Model
 end
 
 require "database_cleaner/active_record"
