@@ -31,8 +31,7 @@ module AcidicJob
           "#{self.class.name}#step_done",
           # NOTE: options are marshalled through JSON so use only basic types.
           { "run_id" => run.id,
-            "step_result_class_name" => step_result.class.name,
-            "step_result_attributes" => step_result.attributes }
+            "step_result_yaml" => step_result.to_yaml.strip }
         )
         # NOTE: The jobs method is atomic.
         # All jobs created in the block are actually pushed atomically at the end of the block.
@@ -57,7 +56,7 @@ module AcidicJob
       run = Run.find(options["run_id"])
       current_step = run.workflow[run.recovery_point.to_s]
       # re-hydrate the `step_result` object
-      step_result = options["step_result_class_name"].constantize.new(*options["step_result_attributes"])
+      step_result = YAML.load(options["step_result_yaml"])
       step = Step.new(current_step, run, self, step_result)
 
       # TODO: WRITE REGRESSION TESTS FOR PARALLEL JOB FAILING AND RETRYING THE ORIGINAL STEP
