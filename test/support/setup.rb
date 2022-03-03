@@ -70,7 +70,18 @@ ActiveRecord::Schema.define do
     t.references :user, foreign_key: true, on_delete: :restrict
     t.timestamps
   end
+
+  create_table :notifications, force: :cascade do |t|
+    t.string :recipient_type, null: false
+    t.bigint :recipient_id, null: false
+    t.string :type
+    t.json :params
+    t.datetime :read_at
+    t.timestamps
+    t.index %i[recipient_type recipient_id], name: "index_notifications_on_recipient_type_and_recipient_id"
+  end
 end
+
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
   include GlobalID::Identification
@@ -83,12 +94,18 @@ class Audit < ApplicationRecord
 end
 
 class User < ApplicationRecord
+  has_many :notifications, as: :recipient
+
   validates :email, presence: true
   validates :stripe_customer_id, presence: true
 end
 
 class Ride < ApplicationRecord
   belongs_to :user
+end
+
+class Notification < ApplicationRecord
+  include Noticed::Model
 end
 
 require "database_cleaner/active_record"

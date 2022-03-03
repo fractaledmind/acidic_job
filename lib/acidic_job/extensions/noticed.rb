@@ -5,17 +5,25 @@ module AcidicJob
     module Noticed
       extend ActiveSupport::Concern
 
+      class_methods do
+        def deliver_acidicly(recipients)
+          new.deliver_acidicly(recipients)
+        end
+      end
+
       def deliver_acidicly(recipients)
         # THIS IS A HACK THAT COPIES AND PASTES KEY PARTS OF THE `Noticed::Base` CODE
         # IN ORDER TO ALLOW US TO TRANSACTIONALLY DELIVER NOTIFICATIONS
         # THIS IS THUS LIABLE TO BREAK WHENEVER THAT GEM IS UPDATED
         delivery_methods = self.class.delivery_methods.dup
 
-        Array.wrap(recipients).uniq.flat_map do |recipient|
+        Array.wrap(recipients).uniq.each do |recipient|
           if (index = delivery_methods.find_index { |m| m[:name] == :database })
             database_delivery_method = delivery_methods.delete_at(index)
-            self.record = run_delivery_method(database_delivery_method, recipient: recipient, enqueue: false,
-                                                                        record: nil)
+            self.record = run_delivery_method(database_delivery_method,
+                                              recipient: recipient,
+                                              enqueue: false,
+                                              record: nil)
           end
 
           delivery_methods.map do |delivery_method|
@@ -36,9 +44,9 @@ module AcidicJob
               idempotency_key: IdempotencyKey.value_for(serialized_job)
             )
           end
-          alias_method :perform_transactionally, :perform_acidicly
         end
       end
+      alias deliver_transactionally deliver_acidicly
     end
   end
 end
