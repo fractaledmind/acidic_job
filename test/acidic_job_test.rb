@@ -46,7 +46,7 @@ class TestAcidicJobs < Minitest::Test
         "executions" => 1,
         "exception_executions" => {},
         "locale" => "en",
-        "timezone" => nil
+        "timezone" => "UTC"
       },
       workflow: {
         "create_ride_and_audit_record" => {

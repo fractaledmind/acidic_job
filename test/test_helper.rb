@@ -12,4 +12,7 @@ end
 
 require "acidic_job"
 require "minitest/autorun"
+require "combustion"
+Combustion.path = "test/dummy"
+Combustion.initialize!
 require_relative "support/setup"

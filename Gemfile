@@ -30,3 +30,5 @@ gem "pry"
 gem "sidekiq"
 
 gem "noticed"
+
+gem "combustion"
