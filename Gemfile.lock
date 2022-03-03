@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     acidic_job (1.0.0.pre.alpha)
-      activerecord (>= 4.0.0)
+      activerecord (>= 6.1.0)
       activesupport
 
 GEM
@@ -122,8 +122,6 @@ GEM
     nokogiri (1.12.3)
       mini_portile2 (~> 2.6.1)
       racc (~> 1.4)
-    nokogiri (1.12.3-x86_64-darwin)
-      racc (~> 1.4)
     noticed (1.5.7)
       http (>= 4.0.0)
       rails (>= 5.2.0)
@@ -210,6 +208,7 @@ GEM
       unf_ext
     unf_ext (0.0.8)
     unicode-display_width (2.0.0)
+    warning (1.2.1)
     websocket-driver (0.7.5)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
@@ -228,7 +227,7 @@ DEPENDENCIES
   minitest (~> 5.0)
   noticed
   pry
-  railties (>= 4.0)
+  railties (>= 6.1.0)
   rake (~> 13.0)
   rubocop (~> 1.7)
   rubocop-minitest
@@ -236,6 +235,7 @@ DEPENDENCIES
   sidekiq
   simplecov
   sqlite3
+  warning
 
 BUNDLED WITH
    2.2.31

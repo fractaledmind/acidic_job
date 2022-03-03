@@ -32,3 +32,5 @@ gem "sidekiq"
 gem "noticed"
 
 gem "combustion"
+
+gem "warning"
