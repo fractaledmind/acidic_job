@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    acidic_job (1.0.0.pre4)
+    acidic_job (1.0.0.pre5)
       activerecord (>= 6.1.0)
       activesupport
 
