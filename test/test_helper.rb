@@ -10,8 +10,8 @@ SimpleCov.start do
   primary_coverage :branch
 end
 
-require 'warning'
-Warning.ignore([:not_reached, :unused_var])
+require "warning"
+Warning.ignore(%i[not_reached unused_var])
 
 require "acidic_job"
 require "minitest/autorun"
