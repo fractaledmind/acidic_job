@@ -7,18 +7,18 @@ module AcidicJob
     class InstallGenerator < ::Rails::Generators::Base
       include ActiveRecord::Generators::Migration
       source_root File.expand_path("templates", __dir__)
-      
+
       desc "Generates a migration for the AcidicJob::Run table."
-    
+
       # Copies the migration template to db/migrate.
       def copy_acidic_job_runs_migration_files
         migration_template "create_acidic_job_runs_migration.rb.erb",
                            "db/migrate/create_acidic_job_runs.rb",
                            migration_version: migration_version
       end
-    
+
       protected
-    
+
       def migration_version
         "[#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}]"
       end
