@@ -71,12 +71,7 @@ module AcidicJob
     # convert the array of steps into a hash of recovery_points and next steps
     workflow = define_workflow(steps)
 
-    # determine the idempotency key value for this job run (`job_id` or `jid`)
-    # might be defined already in `identifier` method
-    # TODO: allow idempotency to be defined by args OR job id
-    @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
-
-    @run = ensure_run_record(@__acidic_job_idempotency_key, workflow, given)
+    @run = ensure_run_record(workflow, given)
 
     # begin the workflow
     process_run(@run)
@@ -93,6 +88,9 @@ module AcidicJob
     FinishedPoint.new
   end
 
+  # determine the idempotency key value for this job run (`job_id` or `jid`)
+  # might be defined already in `identifier` method
+  # TODO: allow idempotency to be defined by args OR job id
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def idempotency_key
     return @__acidic_job_idempotency_key if defined? @__acidic_job_idempotency_key
@@ -171,7 +169,7 @@ module AcidicJob
     # { "step 1": { does: "step 1", awaits: [], then: "step 2" }, ...  }
   end
 
-  def ensure_run_record(key_val, workflow, accessors)
+  def ensure_run_record(workflow, accessors)
     isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
                       when :sqlite
                         :read_uncommitted
@@ -180,7 +178,7 @@ module AcidicJob
                       end
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
-      run = Run.find_by(idempotency_key: key_val)
+      run = Run.find_by(idempotency_key: idempotency_key)
       serialized_job = serialize_job(@__acidic_job_args, @__acidic_job_kwargs)
 
       if run.present?
@@ -201,7 +199,7 @@ module AcidicJob
       else
         run = Run.create!(
           staged: false,
-          idempotency_key: key_val,
+          idempotency_key: idempotency_key,
           job_class: self.class.name,
           locked_at: Time.current,
           last_run_at: Time.current,
