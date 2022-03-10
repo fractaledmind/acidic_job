@@ -69,6 +69,29 @@ class WorkerWithOldSyntax
   end
 end
 
+class WorkerIdentifiedByJIDByDefault
+  include Sidekiq::Worker
+  include AcidicJob
+
+  def perform; end
+end
+
+class WorkerIdentifiedByJID
+  include Sidekiq::Worker
+  include AcidicJob
+  acidic_by_job_id
+
+  def perform; end
+end
+
+class WorkerIdentifiedByArgs
+  include Sidekiq::Worker
+  include AcidicJob
+  acidic_by_job_args
+
+  def perform; end
+end
+
 class TestEdgeCases < Minitest::Test
   def before_setup
     super
@@ -125,5 +148,29 @@ class TestEdgeCases < Minitest::Test
         include AcidicJob
       end
     end
+  end
+
+  def test_worker_identified_by_job_id_by_default
+    assert_equal :job_id, WorkerIdentifiedByJIDByDefault.instance_variable_get(:@acidic_identifier)
+
+    job = WorkerIdentifiedByJIDByDefault.new
+    job.jid = "1234567890"
+    assert_equal "1234567890", job.idempotency_key
+  end
+
+  def test_worker_identified_by_job_id
+    assert_equal :job_id, WorkerIdentifiedByJID.instance_variable_get(:@acidic_identifier)
+
+    job = WorkerIdentifiedByJID.new
+    job.jid = "0987654321"
+    assert_equal "0987654321", job.idempotency_key
+  end
+
+  def test_worker_identified_by_job_args
+    assert_equal :job_args, WorkerIdentifiedByArgs.instance_variable_get(:@acidic_identifier)
+
+    job = WorkerIdentifiedByArgs.new
+    job.jid = "6574839201"
+    assert_equal "9e59feb9d200a24f8b9f9886799be32a7d851f71", job.idempotency_key
   end
 end
