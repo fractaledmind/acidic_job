@@ -176,7 +176,6 @@ One final feature for those of you using Sidekiq Pro: an integrated DSL for Side
 In my opinion, any commercial software using Sidekiq should get Sidekiq Pro; it is _absolutely_ worth the money. If, however, you are using `acidic_job` in a non-commercial application, you could use the open-source dropin replacement for this functionality: https://github.com/breamware/sidekiq-batch
 
 ```ruby
-# TODO: write code sample
 class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
