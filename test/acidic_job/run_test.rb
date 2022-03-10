@@ -152,7 +152,7 @@ class TestAcidicJobRun < Minitest::Test
       workflow: { a: "a" }
     }
     finished = AcidicJob::Run::FINISHED_RECOVERY_POINT
-  
+
     AcidicJob::Run.create!(default_attributes.merge(recovery_point: :started, error_object: nil,
                                                     idempotency_key: rand))
     AcidicJob::Run.create!(default_attributes.merge(recovery_point: :started, error_object: "T",
@@ -161,7 +161,7 @@ class TestAcidicJobRun < Minitest::Test
                                                     idempotency_key: rand))
     AcidicJob::Run.create!(default_attributes.merge(recovery_point: finished, error_object: "T",
                                                     idempotency_key: rand))
-  
+
     assert_equal 4, AcidicJob::Run.count
     assert_equal 0, AcidicJob::Run.where(recovery_point: :started).purge
   end
