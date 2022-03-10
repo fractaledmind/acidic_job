@@ -35,6 +35,19 @@ module AcidicJob
       validates :workflow, presence: true
     end
 
+    def self.purge
+      successfully_completed = where(
+        recovery_point: FINISHED_RECOVERY_POINT,
+        error_object: nil
+      )
+      count = successfully_completed.count
+
+      return 0 if count.zero?
+
+      Rails.logger.info("Deleting #{count} successfully completed AcidicJob runs")
+      successfully_completed.delete_all
+    end
+
     def finished?
       recovery_point == FINISHED_RECOVERY_POINT
     end
