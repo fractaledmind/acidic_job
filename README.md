@@ -191,6 +191,71 @@ class RideCreateJob < ActiveJob::Base
 end
 ```
 
+## Testing
+
+When testing acidic jobs, you are likely to run into `ActiveRecord::TransactionIsolationError`s:
+
+```
+ActiveRecord::TransactionIsolationError: cannot set transaction isolation in a nested transaction
+```
+
+This error is thrown because by default RSpec and most MiniTest test suites use database transactions to keep the test database clean between tests. The database transaction that is wrapping all of the code executed in your test is run at the standard isolation level, but acidic jobs then try to create another transaction run at a more conservative isolation level. You cannot have a nested transaction that runs at a different isolation level, thus, this error. 
+
+In order to avoid this error, you need to ensure firstly that your tests that run your acidic jobs are not using a database transaction and secondly that they use some different strategy to keep your test database clean. The [DatabaseCleaner](https://github.com/DatabaseCleaner/database_cleaner) gem is a commonly used tool to manage different strategies for keeping your test database clean. As for which strategy to use, `truncation` and `deletion` are both safe, but their speed varies based on our app's table structure (see https://github.com/DatabaseCleaner/database_cleaner#what-strategy-is-fastest). Either is fine; use whichever is faster for your app.
+
+In order to make this test setup simpler, `AcidicJob` provides a `TestCase` class that your MiniTest jobs tests can inherit from. It is simple; it inherits from `ActiveJob::TestCase`, sets `use_transactional_tests` to `false`, and ensures `DatabaseCleaner` is run for each of your tests:
+
+```ruby
+class AcidicJob::TestCase < ActiveJob::TestCase
+  self.use_transactional_tests = false
+
+  def before_setup
+    super
+    DatabaseCleaner.start
+  end
+
+  def after_teardown
+    DatabaseCleaner.clean
+    super
+  end
+
+  # ...
+end
+```
+
+For those of you using RSpec, you can require the `acidic_job/rspec_configuration` file, which will configure RSpec in the exact same way I have used in my RSpec projects to allow me to test acidic jobs with either the `deletion` strategy but still have all of my other tests use the fast `transaction` strategy:
+
+```ruby
+require "database_cleaner/active_record"
+
+# see https://github.com/DatabaseCleaner/database_cleaner#how-to-use
+RSpec.configure do |config|
+  config.use_transactional_fixtures = false
+
+  config.before(:suite) do
+    DatabaseCleaner.clean_with :truncation
+
+    # Here we are defaulting to :transaction but swapping to deletion for some specs;
+    # if your spec or its code-under-test uses
+    # nested transactions then specify :transactional e.g.:
+    #   describe "SomeWorker", :transactional do
+    #
+    DatabaseCleaner.strategy = :transaction
+
+    config.before(:context, transactional: true) { DatabaseCleaner.strategy = :deletion }
+    config.after(:context, transactional: true) { DatabaseCleaner.strategy = :transaction }
+    config.before(:context, type: :system) { DatabaseCleaner.strategy = :deletion }
+    config.after(:context, type: :system) { DatabaseCleaner.strategy = :transaction }
+  end
+
+  config.around(:each) do |example|
+    DatabaseCleaner.cleaning do
+      example.run
+    end
+  end
+end
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
