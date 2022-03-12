@@ -98,6 +98,9 @@ module AcidicJob
   def idempotency_key
     return @__acidic_job_idempotency_key if defined? @__acidic_job_idempotency_key
 
+    # `with_acidity` might not have run yet
+    raise IdempotencyKeyUndefined if @__acidic_job_unique_by.nil?
+
     @__acidic_job_idempotency_key ||= IdempotencyKey.new(self).value_for(@__acidic_job_unique_by)
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName

@@ -145,23 +145,14 @@ class TestAcidicJobs < AcidicJob::TestCase
       assert_equal 0, AcidicJob::Run.staged.count
     end
 
-    def test_idempotency_key_method_returns_job_id
+    def test_idempotency_key_method_throws_before_performed
       key = create_run
       AcidicJob::Run.stub(:find_by, ->(*) { key }) do
         job = RideCreateJob.new
-        idempotency_key = job.idempotency_key
 
-        assert_equal idempotency_key, job.job_id
-      end
-    end
-
-    def test_idempotency_key_method_returns_job_id_memoized
-      key = create_run
-      AcidicJob::Run.stub(:find_by, ->(*) { key }) do
-        job = RideCreateJob.new
-        idempotency_key = job.idempotency_key
-
-        assert_equal idempotency_key, job.idempotency_key
+        assert_raises AcidicJob::IdempotencyKeyUndefined do
+          idempotency_key = job.idempotency_key
+        end
       end
     end
   end
