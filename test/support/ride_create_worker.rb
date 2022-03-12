@@ -16,7 +16,7 @@ class RideCreateWorker
   class SimulatedTestingFailure < StandardError; end
 
   def perform(user_id, ride_params)
-    with_acidity given: { user_id: user_id, params: ride_params, ride: nil } do
+    with_acidity providing: { user_id: user_id, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt

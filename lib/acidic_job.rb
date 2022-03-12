@@ -59,7 +59,7 @@ module AcidicJob
     end
   end
 
-  def with_acidity(given: {})
+  def with_acidity(providing: {})
     # execute the block to gather the info on what steps are defined for this job workflow
     @__acidic_job_steps = []
     steps = yield || []
@@ -76,7 +76,7 @@ module AcidicJob
     # TODO: allow idempotency to be defined by args OR job id
     @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
 
-    @run = ensure_run_record(@__acidic_job_idempotency_key, workflow, given)
+    @run = ensure_run_record(@__acidic_job_idempotency_key, workflow, providing)
 
     # begin the workflow
     process_run(@run)
@@ -84,7 +84,7 @@ module AcidicJob
 
   # DEPRECATED
   def idempotently(with:, &blk)
-    with_acidity(given: with, &blk)
+    with_acidity(providing: with, &blk)
   end
 
   def safely_finish_acidic_job

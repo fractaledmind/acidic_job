@@ -12,7 +12,7 @@ class WorkerWithRescueInPerform
   include AcidicJob
 
   def perform
-    with_acidity given: {} do
+    with_acidity do
       step :do_something
     end
   rescue CustomErrorForTesting
@@ -29,7 +29,7 @@ class WorkerWithErrorInsidePhaseTransaction
   include AcidicJob
 
   def perform
-    with_acidity given: { accessor: nil } do
+    with_acidity providing: { accessor: nil } do
       step :do_something
     end
   end
@@ -45,7 +45,7 @@ class WorkerWithLogicInsideAcidicBlock
   include AcidicJob
 
   def perform(bool)
-    with_acidity given: {} do
+    with_acidity do
       step :do_something if bool
     end
   end

@@ -78,7 +78,7 @@ class RideCreateJob < ActiveJob::Base
   def perform(user_id, ride_params)
     user = User.find(user_id)
 
-    with_acidity given: { user: user, params: ride_params, ride: nil } do
+    with_acidity providing: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -99,20 +99,20 @@ class RideCreateJob < ActiveJob::Base
 end
 ```
 
-`with_acidity` takes only the `given:` named parameter and a block where you define the steps of this operation. `step` simply takes the name of a method available in the job. That's all!
+`with_acidity` takes only the `providing:` named parameter and a block where you define the steps of this operation. `step` simply takes the name of a method available in the job. That's all!
 
 Now, each execution of this job will find or create an `AcidicJob::Run` record, which we leverage to wrap every step in a database transaction. Moreover, this database record allows `acidic_job` to ensure that if your job fails on step 3, when it retries, it will simply jump right back to trying to execute the method defined for the 3rd step, and won't even execute the first two step methods. This means your step methods only need to be idempotent on failure, not on success, since they will never be run again if they succeed.
 
 ### Persisted Attributes
 
-Any objects passed to the `given` option on the `with_acidity` method are not just made available to each of your step methods, they are made available across retries. This means that you can set an attribute in step 1, access it in step 2, have step 2 fail, have the job retry, jump directly back to step 2 on retry, and have that object still accessible. This is done by serializing all objects to a field on the `AcidicJob::Run` and manually providing getters and setters that sync with the database record.
+Any objects passed to the `providing` option on the `with_acidity` method are not just made available to each of your step methods, they are made available across retries. This means that you can set an attribute in step 1, access it in step 2, have step 2 fail, have the job retry, jump directly back to step 2 on retry, and have that object still accessible. This is done by serializing all objects to a field on the `AcidicJob::Run` and manually providing getters and setters that sync with the database record.
 
 ```ruby
 class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
   def perform(ride_params)
-    with_acidity given: { ride: nil } do
+    with_acidity providing: { ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -148,7 +148,7 @@ class RideCreateJob < ActiveJob::Base
   def perform(user_id, ride_params)
     user = User.find(user_id)
     
-    with_acidity given: { user: user, params: ride_params, ride: nil } do
+    with_acidity providing: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -182,7 +182,7 @@ class RideCreateJob < ActiveJob::Base
   def perform(user_id, ride_params)
     user = User.find(user_id)
 
-    with_acidity given: { user: user, params: ride_params, ride: nil } do
+    with_acidity providing: { user: user, params: ride_params, ride: nil } do
       step :create_ride_and_audit_record, awaits: [SomeJob]
       step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
       step :send_receipt
