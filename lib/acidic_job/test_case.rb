@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "active_job/test_case"
-require "database_cleaner/active_record"
+require "database_cleaner"
 
 module AcidicJob
   class TestCase < ActiveJob::TestCase
