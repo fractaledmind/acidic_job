@@ -4,8 +4,9 @@ require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
 require_relative "support/ride_create_worker"
+require "acidic_job/test_case"
 
-class TestAcidicWorkers < Minitest::Test
+class TestAcidicWorkers < AcidicJob::TestCase
   def setup
     @valid_params = {
       "origin_lat" => 0.0,
@@ -13,21 +14,20 @@ class TestAcidicWorkers < Minitest::Test
       "target_lat" => 0.0,
       "target_lon" => 0.0
     }.freeze
-    @valid_user = User.find_by(stripe_customer_id: "tok_visa")
-    @invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
+    @valid_user = User.find_or_create_by(email: "user@example.com", stripe_customer_id: "tok_visa")
+    @invalid_user = User.find_or_create_by(email: "user-bad-source@example.com",
+                                           stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = [{ amount: 20_00, currency: "usd", user_id: @valid_user.id }.stringify_keys]
     @sidekiq_queue = Sidekiq::Queues["default"]
   end
 
   def before_setup
     super
-    DatabaseCleaner.start
     Sidekiq::Queues.clear_all
   end
 
   def after_teardown
     Sidekiq::Queues.clear_all
-    DatabaseCleaner.clean
     super
   end
 

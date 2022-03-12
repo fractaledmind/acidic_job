@@ -117,4 +117,52 @@ class TestAcidicJobRun < Minitest::Test
       end
     end
   end
+
+  def test_purging_successfully_completed_runs_without_relation
+    default_attributes = {
+      staged: false,
+      job_class: MyJob,
+      serialized_job: { "job_class" => "MyJob", "job_id" => nil },
+      last_run_at: Time.now,
+      recovery_point: "a",
+      workflow: { a: "a" }
+    }
+    finished = AcidicJob::Run::FINISHED_RECOVERY_POINT
+
+    AcidicJob::Run.create!(default_attributes.merge(recovery_point: :started, error_object: nil,
+                                                    idempotency_key: rand))
+    AcidicJob::Run.create!(default_attributes.merge(recovery_point: :started, error_object: "T",
+                                                    idempotency_key: rand))
+    AcidicJob::Run.create!(default_attributes.merge(recovery_point: finished, error_object: nil,
+                                                    idempotency_key: rand))
+    AcidicJob::Run.create!(default_attributes.merge(recovery_point: finished, error_object: "T",
+                                                    idempotency_key: rand))
+
+    assert_equal 4, AcidicJob::Run.count
+    assert_equal 1, AcidicJob::Run.purge
+  end
+
+  def test_purging_successfully_completed_runs_with_relation
+    default_attributes = {
+      staged: false,
+      job_class: MyJob,
+      serialized_job: { "job_class" => "MyJob", "job_id" => nil },
+      last_run_at: Time.now,
+      recovery_point: "a",
+      workflow: { a: "a" }
+    }
+    finished = AcidicJob::Run::FINISHED_RECOVERY_POINT
+
+    AcidicJob::Run.create!(default_attributes.merge(recovery_point: :started, error_object: nil,
+                                                    idempotency_key: rand))
+    AcidicJob::Run.create!(default_attributes.merge(recovery_point: :started, error_object: "T",
+                                                    idempotency_key: rand))
+    AcidicJob::Run.create!(default_attributes.merge(recovery_point: finished, error_object: nil,
+                                                    idempotency_key: rand))
+    AcidicJob::Run.create!(default_attributes.merge(recovery_point: finished, error_object: "T",
+                                                    idempotency_key: rand))
+
+    assert_equal 4, AcidicJob::Run.count
+    assert_equal 0, AcidicJob::Run.where(recovery_point: :started).purge
+  end
 end

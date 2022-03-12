@@ -176,7 +176,6 @@ One final feature for those of you using Sidekiq Pro: an integrated DSL for Side
 In my opinion, any commercial software using Sidekiq should get Sidekiq Pro; it is _absolutely_ worth the money. If, however, you are using `acidic_job` in a non-commercial application, you could use the open-source dropin replacement for this functionality: https://github.com/breamware/sidekiq-batch
 
 ```ruby
-# TODO: write code sample
 class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
@@ -187,6 +186,53 @@ class RideCreateJob < ActiveJob::Base
       step :create_ride_and_audit_record, awaits: [SomeJob]
       step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
       step :send_receipt
+    end
+  end
+end
+```
+
+## Testing
+
+When testing acidic jobs, you are likely to run into `ActiveRecord::TransactionIsolationError`s:
+
+```
+ActiveRecord::TransactionIsolationError: cannot set transaction isolation in a nested transaction
+```
+
+This error is thrown because by default RSpec and most MiniTest test suites use database transactions to keep the test database clean between tests. The database transaction that is wrapping all of the code executed in your test is run at the standard isolation level, but acidic jobs then try to create another transaction run at a more conservative isolation level. You cannot have a nested transaction that runs at a different isolation level, thus, this error. 
+
+In order to avoid this error, you need to ensure firstly that your tests that run your acidic jobs are not using a database transaction and secondly that they use some different strategy to keep your test database clean. The [DatabaseCleaner](https://github.com/DatabaseCleaner/database_cleaner) gem is a commonly used tool to manage different strategies for keeping your test database clean. As for which strategy to use, `truncation` and `deletion` are both safe, but their speed varies based on our app's table structure (see https://github.com/DatabaseCleaner/database_cleaner#what-strategy-is-fastest). Either is fine; use whichever is faster for your app.
+
+In order to make this test setup simpler, `AcidicJob` provides a `TestCase` class that your MiniTest jobs tests can inherit from. It is simple; it inherits from `ActiveJob::TestCase`, sets `use_transactional_tests` to `false`, and ensures `DatabaseCleaner` is run for each of your tests. Moreover, it ensures that the system's original DatabaseCleaner configuration is maintained, options included, except that any `transaction` strategies for any ORMs are replaced with a `deletion` strategy. It does so by storing whatever the system DatabaseCleaner configuration is at the start of `before_setup` phase in an instance variable and then restores that configuration at the end of `after_teardown` phase. In between, it runs the configuration thru a pipeline that selectively replaces any `transaction` strategies with a corresponding `deletion` strategy, leaving any other configured strategies untouched.
+
+For those of you using RSpec, you can require the `acidic_job/rspec_configuration` file, which will configure RSpec in the exact same way I have used in my RSpec projects to allow me to test acidic jobs with either the `deletion` strategy but still have all of my other tests use the fast `transaction` strategy:
+
+```ruby
+require "database_cleaner/active_record"
+
+# see https://github.com/DatabaseCleaner/database_cleaner#how-to-use
+RSpec.configure do |config|
+  config.use_transactional_fixtures = false
+
+  config.before(:suite) do
+    DatabaseCleaner.clean_with :truncation
+
+    # Here we are defaulting to :transaction but swapping to deletion for some specs;
+    # if your spec or its code-under-test uses
+    # nested transactions then specify :transactional e.g.:
+    #   describe "SomeWorker", :transactional do
+    #
+    DatabaseCleaner.strategy = :transaction
+
+    config.before(:context, transactional: true) { DatabaseCleaner.strategy = :deletion }
+    config.after(:context, transactional: true) { DatabaseCleaner.strategy = :transaction }
+    config.before(:context, type: :system) { DatabaseCleaner.strategy = :deletion }
+    config.after(:context, type: :system) { DatabaseCleaner.strategy = :transaction }
+  end
+
+  config.around(:each) do |example|
+    DatabaseCleaner.cleaning do
+      example.run
     end
   end
 end
