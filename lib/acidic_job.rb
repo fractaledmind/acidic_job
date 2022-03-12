@@ -250,14 +250,4 @@ module AcidicJob
 
     true
   end
-
-  def identifier
-    return jid if defined?(jid) && !jid.nil?
-    return job_id if defined?(job_id) && !job_id.nil?
-
-    # might be defined already in `with_acidity` method
-    @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
-
-    @__acidic_job_idempotency_key
-  end
 end
