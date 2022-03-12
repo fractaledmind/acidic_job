@@ -2,8 +2,9 @@
 
 require "test_helper"
 require_relative "support/ride_create_job"
+require "acidic_job/test_case"
 
-class TestAcidicJobs < Minitest::Test
+class TestAcidicJobs < AcidicJob::TestCase
   include ActiveJob::TestHelper
 
   def setup
@@ -13,8 +14,8 @@ class TestAcidicJobs < Minitest::Test
       "target_lat" => 0.0,
       "target_lon" => 0.0
     }.freeze
-    @valid_user = User.find_by(stripe_customer_id: "tok_visa")
-    @invalid_user = User.find_by(stripe_customer_id: "tok_chargeCustomerFail")
+    @valid_user = User.find_or_create_by(email: "user@example.com", stripe_customer_id: "tok_visa")
+    @invalid_user = User.find_or_create_by(email: "user-bad-source@example.com", stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = { amount: 20_00, currency: "usd", user: @valid_user }
   end
 
