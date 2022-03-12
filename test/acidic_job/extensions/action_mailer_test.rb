@@ -13,7 +13,7 @@ end
 
 class TestActionMailerExtension < Minitest::Test
   def setup
-    @user = User.find_by(stripe_customer_id: "tok_visa")
+    @user = User.find_or_create_by(email: "user@example.com", stripe_customer_id: "tok_visa")
   end
 
   def before_setup

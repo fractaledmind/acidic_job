@@ -108,7 +108,6 @@ class Notification < ApplicationRecord
   include Noticed::Model
 end
 
-require "database_cleaner/active_record"
 DatabaseCleaner.strategy = [:deletion, { except: %w[users] }]
 DatabaseCleaner.clean
 
