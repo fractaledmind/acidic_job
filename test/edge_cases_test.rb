@@ -149,4 +149,23 @@ class TestEdgeCases < AcidicJob::TestCase
       WorkerWithNoSteps.new.perform
     end
   end
+
+  def test_worker_return_value_in_with_acidity_block
+    dynamic_class = Class.new do
+      include Sidekiq::Worker
+      include AcidicJob
+  
+      def perform
+        with_acidity do
+          step :do_something
+          123
+        end
+      end
+    end
+    Object.const_set("WorkerWithBlockReturn", dynamic_class)
+  
+    WorkerWithBlockReturn.new.perform
+
+    assert_equal 1, AcidicJob::Run.unstaged.count
+  end
 end

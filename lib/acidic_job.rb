@@ -60,16 +60,17 @@ module AcidicJob
   end
 
   def with_acidity(providing: {})
-    # execute the block to gather the info on what steps are defined for this job workflow
+    # ensure this instance variable is always defined
     @__acidic_job_steps = []
-    steps = yield || []
+    # execute the block to gather the info on what steps are defined for this job workflow
+    yield
 
     # check that the block actually defined at least one step
     # TODO: WRITE TESTS FOR FAULTY BLOCK VALUES
     raise NoDefinedSteps if @__acidic_job_steps.nil? || @__acidic_job_steps.empty?
 
     # convert the array of steps into a hash of recovery_points and next steps
-    workflow = define_workflow(steps)
+    workflow = define_workflow(@__acidic_job_steps)
 
     @run = ensure_run_record(workflow, providing)
 
