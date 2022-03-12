@@ -4,8 +4,9 @@ require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
 require_relative "support/ride_create_worker"
+require "acidic_job/test_case"
 
-class TestAcidicWorkers < Minitest::Test
+class TestAcidicWorkers < AcidicJob::TestCase
   def setup
     @valid_params = {
       "origin_lat" => 0.0,
@@ -22,13 +23,11 @@ class TestAcidicWorkers < Minitest::Test
 
   def before_setup
     super
-    DatabaseCleaner.start
     Sidekiq::Queues.clear_all
   end
 
   def after_teardown
     Sidekiq::Queues.clear_all
-    DatabaseCleaner.clean
     super
   end
 

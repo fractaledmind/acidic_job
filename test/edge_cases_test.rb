@@ -3,6 +3,7 @@
 require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
+require "acidic_job/test_case"
 
 class CustomErrorForTesting < StandardError; end
 
@@ -69,16 +70,14 @@ class WorkerWithOldSyntax
   end
 end
 
-class TestEdgeCases < Minitest::Test
+class TestEdgeCases < AcidicJob::TestCase
   def before_setup
     super
-    DatabaseCleaner.start
     Sidekiq::Queues.clear_all
   end
 
   def after_teardown
     Sidekiq::Queues.clear_all
-    DatabaseCleaner.clean
     super
   end
 

@@ -3,6 +3,7 @@
 require "test_helper"
 require "sidekiq"
 require_relative "./support/sidekiq_batches"
+require "acidic_job/test_case"
 
 class CustomErrorForTesting < StandardError; end
 
@@ -28,20 +29,18 @@ class WorkerWithEnqueueStep < Support::Sidekiq::Workflow
   end
 end
 
-class TestWorkflows < Minitest::Test
+class TestWorkflows < AcidicJob::TestCase
   def setup
     @sidekiq_queue = Sidekiq::Queues["default"]
   end
 
   def before_setup
     super
-    DatabaseCleaner.start
     Sidekiq::Queues.clear_all
   end
 
   def after_teardown
     Sidekiq::Queues.clear_all
-    DatabaseCleaner.clean
     super
   end
 

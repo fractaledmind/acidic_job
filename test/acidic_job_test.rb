@@ -20,16 +20,6 @@ class TestAcidicJobs < AcidicJob::TestCase
     @staged_job_params = { amount: 20_00, currency: "usd", user: @valid_user }
   end
 
-  def before_setup
-    super
-    DatabaseCleaner.start
-  end
-
-  def after_teardown
-    DatabaseCleaner.clean
-    super
-  end
-
   def create_run(params = {})
     AcidicJob::Run.create!({
       idempotency_key: "XXXX_IDEMPOTENCY_KEY",
