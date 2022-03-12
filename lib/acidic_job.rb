@@ -79,6 +79,7 @@ module AcidicJob
 
   # DEPRECATED
   def idempotently(with:, &blk)
+    ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:idempotently)
     with_acidity(providing: with, &blk)
   end
 
