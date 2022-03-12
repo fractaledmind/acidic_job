@@ -203,25 +203,7 @@ This error is thrown because by default RSpec and most MiniTest test suites use 
 
 In order to avoid this error, you need to ensure firstly that your tests that run your acidic jobs are not using a database transaction and secondly that they use some different strategy to keep your test database clean. The [DatabaseCleaner](https://github.com/DatabaseCleaner/database_cleaner) gem is a commonly used tool to manage different strategies for keeping your test database clean. As for which strategy to use, `truncation` and `deletion` are both safe, but their speed varies based on our app's table structure (see https://github.com/DatabaseCleaner/database_cleaner#what-strategy-is-fastest). Either is fine; use whichever is faster for your app.
 
-In order to make this test setup simpler, `AcidicJob` provides a `TestCase` class that your MiniTest jobs tests can inherit from. It is simple; it inherits from `ActiveJob::TestCase`, sets `use_transactional_tests` to `false`, and ensures `DatabaseCleaner` is run for each of your tests:
-
-```ruby
-class AcidicJob::TestCase < ActiveJob::TestCase
-  self.use_transactional_tests = false
-
-  def before_setup
-    super
-    DatabaseCleaner.start
-  end
-
-  def after_teardown
-    DatabaseCleaner.clean
-    super
-  end
-
-  # ...
-end
-```
+In order to make this test setup simpler, `AcidicJob` provides a `TestCase` class that your MiniTest jobs tests can inherit from. It is simple; it inherits from `ActiveJob::TestCase`, sets `use_transactional_tests` to `false`, and ensures `DatabaseCleaner` is run for each of your tests. Moreover, it ensures that the system's original DatabaseCleaner configuration is maintained, options included, except that any `transaction` strategies for any ORMs are replaced with a `deletion` strategy. It does so by storing whatever the system DatabaseCleaner configuration is at the start of `before_setup` phase in an instance variable and then restores that configuration at the end of `after_teardown` phase. In between, it runs the configuration thru a pipeline that selectively replaces any `transaction` strategies with a corresponding `deletion` strategy, leaving any other configured strategies untouched.
 
 For those of you using RSpec, you can require the `acidic_job/rspec_configuration` file, which will configure RSpec in the exact same way I have used in my RSpec projects to allow me to test acidic jobs with either the `deletion` strategy but still have all of my other tests use the fast `transaction` strategy:
 
