@@ -24,6 +24,6 @@ module AcidicJob
   class TooManyParametersForParallelJob < Error; end
 
   class UnknownSerializedJobIdentifier < Error; end
-    
+
   class IdempotencyKeyUndefined < Error; end
 end

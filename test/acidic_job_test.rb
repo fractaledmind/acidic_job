@@ -151,7 +151,7 @@ class TestAcidicJobs < AcidicJob::TestCase
         job = RideCreateJob.new
 
         assert_raises AcidicJob::IdempotencyKeyUndefined do
-          idempotency_key = job.idempotency_key
+          job.idempotency_key
         end
       end
     end
