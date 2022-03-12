@@ -9,6 +9,7 @@ module AcidicJob
 
     def before_setup
       super
+      DatabaseCleaner.strategy = :truncation
       DatabaseCleaner.start
     end
 
