@@ -60,23 +60,19 @@ module AcidicJob
   end
 
   def with_acidity(providing: {})
-    # execute the block to gather the info on what steps are defined for this job workflow
+    # ensure this instance variable is always defined
     @__acidic_job_steps = []
-    steps = yield || []
+    # execute the block to gather the info on what steps are defined for this job workflow
+    yield
 
     # check that the block actually defined at least one step
     # TODO: WRITE TESTS FOR FAULTY BLOCK VALUES
     raise NoDefinedSteps if @__acidic_job_steps.nil? || @__acidic_job_steps.empty?
 
     # convert the array of steps into a hash of recovery_points and next steps
-    workflow = define_workflow(steps)
+    workflow = define_workflow(@__acidic_job_steps)
 
-    # determine the idempotency key value for this job run (`job_id` or `jid`)
-    # might be defined already in `identifier` method
-    # TODO: allow idempotency to be defined by args OR job id
-    @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
-
-    @run = ensure_run_record(@__acidic_job_idempotency_key, workflow, providing)
+    @run = ensure_run_record(workflow, providing)
 
     # begin the workflow
     process_run(@run)
@@ -84,6 +80,7 @@ module AcidicJob
 
   # DEPRECATED
   def idempotently(with:, &blk)
+    ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:idempotently)
     with_acidity(providing: with, &blk)
   end
 
@@ -93,6 +90,7 @@ module AcidicJob
     FinishedPoint.new
   end
 
+  # TODO: allow idempotency to be defined by args OR job id
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def idempotency_key
     return @__acidic_job_idempotency_key if defined? @__acidic_job_idempotency_key
@@ -171,7 +169,7 @@ module AcidicJob
     # { "step 1": { does: "step 1", awaits: [], then: "step 2" }, ...  }
   end
 
-  def ensure_run_record(key_val, workflow, accessors)
+  def ensure_run_record(workflow, accessors)
     isolation_level = case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
                       when :sqlite
                         :read_uncommitted
@@ -180,7 +178,7 @@ module AcidicJob
                       end
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
-      run = Run.find_by(idempotency_key: key_val)
+      run = Run.find_by(idempotency_key: idempotency_key)
       serialized_job = serialize_job(@__acidic_job_args, @__acidic_job_kwargs)
 
       if run.present?
@@ -201,7 +199,7 @@ module AcidicJob
       else
         run = Run.create!(
           staged: false,
-          idempotency_key: key_val,
+          idempotency_key: idempotency_key,
           job_class: self.class.name,
           locked_at: Time.current,
           last_run_at: Time.current,
@@ -245,15 +243,5 @@ module AcidicJob
     end
 
     true
-  end
-
-  def identifier
-    return jid if defined?(jid) && !jid.nil?
-    return job_id if defined?(job_id) && !job_id.nil?
-
-    # might be defined already in `with_acidity` method
-    @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
-
-    @__acidic_job_idempotency_key
   end
 end
