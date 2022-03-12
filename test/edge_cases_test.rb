@@ -24,7 +24,7 @@ class TestEdgeCases < AcidicJob::TestCase
     dynamic_class = Class.new do
       include Sidekiq::Worker
       include AcidicJob
-      
+
       def perform
         with_acidity do
           step :do_something
@@ -32,7 +32,7 @@ class TestEdgeCases < AcidicJob::TestCase
       rescue CustomErrorForTesting
         true
       end
-      
+
       def do_something
         raise CustomErrorForTesting
       end
@@ -49,13 +49,13 @@ class TestEdgeCases < AcidicJob::TestCase
     dynamic_class = Class.new do
       include Sidekiq::Worker
       include AcidicJob
-      
+
       def perform
         with_acidity providing: { accessor: nil } do
           step :do_something
         end
       end
-      
+
       def do_something
         self.accessor = "value"
         raise CustomErrorForTesting
@@ -76,13 +76,13 @@ class TestEdgeCases < AcidicJob::TestCase
     dynamic_class = Class.new do
       include Sidekiq::Worker
       include AcidicJob
-      
+
       def perform(bool)
         with_acidity do
           step :do_something if bool
         end
       end
-      
+
       def do_something
         raise CustomErrorForTesting
       end
@@ -104,13 +104,13 @@ class TestEdgeCases < AcidicJob::TestCase
     dynamic_class = Class.new do
       include Sidekiq::Worker
       include AcidicJob
-      
+
       def perform
-        idempotently 'with': {} do
+        idempotently with: {} do
           step :do_something
         end
       end
-      
+
       def do_something
         raise CustomErrorForTesting
       end
@@ -131,12 +131,12 @@ class TestEdgeCases < AcidicJob::TestCase
       end
     end
   end
-    
+
   def test_worker_with_no_steps_throws_error
     dynamic_class = Class.new do
       include Sidekiq::Worker
       include AcidicJob
-      
+
       def perform
         with_acidity do
           2 * 2
