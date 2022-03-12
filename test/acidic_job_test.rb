@@ -15,7 +15,8 @@ class TestAcidicJobs < AcidicJob::TestCase
       "target_lon" => 0.0
     }.freeze
     @valid_user = User.find_or_create_by(email: "user@example.com", stripe_customer_id: "tok_visa")
-    @invalid_user = User.find_or_create_by(email: "user-bad-source@example.com", stripe_customer_id: "tok_chargeCustomerFail")
+    @invalid_user = User.find_or_create_by(email: "user-bad-source@example.com",
+                                           stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = { amount: 20_00, currency: "usd", user: @valid_user }
   end
 
