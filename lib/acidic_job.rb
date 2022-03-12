@@ -46,10 +46,6 @@ module AcidicJob
     end
 
     klass.set_callback :perform, :after, :delete_staged_job_record, if: :was_staged_job?
-
-    klass.instance_variable_set(:@acidic_identifier, :job_id)
-    klass.define_singleton_method(:acidic_by_job_id) { @acidic_identifier = :job_id }
-    klass.define_singleton_method(:acidic_by_job_args) { @acidic_identifier = :job_args }
   end
 
   included do
@@ -63,19 +59,21 @@ module AcidicJob
     end
   end
 
-  def with_acidity(providing: {})
-    # execute the block to gather the info on what steps are defined for this job workflow
+  def with_acidity(providing: {}, unique_by: :job_id)
+    @__acidic_job_unique_by = unique_by
+    # ensure this instance variable is always defined
     @__acidic_job_steps = []
-    steps = yield || []
+    # execute the block to gather the info on what steps are defined for this job workflow
+    yield
 
     # check that the block actually defined at least one step
     # TODO: WRITE TESTS FOR FAULTY BLOCK VALUES
     raise NoDefinedSteps if @__acidic_job_steps.nil? || @__acidic_job_steps.empty?
 
     # convert the array of steps into a hash of recovery_points and next steps
-    workflow = define_workflow(steps)
+    workflow = define_workflow(@__acidic_job_steps)
 
-    @run = ensure_run_record(workflow, given)
+    @run = ensure_run_record(workflow, providing)
 
     # begin the workflow
     process_run(@run)
@@ -83,6 +81,7 @@ module AcidicJob
 
   # DEPRECATED
   def idempotently(with:, &blk)
+    ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:idempotently)
     with_acidity(providing: with, &blk)
   end
 
@@ -99,9 +98,7 @@ module AcidicJob
   def idempotency_key
     return @__acidic_job_idempotency_key if defined? @__acidic_job_idempotency_key
 
-    acidic_identifier = self.class.instance_variable_get(:@acidic_identifier)
-    @__acidic_job_idempotency_key ||= IdempotencyKey.new(acidic_identifier).value_for(self, @__acidic_job_args,
-                                                                                      @__acidic_job_kwargs)
+    @__acidic_job_idempotency_key ||= IdempotencyKey.new(self).value_for(@__acidic_job_unique_by)
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName
 

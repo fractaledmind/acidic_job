@@ -41,6 +41,7 @@ module AcidicJob
               staged: true,
               job_class: job_class.name,
               serialized_job: serialized_job,
+              # TODO: ensure that this provides the correct result for a job configured to not use :job_id
               idempotency_key: IdempotencyKey.value_for(serialized_job)
             )
           end

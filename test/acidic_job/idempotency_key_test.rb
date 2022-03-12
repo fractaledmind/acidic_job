@@ -32,13 +32,13 @@ class TestIdempotencyKey < Minitest::Test
   def test_return_sha_digest_from_hash_with_worker
     value = AcidicJob::IdempotencyKey.value_for({ "worker" => "SomeClass" })
 
-    assert_equal "2370d4813b8b5985f2363681034e3fc312988344", value
+    assert_equal "3448676ac7043b5378f25239cc0d7b8fbe9c23c2", value
   end
 
   def test_return_sha_digest_from_hash_with_job_class
     value = AcidicJob::IdempotencyKey.value_for({ "job_class" => "SomeClass" })
 
-    assert_equal "2370d4813b8b5985f2363681034e3fc312988344", value
+    assert_equal "3448676ac7043b5378f25239cc0d7b8fbe9c23c2", value
   end
 
   def test_return_sha_digest_from_object
@@ -46,6 +46,6 @@ class TestIdempotencyKey < Minitest::Test
     klass = Struct.new(:name)
     value = AcidicJob::IdempotencyKey.value_for(job.new(klass.new("SomeClass")))
 
-    assert_equal "2370d4813b8b5985f2363681034e3fc312988344", value
+    assert_equal "3448676ac7043b5378f25239cc0d7b8fbe9c23c2", value
   end
 end
