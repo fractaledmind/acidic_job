@@ -46,15 +46,6 @@ class TestNoticedExtension < Minitest::Test
     assert_equal "default", noticed_run.serialized_job["queue_name"]
   end
 
-  def test_deliver_acidicly_with_idempotency_key
-    ExampleNotification.deliver_acidicly(@user, idempotency_key: "SOME_KEY")
-
-    assert_equal 1, AcidicJob::Run.staged.count
-
-    noticed_run = AcidicJob::Run.staged.first
-    assert_equal "SOME_KEY", noticed_run.idempotency_key
-  end
-
   def test_deliver_acidicly_with_unique_by
     ExampleNotification.deliver_acidicly(@user, unique_by: { key: "value" })
 

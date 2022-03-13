@@ -11,15 +11,6 @@ class ExampleJob < ActiveJob::Base
 end
 
 class TestActiveJobExtension < AcidicJob::TestCase
-  def test_perform_acidicly_with_idempotency_key
-    ExampleJob.perform_acidicly(idempotency_key: "SOME_KEY")
-
-    assert_equal 1, AcidicJob::Run.staged.count
-
-    worker_run = AcidicJob::Run.staged.first
-    assert_equal "SOME_KEY", worker_run.idempotency_key
-  end
-
   def test_perform_acidicly_with_unique_by
     ExampleJob.perform_acidicly(unique_by: { key: "value" })
 
