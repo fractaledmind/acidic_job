@@ -101,11 +101,11 @@ module AcidicJob
   # TODO: allow idempotency to be defined by args OR job id
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def idempotency_key
-    return @__acidic_job_idempotency_key if defined? @__acidic_job_idempotency_key
+    return @__acidic_job_idempotency_key if defined?(@__acidic_job_idempotency_key) && !@__acidic_job_idempotency_key.nil?
 
     acidic_identifier = self.class.acidic_identifier
-    @__acidic_job_idempotency_key ||= IdempotencyKey.new(acidic_identifier).value_for(self, @__acidic_job_args,
-                                                                                      @__acidic_job_kwargs)
+    @__acidic_job_idempotency_key ||= IdempotencyKey.new(acidic_identifier)
+                                                    .value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName
 
