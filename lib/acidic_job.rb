@@ -46,6 +46,10 @@ module AcidicJob
     end
 
     klass.set_callback :perform, :after, :delete_staged_job_record, if: :was_staged_job?
+
+    klass.instance_variable_set(:@acidic_identifier, :job_id)
+    klass.define_singleton_method(:acidic_by_job_id) { @acidic_identifier = :job_id }
+    klass.define_singleton_method(:acidic_by_job_args) { @acidic_identifier = :job_args }
   end
 
   included do
@@ -56,6 +60,10 @@ module AcidicJob
     def inherited(subclass)
       AcidicJob.wire_everything_up(subclass)
       super
+    end
+
+    def acidic_identifier
+      @acidic_identifier
     end
   end
 
@@ -93,9 +101,13 @@ module AcidicJob
   # TODO: allow idempotency to be defined by args OR job id
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def idempotency_key
-    return @__acidic_job_idempotency_key if defined? @__acidic_job_idempotency_key
+    if defined?(@__acidic_job_idempotency_key) && !@__acidic_job_idempotency_key.nil?
+      return @__acidic_job_idempotency_key
+    end
 
-    @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
+    acidic_identifier = self.class.acidic_identifier
+    @__acidic_job_idempotency_key ||= IdempotencyKey.new(acidic_identifier)
+                                                    .value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName
 
