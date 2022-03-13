@@ -106,7 +106,7 @@ class TestEdgeCases < AcidicJob::TestCase
       include AcidicJob
 
       def perform
-        idempotently with: {} do
+        idempotently do
           step :do_something
         end
       end
