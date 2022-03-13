@@ -46,6 +46,10 @@ module AcidicJob
     end
 
     klass.set_callback :perform, :after, :delete_staged_job_record, if: :was_staged_job?
+
+    klass.instance_variable_set(:@acidic_identifier, :job_id)
+    klass.define_singleton_method(:acidic_by_job_id) { @acidic_identifier = :job_id }
+    klass.define_singleton_method(:acidic_by_job_args) { @acidic_identifier = :job_args }
   end
 
   included do
@@ -56,6 +60,10 @@ module AcidicJob
     def inherited(subclass)
       AcidicJob.wire_everything_up(subclass)
       super
+    end
+
+    def acidic_identifier
+      @acidic_identifier
     end
   end
 
