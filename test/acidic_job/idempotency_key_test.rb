@@ -4,39 +4,39 @@ require "test_helper"
 
 class TestIdempotencyKey < Minitest::Test
   def test_return_job_id_from_hash
-    value = AcidicJob::IdempotencyKey.value_for({ "job_id" => "ID" })
+    value = AcidicJob::IdempotencyKey.new(:job_id).value_for({ "job_id" => "ID" })
 
     assert_equal "ID", value
   end
 
   def test_return_jid_from_hash
-    value = AcidicJob::IdempotencyKey.value_for({ "jid" => "ID" })
+    value = AcidicJob::IdempotencyKey.new(:job_id).value_for({ "jid" => "ID" })
 
     assert_equal "ID", value
   end
 
   def test_return_job_id_from_obj
     job = Struct.new(:job_id)
-    value = AcidicJob::IdempotencyKey.value_for(job.new("ID"))
+    value = AcidicJob::IdempotencyKey.new(:job_id).value_for(job.new("ID"))
 
     assert_equal "ID", value
   end
 
   def test_return_jid_from_obj
     job = Struct.new(:jid)
-    value = AcidicJob::IdempotencyKey.value_for(job.new("ID"))
+    value = AcidicJob::IdempotencyKey.new(:job_id).value_for(job.new("ID"))
 
     assert_equal "ID", value
   end
 
   def test_return_sha_digest_from_hash_with_worker
-    value = AcidicJob::IdempotencyKey.value_for({ "worker" => "SomeClass" })
+    value = AcidicJob::IdempotencyKey.new(:job_id).value_for({ "worker" => "SomeClass" })
 
     assert_equal "2370d4813b8b5985f2363681034e3fc312988344", value
   end
 
   def test_return_sha_digest_from_hash_with_job_class
-    value = AcidicJob::IdempotencyKey.value_for({ "job_class" => "SomeClass" })
+    value = AcidicJob::IdempotencyKey.new(:job_id).value_for({ "job_class" => "SomeClass" })
 
     assert_equal "2370d4813b8b5985f2363681034e3fc312988344", value
   end
@@ -44,7 +44,7 @@ class TestIdempotencyKey < Minitest::Test
   def test_return_sha_digest_from_object
     job = Struct.new(:class) # rubocop:disable Lint/StructNewOverride
     klass = Struct.new(:name)
-    value = AcidicJob::IdempotencyKey.value_for(job.new(klass.new("SomeClass")))
+    value = AcidicJob::IdempotencyKey.new(:job_id).value_for(job.new(klass.new("SomeClass")))
 
     assert_equal "2370d4813b8b5985f2363681034e3fc312988344", value
   end
