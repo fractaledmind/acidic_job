@@ -64,6 +64,7 @@ It provides a suite of functionality that empowers you to create complex, robust
 * Transactional Steps — break your job into a series of steps, each of which will be run within an acidic database transaction, allowing retries to jump back to the last "recovery point".
 * Persisted Attributes — when retrying jobs at later steps, we need to ensure that data created in previous steps is still available to later steps on retry.
 * Transactionally Staged Jobs — enqueue additional jobs within the acidic transaction safely
+* Custom Idempotency Keys — use something other than the job ID for the idempotency key of the job run
 * Sidekiq Callbacks — bring ActiveJob-like callbacks into your pure Sidekiq Workers
 * Sidekiq Batches — leverage the power of Sidekiq Pro's `batch` functionality without the hassle
 
@@ -162,6 +163,47 @@ class RideCreateJob < ActiveJob::Base
   end
 end
 ```
+
+### Custom Idempotency Keys
+
+By default, `AcidicJob` uses the job identifier provided by the queueing system (ActiveJob or Sidekiq) as the idempotency key for the job run. The idempotency key is what is used to guarantee that no two runs of the same job occur. However, sometimes we need particular jobs to be idempotent based on some other criteria. In these cases, `AcidicJob` provides a collection of tools to allow you to ensure the idempotency of your jobs.
+
+Firstly, you can configure your job class to explicitly use either the job identifier or the job arguments as the foundation for the idempotency key. A job class that calls the `acidic_by_job_id` class method (which is the default behavior) will simply make the job run's idempotency key the job's identifier:
+
+```ruby
+class ExampleJob < ActiveJob::Base
+  include AcidicJob
+  acidic_by_job_id
+
+  def perform
+  end
+end
+```
+
+Conversely, a job class can use the `acidic_by_job_args` method to configure that job class to use the arguments passed to the job as the foundation for the job run's idempotency key:
+
+```ruby
+class ExampleJob < ActiveJob::Base
+  include AcidicJob
+  acidic_by_job_args
+
+  def perform(arg_1, arg_2)
+    # the idempotency key will be based on whatever the values of `arg_1` and `arg_2` are
+  end
+end
+```
+
+These options cover the two common situations, but sometimes our systems need finer-grained control. For example, our job might take some record as the job argument, but we need to use a combination of the record identifier and record status as the foundation for the idempotency key. In these cases we can't configure the idempotency key logic at the class level, so instead we can provide the logic when enqueuing the job itself.
+
+When you call any `deliver_acidicly` or `perform_acidicly` method you can pass an optional `unique_by` argument which will be used to generate the idempotency key:
+
+```ruby
+ExampleJob.perform_acidicly(unique_by: { id: record.id, status: record.status })
+UserMailer.with(user, record).deliver_acidicly(unique_by: [user.id, record.id, record.status])
+```
+
+As you see, the value to the `unique_by` option can be a Hash or an Array or even a simple scalar value.
+
 
 ### Sidekiq Callbacks
 
