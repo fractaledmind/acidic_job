@@ -36,12 +36,13 @@ module AcidicJob
               record: record
             }
             serialized_job = job_class.send(:job_or_instantiate, args).serialize
+            acidic_identifier = job_class.respond_to?(:acidic_identifier) ? job_class.acidic_identifier : :job_id
 
             AcidicJob::Run.create!(
               staged: true,
               job_class: job_class.name,
               serialized_job: serialized_job,
-              idempotency_key: IdempotencyKey.value_for(serialized_job)
+              idempotency_key: IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
             )
           end
         end

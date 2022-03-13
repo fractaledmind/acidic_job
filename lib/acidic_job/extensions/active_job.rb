@@ -29,7 +29,7 @@ module AcidicJob
             staged: true,
             job_class: name,
             serialized_job: serialized_job,
-            idempotency_key: IdempotencyKey.value_for(serialized_job)
+            idempotency_key: IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
           )
         end
         alias_method :perform_transactionally, :perform_acidicly
