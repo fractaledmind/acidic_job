@@ -57,9 +57,9 @@ class TestNoticedExtension < Minitest::Test
 
   def test_deliver_acidicly_with_unique_by
     ExampleNotification.deliver_acidicly(@user, unique_by: { key: "value" })
-  
+
     assert_equal 1, AcidicJob::Run.staged.count
-  
+
     noticed_run = AcidicJob::Run.staged.first
     assert_equal "e61be681cc78784bd968901206bfee78e6897d8b", noticed_run.idempotency_key
   end

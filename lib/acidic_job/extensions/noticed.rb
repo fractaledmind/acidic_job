@@ -37,14 +37,14 @@ module AcidicJob
             }
             serialized_job = job_class.send(:job_or_instantiate, args).serialize
             acidic_identifier = job_class.respond_to?(:acidic_identifier) ? job_class.acidic_identifier : :job_id
-            # generate `idempotency_key` either using [1] provided key, [2] provided uniqueness constraint, or [3] computed key
+            # use either [1] provided key, [2] provided uniqueness constraint, or [3] computed key
             key = if idempotency_key
-              idempotency_key
-            elsif unique_by
-              IdempotencyKey.generate(unique_by: unique_by, job_class: job_class.name)
-            else
-              IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
-            end
+                    idempotency_key
+                  elsif unique_by
+                    IdempotencyKey.generate(unique_by: unique_by, job_class: job_class.name)
+                  else
+                    IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
+                  end
 
             AcidicJob::Run.create!(
               staged: true,

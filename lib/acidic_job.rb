@@ -101,7 +101,9 @@ module AcidicJob
   # TODO: allow idempotency to be defined by args OR job id
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def idempotency_key
-    return @__acidic_job_idempotency_key if defined?(@__acidic_job_idempotency_key) && !@__acidic_job_idempotency_key.nil?
+    if defined?(@__acidic_job_idempotency_key) && !@__acidic_job_idempotency_key.nil?
+      return @__acidic_job_idempotency_key
+    end
 
     acidic_identifier = self.class.acidic_identifier
     @__acidic_job_idempotency_key ||= IdempotencyKey.new(acidic_identifier)
