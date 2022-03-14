@@ -209,7 +209,7 @@ class ExampleJob < ActiveJob::Base
 end
 ```
 
-As you see, the value to the `unique_by` option can be a Hash or an Array or even a simple scalar value.
+> **Note:** The signature of the `acidic_by` proc _needs to match the signature_ of the job's `perform` method.
 
 
 ### Sidekiq Callbacks
