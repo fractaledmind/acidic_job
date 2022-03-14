@@ -68,6 +68,19 @@ module AcidicJob
     end
   end
 
+  def initialize(*args, **kwargs)
+    # ensure this instance variable is always defined
+    @__acidic_job_steps = []
+    @__acidic_job_args = args
+    @__acidic_job_kwargs = kwargs
+
+    if method(__method__).super_method.arity.zero?
+      super()
+    else
+      super(*args, **kwargs)
+    end
+  end
+
   def with_acidity(providing: {})
     # ensure this instance variable is always defined
     @__acidic_job_steps = []
@@ -108,7 +121,7 @@ module AcidicJob
 
     acidic_identifier = self.class.acidic_identifier
     @__acidic_job_idempotency_key ||= IdempotencyKey.new(acidic_identifier)
-                                                    .value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
+                                                    .value_for(self, *@__acidic_job_args, **@__acidic_job_kwargs)
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName
 
