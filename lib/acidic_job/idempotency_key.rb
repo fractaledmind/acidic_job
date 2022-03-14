@@ -68,10 +68,10 @@ module AcidicJob
       Digest::SHA1.hexdigest [worker_class, args, kwargs].flatten.join
     end
 
-    def value_from_proc(hash_or_job, *args, **kwargs)
-      return if args.empty?
+    def value_from_proc(_hash_or_job, *args, **kwargs)
+      return if args.empty? && kwargs.empty?
 
-      idempotency_args = Array(@identifier.call(*args[0], **args[1]))
+      idempotency_args = Array(@identifier.call(*args, **kwargs))
       Digest::SHA1.hexdigest idempotency_args.flatten.join
     end
   end
