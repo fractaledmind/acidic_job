@@ -9,10 +9,6 @@ class MyJob
 end
 
 class TestAcidicJobRun < Minitest::Test
-  def setup
-    @staged_job_params = { amount: 20_00, currency: "usd", user: @valid_user }
-  end
-
   def before_setup
     super
     DatabaseCleaner.start
