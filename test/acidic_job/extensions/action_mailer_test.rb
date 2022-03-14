@@ -45,13 +45,4 @@ class TestActionMailerExtension < Minitest::Test
     assert_equal "ActionMailer::MailDeliveryJob", mailer_run.job_class
     assert_equal "mailers", mailer_run.serialized_job["queue_name"]
   end
-
-  def test_deliver_acidicly_with_unique_by
-    UserMailer.comment_notification.deliver_acidicly(unique_by: { key: "value" })
-
-    assert_equal 1, AcidicJob::Run.staged.count
-
-    noticed_run = AcidicJob::Run.staged.first
-    assert_equal "1a5a4742e43c551bba6c3371d0c173220c3b0ef3", noticed_run.idempotency_key
-  end
 end

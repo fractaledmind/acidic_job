@@ -2,21 +2,22 @@
 
 module AcidicJob
   class IdempotencyKey
-    def self.generate(unique_by:, job_class:)
-      new(:job_args).value_for({ "job_class" => job_class }, Marshal.dump(unique_by))
-    end
-
     def initialize(identifier = :job_id)
       @identifier = identifier
     end
 
     def value_for(hash_or_job, *args, **kwargs)
-      return value_from_job_args(hash_or_job, *args, **kwargs) if @identifier == :job_args
-
-      value = if hash_or_job.is_a?(Hash)
-                value_from_job_id_for_hash(hash_or_job)
+      value = case @identifier
+              when Proc
+                value_from_proc(hash_or_job, *args, **kwargs)
+              when :job_args
+                value_from_job_args(hash_or_job, *args, **kwargs)
               else
-                value_from_job_id_for_obj(hash_or_job)
+                if hash_or_job.is_a?(Hash)
+                  value_from_job_id_for_hash(hash_or_job)
+                else
+                  value_from_job_id_for_obj(hash_or_job)
+                end
               end
 
       value || value_from_job_args(hash_or_job, *args, **kwargs)
@@ -61,6 +62,13 @@ module AcidicJob
                      end
 
       Digest::SHA1.hexdigest [worker_class, args, kwargs].flatten.join
+    end
+
+    def value_from_proc(_hash_or_job, *args, **kwargs)
+      return if args.empty? && kwargs.empty?
+
+      idempotency_args = Array(@identifier.call(*args, **kwargs))
+      Digest::SHA1.hexdigest idempotency_args.flatten.join
     end
   end
 end

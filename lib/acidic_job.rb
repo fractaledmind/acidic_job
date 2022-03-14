@@ -50,6 +50,7 @@ module AcidicJob
     klass.instance_variable_set(:@acidic_identifier, :job_id)
     klass.define_singleton_method(:acidic_by_job_id) { @acidic_identifier = :job_id }
     klass.define_singleton_method(:acidic_by_job_args) { @acidic_identifier = :job_args }
+    klass.define_singleton_method(:acidic_by) { |proc| @acidic_identifier = proc }
   end
 
   included do
@@ -64,6 +65,19 @@ module AcidicJob
 
     def acidic_identifier
       @acidic_identifier
+    end
+  end
+
+  def initialize(*args, **kwargs)
+    # ensure this instance variable is always defined
+    @__acidic_job_steps = []
+    @__acidic_job_args = args
+    @__acidic_job_kwargs = kwargs
+
+    if method(__method__).super_method.arity.zero?
+      super()
+    else
+      super(*args, **kwargs)
     end
   end
 
@@ -107,7 +121,7 @@ module AcidicJob
 
     acidic_identifier = self.class.acidic_identifier
     @__acidic_job_idempotency_key ||= IdempotencyKey.new(acidic_identifier)
-                                                    .value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
+                                                    .value_for(self, *@__acidic_job_args, **@__acidic_job_kwargs)
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName
 

@@ -196,16 +196,20 @@ class ExampleJob < ActiveJob::Base
 end
 ```
 
-These options cover the two common situations, but sometimes our systems need finer-grained control. For example, our job might take some record as the job argument, but we need to use a combination of the record identifier and record status as the foundation for the idempotency key. In these cases we can't configure the idempotency key logic at the class level, so instead we can provide the logic when enqueuing the job itself.
-
-When you call any `deliver_acidicly` or `perform_acidicly` method you can pass an optional `unique_by` argument which will be used to generate the idempotency key:
+These options cover the two common situations, but sometimes our systems need finer-grained control. For example, our job might take some record as the job argument, but we need to use a combination of the record identifier and record status as the foundation for the idempotency key. In these cases you can pass a `Proc` to an `acidic_by` class method:
 
 ```ruby
-ExampleJob.perform_acidicly(unique_by: { id: record.id, status: record.status })
-UserMailer.with(user, record).deliver_acidicly(unique_by: [user.id, record.id, record.status])
+class ExampleJob < ActiveJob::Base
+  include AcidicJob
+  acidic_by ->(record:) { [record.id, record.status] }
+
+  def perform(record:)
+    # the idempotency key will be based on whatever the values of `record.id` and `record.status` are
+  end
+end
 ```
 
-As you see, the value to the `unique_by` option can be a Hash or an Array or even a simple scalar value.
+> **Note:** The signature of the `acidic_by` proc _needs to match the signature_ of the job's `perform` method.
 
 
 ### Sidekiq Callbacks
