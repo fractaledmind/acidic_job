@@ -218,4 +218,47 @@ class TestEdgeCases < AcidicJob::TestCase
     job.jid = "6574839201"
     assert_equal "9e59feb9d200a24f8b9f9886799be32a7d851f71", job.idempotency_key
   end
+
+  def test_worker_identified_by_proc
+    dynamic_class = Class.new do
+      include Sidekiq::Worker
+      include AcidicJob
+      acidic_by ->(review:) { [review.id, review.aasm_state] }
+
+      def perform(review:)
+        with_acidity providing: { review: review, lifecycle_event: nil } do
+          step :no_op
+        end
+      end
+    end
+    Object.const_set("WorkerIdentifiedByProc", dynamic_class)
+
+    assert_equal Proc, WorkerIdentifiedByProc.instance_variable_get(:@acidic_identifier).class
+    review = OpenStruct.new(id: 123, aasm_state: :initiated)
+
+    job = WorkerIdentifiedByProc.new(review: review)
+    job.jid = "6574839201"
+    assert_equal "759dc9e1dc03edf16fd49f3990a3d50fbdc10bf7", job.idempotency_key
+  end
+
+  def test_job_identified_by_proc
+    dynamic_class = Class.new(ActiveJob::Base) do
+      include AcidicJob
+      acidic_by ->(review:) { [review.id, review.aasm_state] }
+
+      def perform(review:)
+        with_acidity providing: { review: review, lifecycle_event: nil } do
+          step :no_op
+        end
+      end
+    end
+    Object.const_set("JobIdentifiedByProc", dynamic_class)
+
+    assert_equal Proc, JobIdentifiedByProc.instance_variable_get(:@acidic_identifier).class
+    review = OpenStruct.new(id: 123, aasm_state: :initiated)
+
+    job = JobIdentifiedByProc.new(review: review)
+    job.job_id = "6574839201"
+    assert_equal "759dc9e1dc03edf16fd49f3990a3d50fbdc10bf7", job.idempotency_key
+  end
 end
