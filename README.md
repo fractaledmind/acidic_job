@@ -1,5 +1,7 @@
 # AcidicJob
 
+![main workflow](https://github.com/fractaledmind/acidic_job/actions/workflows/main.yml/badge.svg)
+
 ### Idempotent operations for Rails apps (for ActiveJob or Sidekiq)
 
 At the conceptual heart of basically any software are "operations"—the discrete actions the software performs. Rails provides a powerful abstraction layer for building operations in the form of `ActiveJob`, or we Rubyists can use the tried and true power of pure `Sidekiq`. With either we can easily trigger from other Ruby code throughout our Rails application (controller actions, model methods, model callbacks, etc.); we can run operations both synchronously (blocking execution and then returning its response to the caller) and asychronously (non-blocking and the caller doesn't know its response); and we can also retry a specific operation if needed seamlessly.
