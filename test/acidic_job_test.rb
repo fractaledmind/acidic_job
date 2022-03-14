@@ -35,10 +35,10 @@ class TestAcidicJobs < AcidicJob::TestCase
         "queue_name" => "default",
         "priority" => nil,
         "arguments" => if RUBY_VERSION < "3.0"
-          [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => []), {"_aj_ruby2_keywords"=>[]}]
-        else
-          [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => [])]
-        end,
+                         [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => []), { "_aj_ruby2_keywords" => [] }]
+                       else
+                         [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => [])]
+                       end,
         "executions" => 1,
         "exception_executions" => {},
         "locale" => "en",
