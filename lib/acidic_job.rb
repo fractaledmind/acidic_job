@@ -191,7 +191,7 @@ module AcidicJob
 
     ActiveRecord::Base.transaction(isolation: isolation_level) do
       run = Run.find_by(idempotency_key: idempotency_key)
-      serialized_job = serialize_job(@__acidic_job_args, @__acidic_job_kwargs)
+      serialized_job = serialize_job(*@__acidic_job_args, **@__acidic_job_kwargs)
 
       if run.present?
         # Programs enqueuing multiple jobs with different parameters but the
