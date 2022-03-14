@@ -13,12 +13,4 @@ class ExampleWorker
 end
 
 class TestSidekiqExtension < AcidicJob::TestCase
-  def test_perform_acidicly_with_unique_by
-    ExampleWorker.perform_acidicly(unique_by: { key: "value" })
-
-    assert_equal 1, AcidicJob::Run.staged.count
-
-    worker_run = AcidicJob::Run.staged.first
-    assert_equal "bb061e8599507b55357c5388562d49a5d74de19f", worker_run.idempotency_key
-  end
 end

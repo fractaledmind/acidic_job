@@ -6,12 +6,12 @@ module AcidicJob
       extend ActiveSupport::Concern
 
       class_methods do
-        def deliver_acidicly(recipients, unique_by: nil)
-          new.deliver_acidicly(recipients, unique_by: unique_by)
+        def deliver_acidicly(recipients)
+          new.deliver_acidicly(recipients)
         end
       end
 
-      def deliver_acidicly(recipients, unique_by: nil)
+      def deliver_acidicly(recipients)
         # THIS IS A HACK THAT COPIES AND PASTES KEY PARTS OF THE `Noticed::Base` CODE
         # IN ORDER TO ALLOW US TO TRANSACTIONALLY DELIVER NOTIFICATIONS
         # THIS IS THUS LIABLE TO BREAK WHENEVER THAT GEM IS UPDATED
@@ -37,12 +37,7 @@ module AcidicJob
             }
             serialized_job = job_class.send(:job_or_instantiate, args).serialize
             acidic_identifier = job_class.respond_to?(:acidic_identifier) ? job_class.acidic_identifier : :job_id
-            # use either [1] provided uniqueness constraint or [2] computed key
-            key = if unique_by
-                    IdempotencyKey.generate(unique_by: unique_by, job_class: job_class.name)
-                  else
-                    IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
-                  end
+            key = IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
 
             AcidicJob::Run.create!(
               staged: true,

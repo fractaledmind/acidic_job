@@ -7,19 +7,14 @@ module AcidicJob
     module ActionMailer
       extend ActiveSupport::Concern
 
-      def deliver_acidicly(_options = {}, unique_by: nil)
+      def deliver_acidicly(_options = {})
         job_class = ::ActionMailer::MailDeliveryJob
 
         job_args = [@mailer_class.name, @action.to_s, "deliver_now", @params, *@args]
         # for Sidekiq, this depends on the Sidekiq::Serialization extension
         serialized_job = job_class.new(job_args).serialize
         acidic_identifier = job_class.respond_to?(:acidic_identifier) ? job_class.acidic_identifier : :job_id
-        # use either [1] provided uniqueness constraint or [2] computed key
-        key = if unique_by
-                IdempotencyKey.generate(unique_by: unique_by, job_class: job_class.name)
-              else
-                IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
-              end
+        key = IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
 
         AcidicJob::Run.create!(
           staged: true,

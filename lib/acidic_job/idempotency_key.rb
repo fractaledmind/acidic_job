@@ -2,10 +2,6 @@
 
 module AcidicJob
   class IdempotencyKey
-    def self.generate(unique_by:, job_class:)
-      new(:job_args).value_for({ "job_class" => job_class }, Marshal.dump(unique_by))
-    end
-
     def initialize(identifier = :job_id)
       @identifier = identifier
     end

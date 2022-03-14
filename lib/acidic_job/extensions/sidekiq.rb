@@ -59,13 +59,7 @@ module AcidicJob
         class_methods do
           def perform_acidicly(*args, **kwargs)
             serialized_job = serialize_with_arguments(*args, **kwargs)
-            # use either [1] provided uniqueness constraint or [2] computed key
-            key = if kwargs.key?(:unique_by) || kwargs.key?("unique_by")
-                    unique_by = [kwargs[:unique_by], kwargs["unique_by"]].compact.first
-                    IdempotencyKey.generate(unique_by: unique_by, job_class: name)
-                  else
-                    IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
-                  end
+            key = IdempotencyKey.new(acidic_identifier).value_for(serialized_job)
 
             AcidicJob::Run.create!(
               staged: true,
