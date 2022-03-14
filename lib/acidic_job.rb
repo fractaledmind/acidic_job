@@ -50,6 +50,7 @@ module AcidicJob
     klass.instance_variable_set(:@acidic_identifier, :job_id)
     klass.define_singleton_method(:acidic_by_job_id) { @acidic_identifier = :job_id }
     klass.define_singleton_method(:acidic_by_job_args) { @acidic_identifier = :job_args }
+    klass.define_singleton_method(:acidic_by) { |proc| @acidic_identifier = proc }
   end
 
   included do
