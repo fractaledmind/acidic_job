@@ -34,9 +34,10 @@ module AcidicJob
           end
         end
 
-        def serialize_job(args = [], _kwargs = nil)
+        def serialize_job(*args, **kwargs)
           # `@args` is only set via `deserialize`; it is not a standard Sidekiq thing
           arguments = args || @args
+          arguments += [kwargs] if !kwargs.empty?
           normalized_args = ::Sidekiq.load_json(::Sidekiq.dump_json(arguments))
           item = { "class" => self.class, "args" => normalized_args, "jid" => jid }
           sidekiq_options = sidekiq_options_hash || {}
