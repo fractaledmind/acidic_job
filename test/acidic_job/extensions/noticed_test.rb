@@ -45,4 +45,16 @@ class TestNoticedExtension < Minitest::Test
     assert_equal "Noticed::DeliveryMethods::Test", noticed_run.job_class
     assert_equal "default", noticed_run.serialized_job["queue_name"]
   end
+
+  def test_deliver
+    dynamic_class = Class.new(ActiveJob::Base) do
+      include AcidicJob
+    end
+    Object.const_set("ApplicationJob", dynamic_class)
+    Noticed.parent_class = "ApplicationJob"
+
+    delivered_to = OnlyDatabaseNotification.with({}).deliver(@user)
+
+    assert_equal [@user], delivered_to
+  end
 end
