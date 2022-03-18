@@ -126,7 +126,7 @@ module AcidicJob
 
   def process_run(run)
     # if the run record is already marked as finished, immediately return its result
-    return run.succeeded? if run.finished?
+    return run.succeeded? if run.finished?    
 
     # otherwise, we will enter a loop to process each step of the workflow
     run.workflow.size.times do
