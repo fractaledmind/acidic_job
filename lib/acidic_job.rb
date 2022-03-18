@@ -135,7 +135,7 @@ module AcidicJob
 
       # if any step calls `safely_finish_acidic_job` or the workflow has simply completed,
       # be sure to break out of the loop
-      if recovery_point == Run::FINISHED_RECOVERY_POINT.to_s # rubocop:disable Style/GuardClause
+      if recovery_point.to_s == Run::FINISHED_RECOVERY_POINT.to_s # rubocop:disable Style/GuardClause
         break
       elsif current_step.nil?
         raise UnknownRecoveryPoint, "Defined workflow does not reference this step: #{recovery_point}"
