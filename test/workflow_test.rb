@@ -64,7 +64,7 @@ class TestWorkflows < AcidicJob::TestCase
   def test_step_with_enqueues_is_run_properly
     mocking_sidekiq_batches do
       assert_raises CustomErrorForTesting do
-        WorkerWithEnqueueStep.initiate
+        WorkerWithEnqueueStep.new.perform
       end
     end
 
