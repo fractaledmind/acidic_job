@@ -112,7 +112,6 @@ module AcidicJob
     FinishedPoint.new
   end
 
-  # TODO: allow idempotency to be defined by args OR job id
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def idempotency_key
     if defined?(@__acidic_job_idempotency_key) && !@__acidic_job_idempotency_key.nil?
