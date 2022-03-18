@@ -82,8 +82,6 @@ module AcidicJob
   end
 
   def with_acidity(providing: {})
-    # ensure this instance variable is always defined
-    @__acidic_job_steps = []
     # execute the block to gather the info on what steps are defined for this job workflow
     yield
 
