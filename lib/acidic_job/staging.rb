@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "active_support/concern"
+require "global_id/locator"
 
 module AcidicJob
   module Staging
