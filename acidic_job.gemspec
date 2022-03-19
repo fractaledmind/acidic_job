@@ -27,9 +27,9 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "activerecord", ">= 6.1.0"
+  spec.add_dependency "activerecord"
   spec.add_dependency "activesupport"
-  spec.add_development_dependency "railties", ">= 6.1.0"
+  spec.add_development_dependency "railties"
 
   # For more information and examples about making a new gem, checkout our
   # guide at: https://bundler.io/guides/creating_gem.html
