@@ -5,19 +5,19 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in acidic_job.gemspec
 gemspec
 
-gem "rake", "~> 13.0"
+gem "rake"
 
-gem "minitest", "~> 5.0"
+gem "minitest"
 
-gem "rubocop", "~> 1.7"
+gem "rubocop"
 
 gem "rubocop-minitest"
 
 gem "rubocop-rake"
 
-gem "activerecord", "~> 6.1.3.2"
+gem "activerecord"
 
-gem "activejob", "~> 6.1.3.2"
+gem "activejob"
 
 gem "sqlite3"
 
