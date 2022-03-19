@@ -29,7 +29,21 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "activerecord"
   spec.add_dependency "activesupport"
+  spec.add_development_dependency "combustion"
+  spec.add_development_dependency "database_cleaner"
+  spec.add_development_dependency "minitest"
   spec.add_development_dependency "railties"
+  spec.add_development_dependency "rake"
+  spec.add_development_dependency "rubocop"
+  spec.add_development_dependency "rubocop-minitest"
+  spec.add_development_dependency "rubocop-rake"
+  spec.add_development_dependency "simplecov"
+  spec.add_development_dependency "sqlite3"
+  spec.add_development_dependency "warning"
+  spec.add_development_dependency "activerecord"
+  spec.add_development_dependency "activejob"
+  spec.add_development_dependency "sidekiq"
+  spec.add_development_dependency "noticed"
 
   # For more information and examples about making a new gem, checkout our
   # guide at: https://bundler.io/guides/creating_gem.html
