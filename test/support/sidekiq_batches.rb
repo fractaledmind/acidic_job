@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "sidekiq/testing"
+require_relative "sidekiq_testing"
 
 module Sidekiq
   class Batch
