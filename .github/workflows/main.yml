@@ -34,5 +34,6 @@ jobs:
     - name: Run the default task
       run: |
         gem install bundler -v 2.2.31
-        bundle add rails --version "~> ${{ matrix.rails }}"
+        bundle add rails --version "~> ${{ matrix.rails }}" --skip-install
+        bundle update
         bundle exec rake
