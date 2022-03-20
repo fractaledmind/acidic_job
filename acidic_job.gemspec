@@ -29,6 +29,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "activerecord"
   spec.add_dependency "activesupport"
+  spec.add_development_dependency "activejob"
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "database_cleaner"
   spec.add_development_dependency "minitest"
@@ -39,9 +40,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rubocop"
   spec.add_development_dependency "rubocop-minitest"
   spec.add_development_dependency "rubocop-rake"
-  spec.add_development_dependency "simplecov"
-  spec.add_development_dependency "activejob"
   spec.add_development_dependency "sidekiq"
+  spec.add_development_dependency "simplecov"
   spec.add_development_dependency "sqlite3"
   spec.add_development_dependency "warning"
 
