@@ -32,7 +32,6 @@ class TestEdgeCases < TestCase
 
     assert_equal 1, AcidicJob::Run.count
     assert_equal CustomErrorForTesting, AcidicJob::Run.first.error_object.class
-    assert_equal 1, Sidekiq::RetrySet.new.size
   end
 
   def test_error_in_first_step_rolls_back_step_transaction
@@ -60,7 +59,6 @@ class TestEdgeCases < TestCase
     assert_equal 1, AcidicJob::Run.count
     assert_equal CustomErrorForTesting, AcidicJob::Run.first.error_object.class
     assert_equal AcidicJob::Run.first.attr_accessors, { "accessor" => nil }
-    assert_equal 1, Sidekiq::RetrySet.new.size
   end
 
   def test_logic_inside_acidic_block_is_executed_appropriately
