@@ -5,21 +5,24 @@ require "global_id"
 require "minitest/mock"
 require "logger"
 require "sqlite3"
+require "database_cleaner"
+require "noticed"
 
 # DATABASE AND MODELS ----------------------------------------------------------
 ActiveRecord::Base.establish_connection(
   adapter: "sqlite3",
-  database: "test/database.sqlite",
+  database: "database.sqlite",
   flags: SQLite3::Constants::Open::READWRITE |
          SQLite3::Constants::Open::CREATE |
          SQLite3::Constants::Open::SHAREDCACHE
 )
 
 GlobalID.app = :test
+DatabaseCleaner.clean_with(:truncation)
 
 ActiveRecord::Schema.define do
   create_table :acidic_job_runs, force: true do |t|
-    t.boolean :staged, null: false,	default: -> { false }
+    t.boolean :staged, null: false,	default: false
     t.string :idempotency_key, null: false
     t.text :serialized_job,	null: false
     t.string :job_class,	null: false
@@ -48,11 +51,6 @@ ActiveRecord::Schema.define do
     t.string :remote_address
     t.string :request_uuid
     t.timestamps
-
-    t.index %i[auditable_type auditable_id version]
-    t.index %i[associated_type associated_id]
-    t.index %i[user_id user_type]
-    t.index :request_uuid
   end
 
   create_table :users, force: true do |t|
@@ -108,8 +106,7 @@ class Notification < ApplicationRecord
   include Noticed::Model
 end
 
-DatabaseCleaner.strategy = [:deletion, { except: %w[users] }]
-DatabaseCleaner.clean
+DatabaseCleaner.clean_with(:deletion, except: %w[users])
 
 # SEEDS ------------------------------------------------------------------------
 

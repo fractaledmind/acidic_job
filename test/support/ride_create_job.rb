@@ -13,7 +13,7 @@ class SendRideReceiptJob < ActiveJob::Base
 end
 
 class RideCreateJob < ActiveJob::Base
-  self.log_arguments = false
+  self.log_arguments = false if respond_to?(:log_arguments)
 
   include AcidicJob
 

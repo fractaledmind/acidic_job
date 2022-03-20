@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "acidic_job/test_case"
 require "active_job"
+require_relative "../../support/test_case"
 
 class ExampleJob < ActiveJob::Base
   include AcidicJob
@@ -10,5 +10,5 @@ class ExampleJob < ActiveJob::Base
   def perform; end
 end
 
-class TestActiveJobExtension < AcidicJob::TestCase
+class TestActiveJobExtension < TestCase
 end

@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "active_job/queue_adapters"
+require "active_job/base"
+require "active_job/test_helper"
 require "active_job/test_case"
 require "database_cleaner"
 
@@ -8,6 +11,7 @@ module AcidicJob
     self.use_transactional_tests = false if respond_to?(:use_transactional_tests)
 
     def before_setup
+      @connection = ActiveRecord::Base.connection
       @original_cleaners = DatabaseCleaner.cleaners
       DatabaseCleaner.cleaners = transaction_free_cleaners_for(@original_cleaners)
       super
@@ -25,9 +29,9 @@ module AcidicJob
     # Ensure that the system's original DatabaseCleaner configuration is maintained, options included,
     # except that any `transaction` strategies for any ORMs are replaced with a `deletion` strategy.
     def transaction_free_cleaners_for(original_cleaners)
-      non_transaction_cleaners = original_cleaners.dup.map do |(orm, opts), cleaner|
+      non_transaction_cleaners = original_cleaners.dup.to_h do |(orm, opts), cleaner|
         [[orm, opts], ensure_no_transaction_strategies_for(cleaner)]
-      end.to_h
+      end
       DatabaseCleaner::Cleaners.new(non_transaction_cleaners)
     end
 
@@ -57,12 +61,12 @@ module AcidicJob
                            .first                      # "DatabaseCleaner::ActiveRecord"
       deletion_strategy_class_name = [strategy_namespace, "::", "Deletion"].join
       deletion_strategy_class = deletion_strategy_class_name.constantize
-      instance_variable_hash = strategy.instance_variables.map do |var|
+      instance_variable_hash = strategy.instance_variables.to_h do |var|
         [
           var.to_s.remove("@"),
           strategy.instance_variable_get(var)
         ]
-      end.to_h
+      end
       options = instance_variable_hash.except("db", "connection_class")
 
       deletion_strategy_class.new(**options)

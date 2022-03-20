@@ -4,9 +4,9 @@ require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
 require_relative "support/ride_create_worker"
-require "acidic_job/test_case"
+require_relative "./support/test_case"
 
-class TestAcidicWorkers < AcidicJob::TestCase
+class TestAcidicWorkers < TestCase
   def setup
     @valid_params = {
       "origin_lat" => 0.0,
@@ -19,16 +19,6 @@ class TestAcidicWorkers < AcidicJob::TestCase
                                            stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = [{ amount: 20_00, currency: "usd", user_id: @valid_user.id }.stringify_keys]
     @sidekiq_queue = Sidekiq::Queues["default"]
-  end
-
-  def before_setup
-    super
-    Sidekiq::Queues.clear_all
-  end
-
-  def after_teardown
-    Sidekiq::Queues.clear_all
-    super
   end
 
   def create_key(params = {})
