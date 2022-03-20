@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "sidekiq"
-require "sidekiq/testing"
 require_relative "support/ride_create_worker"
-require_relative "./support/test_case"
+require_relative "support/sidekiq_testing"
+require_relative "support/test_case"
 
 class TestAcidicWorkers < TestCase
   def setup
