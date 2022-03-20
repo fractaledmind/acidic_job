@@ -10,3 +10,5 @@
 /test/database.sqlite
 slides.md
 /test/dummy
+/test/log
+/database.sqlite
