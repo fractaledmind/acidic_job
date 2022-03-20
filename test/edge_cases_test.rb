@@ -224,7 +224,8 @@ class TestEdgeCases < TestCase
     Object.const_set("WorkerIdentifiedByProc", dynamic_class)
 
     assert_equal Proc, WorkerIdentifiedByProc.instance_variable_get(:@acidic_identifier).class
-    review = OpenStruct.new(id: 123, aasm_state: :initiated)
+    review_class = Struct.new(:id, :aasm_state)
+    review = review_class.new(123, :initiated)
 
     job = WorkerIdentifiedByProc.new(review: review)
     job.jid = "6574839201"
@@ -245,7 +246,8 @@ class TestEdgeCases < TestCase
     Object.const_set("JobIdentifiedByProc", dynamic_class)
 
     assert_equal Proc, JobIdentifiedByProc.instance_variable_get(:@acidic_identifier).class
-    review = OpenStruct.new(id: 123, aasm_state: :initiated)
+    review_class = Struct.new(:id, :aasm_state)
+    review = review_class.new(123, :initiated)
 
     job = JobIdentifiedByProc.new(review: review)
     job.job_id = "6574839201"

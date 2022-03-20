@@ -223,6 +223,8 @@ PLATFORMS
 
 DEPENDENCIES
   acidic_job!
+  activejob (~> 6.1.0)
+  activerecord (~> 6.1.0)
   combustion
   database_cleaner
   minitest
