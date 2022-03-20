@@ -3,23 +3,13 @@
 require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
-require "acidic_job/test_case"
+require_relative "./support/test_case"
 
 class CustomErrorForTesting < StandardError; end
 
 # -----------------------------------------------------------------------------
 
-class TestEdgeCases < AcidicJob::TestCase
-  def before_setup
-    super
-    Sidekiq::Queues.clear_all
-  end
-
-  def after_teardown
-    Sidekiq::Queues.clear_all
-    super
-  end
-
+class TestEdgeCases < TestCase
   def test_rescued_error_in_perform_does_not_prevent_error_object_from_being_stored
     dynamic_class = Class.new do
       include Sidekiq::Worker
@@ -234,7 +224,8 @@ class TestEdgeCases < AcidicJob::TestCase
     Object.const_set("WorkerIdentifiedByProc", dynamic_class)
 
     assert_equal Proc, WorkerIdentifiedByProc.instance_variable_get(:@acidic_identifier).class
-    review = OpenStruct.new(id: 123, aasm_state: :initiated)
+    review_class = Struct.new(:id, :aasm_state)
+    review = review_class.new(123, :initiated)
 
     job = WorkerIdentifiedByProc.new(review: review)
     job.jid = "6574839201"
@@ -255,7 +246,8 @@ class TestEdgeCases < AcidicJob::TestCase
     Object.const_set("JobIdentifiedByProc", dynamic_class)
 
     assert_equal Proc, JobIdentifiedByProc.instance_variable_get(:@acidic_identifier).class
-    review = OpenStruct.new(id: 123, aasm_state: :initiated)
+    review_class = Struct.new(:id, :aasm_state)
+    review = review_class.new(123, :initiated)
 
     job = JobIdentifiedByProc.new(review: review)
     job.job_id = "6574839201"

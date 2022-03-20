@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require_relative "../support/test_case"
 
-class TestIdempotencyKey < Minitest::Test
+class TestIdempotencyKey < TestCase
   # with job_id acidic identifier
   def test_return_job_id_from_hash_when_identifier_job_id
     value = AcidicJob::IdempotencyKey.new(:job_id).value_for({ "job_id" => "ID" })

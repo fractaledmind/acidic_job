@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require "test_helper"
+# require "net-smtp"
+require "mail"
+require "action_mailer"
+require_relative "../../support/test_case"
 
 ActionMailer::MessageDelivery.include AcidicJob::Extensions::ActionMailer
 ActionMailer::Parameterized::MessageDelivery.include AcidicJob::Extensions::ActionMailer
@@ -11,19 +15,9 @@ class UserMailer < ActionMailer::Base
   end
 end
 
-class TestActionMailerExtension < Minitest::Test
+class TestActionMailerExtension < TestCase
   def setup
     @user = User.find_or_create_by(email: "user@example.com", stripe_customer_id: "tok_visa")
-  end
-
-  def before_setup
-    super
-    DatabaseCleaner.start
-  end
-
-  def after_teardown
-    DatabaseCleaner.clean
-    super
   end
 
   def test_deliver_acidicly_on_parameterized_action_mailer
