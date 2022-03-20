@@ -3,23 +3,13 @@
 require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
-require "acidic_job/test_case"
+require_relative "./support/test_case"
 
 class CustomErrorForTesting < StandardError; end
 
 # -----------------------------------------------------------------------------
 
-class TestEdgeCases < AcidicJob::TestCase
-  def before_setup
-    super
-    Sidekiq::Queues.clear_all
-  end
-
-  def after_teardown
-    Sidekiq::Queues.clear_all
-    super
-  end
-
+class TestEdgeCases < TestCase
   def test_rescued_error_in_perform_does_not_prevent_error_object_from_being_stored
     dynamic_class = Class.new do
       include Sidekiq::Worker

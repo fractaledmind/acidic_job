@@ -2,6 +2,8 @@
 
 require "test_helper"
 require "noticed"
+require "active_job"
+require_relative "../../support/test_case"
 
 Noticed.parent_class = "ActiveJob::Base"
 Noticed::Base.include AcidicJob::Extensions::Noticed
@@ -15,19 +17,9 @@ class ExampleNotification < Noticed::Base
   deliver_by :test, foo: :bar
 end
 
-class TestNoticedExtension < Minitest::Test
+class TestNoticedExtension < TestCase
   def setup
     @user = User.find_or_create_by(email: "user@example.com", stripe_customer_id: "tok_visa")
-  end
-
-  def before_setup
-    super
-    DatabaseCleaner.start
-  end
-
-  def after_teardown
-    DatabaseCleaner.clean
-    super
   end
 
   def test_deliver_acidicly_on_noticed_notification_with_only_database_delivery

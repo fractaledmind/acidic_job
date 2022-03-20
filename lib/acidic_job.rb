@@ -17,6 +17,8 @@ require_relative "acidic_job/extensions/noticed"
 require_relative "acidic_job/upgrade_service"
 
 require "active_support/concern"
+require "active_job/queue_adapters"
+require "active_job/base"
 
 module AcidicJob
   extend ActiveSupport::Concern

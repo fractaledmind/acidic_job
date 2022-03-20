@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "active_job/queue_adapters"
+require "active_job/base"
+require "active_job/test_helper"
 require "active_job/test_case"
 require "database_cleaner"
 
@@ -8,6 +11,7 @@ module AcidicJob
     self.use_transactional_tests = false if respond_to?(:use_transactional_tests)
 
     def before_setup
+      @connection = ActiveRecord::Base.connection
       @original_cleaners = DatabaseCleaner.cleaners
       DatabaseCleaner.cleaners = transaction_free_cleaners_for(@original_cleaners)
       super
