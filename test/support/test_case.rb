@@ -16,9 +16,10 @@ class TestCase < Minitest::Test
   private
 
   def clear_sidekiq
-    return unless defined?(Sidekiq::Queues)
+    return unless defined?(Sidekiq)
 
     Sidekiq::Queues.clear_all
+    Sidekiq.redis { |c| c.flushdb }
   end
 
   def clear_models

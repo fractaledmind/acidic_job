@@ -2,7 +2,7 @@
 
 require "test_helper"
 require_relative "support/ride_create_job"
-require_relative "./support/test_case"
+require_relative "support/test_case"
 
 class TestAcidicJobs < TestCase
   include ActiveJob::TestHelper

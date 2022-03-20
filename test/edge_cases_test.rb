@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "sidekiq"
-require "sidekiq/job_retry"
-require "sidekiq/testing"
+require_relative "./support/sidekiq_testing"
 require_relative "./support/test_case"
 
 class CustomErrorForTesting < StandardError; end

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
+require "sidekiq"
 require "sidekiq/testing"
+require "sidekiq/job_retry"
+
+Sidekiq::Testing.fake!
 
 # inject retry logic into the testing harness
 module Sidekiq
