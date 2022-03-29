@@ -12,7 +12,7 @@ module AcidicJob
       mod.class_eval "self.use_transactional_tests = false if respond_to?(:use_transactional_tests)"
     end
 
-def before_setup
+    def before_setup
       @connection = ActiveRecord::Base.connection
       @original_cleaners = DatabaseCleaner.cleaners
       DatabaseCleaner.cleaners = transaction_free_cleaners_for(@original_cleaners)
