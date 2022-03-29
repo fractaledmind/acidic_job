@@ -8,7 +8,7 @@ require "database_cleaner"
 
 module AcidicJob
   module Testing
-    def Testing.included(mod)
+    def self.included(mod)
       mod.class_eval "self.use_transactional_tests = false if respond_to?(:use_transactional_tests)"
     end
 
