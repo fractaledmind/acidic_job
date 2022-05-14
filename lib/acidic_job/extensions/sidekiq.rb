@@ -25,12 +25,16 @@ module AcidicJob
           # and `AcidicJob::DeliverAcidicly#deliver_acidicly`
           def serialize_with_arguments(args = [], _kwargs = nil)
             # THIS IS A HACK THAT ESSENTIALLY COPIES THE CODE FROM THE SIDEKIQ CODEBASE TO MIMIC THE BEHAVIOR
+            # updated to handle Sidekiq v6.4.2 at latest
             args = Array[args]
             normalized_args = ::Sidekiq.load_json(::Sidekiq.dump_json(args))
             item = { "class" => self, "args" => normalized_args }
             dummy_sidekiq_client = ::Sidekiq::Client.new
             normed = dummy_sidekiq_client.send :normalize_item, item
-            dummy_sidekiq_client.send :process_single, item["class"], normed
+            redis_pool = dummy_sidekiq_client.instance_variable_get(:@redis_pool)
+            dummy_sidekiq_client.middleware.invoke(normed["class"], normed, normed["queue"], redis_pool) do
+              normed
+            end
           end
         end
 

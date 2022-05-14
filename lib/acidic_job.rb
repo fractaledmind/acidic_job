@@ -131,7 +131,7 @@ module AcidicJob
     return run.succeeded? if run.finished?
 
     # otherwise, we will enter a loop to process each step of the workflow
-    run.workflow.size.times do
+    loop do
       recovery_point = run.recovery_point.to_s
       current_step = run.workflow[recovery_point]
 
@@ -170,12 +170,13 @@ module AcidicJob
     run.succeeded?
   end
 
-  def step(method_name, awaits: [])
+  def step(method_name, awaits: [], for_each: nil)
     @__acidic_job_steps ||= []
 
     @__acidic_job_steps << {
       "does" => method_name.to_s,
-      "awaits" => awaits
+      "awaits" => awaits,
+      "for_each" => for_each
     }
 
     @__acidic_job_steps
