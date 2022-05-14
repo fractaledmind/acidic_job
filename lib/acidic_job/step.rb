@@ -52,6 +52,12 @@ module AcidicJob
       # {"does" => :enqueue_step, "then" => :next_step, "awaits" => [WorkerWithEnqueueStep::FirstWorker]}
       current_step = step["does"]
       next_step = step["then"]
+      # to support iteration within steps
+      iterable_key = step["for_each"]
+      iterated_key = "processed_#{iterable_key}"
+      iterables = @run.attr_accessors.fetch(iterable_key, [])
+      iterateds = @run.attr_accessors.fetch(iterated_key, [])
+      next_item = iterables.reject { |item| iterateds.include? item }.first
 
       # jobs can have no-op steps, especially so that they can use only the async/await mechanism for that step
       callable = if @job.respond_to?(current_step, _include_private = true)
@@ -62,7 +68,11 @@ module AcidicJob
 
       # return a callable Proc with a consistent interface for the execution phase
       proc do |run|
-        result = if callable.arity.zero?
+        result = if iterable_key.present? && next_item.present?
+                   callable.call(next_item)
+                 elsif iterable_key.present? && next_item.nil?
+                   true
+                 elsif callable.arity.zero?
                    callable.call
                  elsif callable.arity == 1
                    callable.call(run)
@@ -72,6 +82,11 @@ module AcidicJob
 
         if result.is_a?(FinishedPoint)
           result
+        elsif next_item.present?
+          iterateds << next_item
+          @run.attr_accessors[iterated_key] = iterateds
+          @run.save!(validate: false)
+          RecoveryPoint.new(current_step)
         elsif next_step.to_s == Run::FINISHED_RECOVERY_POINT
           FinishedPoint.new
         else

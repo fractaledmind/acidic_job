@@ -252,4 +252,61 @@ class TestEdgeCases < TestCase
     job.job_id = "6574839201"
     assert_equal "759dc9e1dc03edf16fd49f3990a3d50fbdc10bf7", job.idempotency_key
   end
+
+  def test_job_with_for_each_step
+    dynamic_class = Class.new(ActiveJob::Base) do
+      include AcidicJob
+
+      attr_reader :processed_items
+
+      def initialize
+        @processed_items = []
+        super()
+      end
+
+      def perform
+        with_acidity providing: { items: (1..10).to_a } do
+          step :work_with_individual_item, for_each: :items
+        end
+      end
+
+      def work_with_individual_item(item)
+        @processed_items << item
+      end
+    end
+    Object.const_set("JobWithForEachStep", dynamic_class)
+
+    job = JobWithForEachStep.new
+    job.perform_now
+    assert_equal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], job.processed_items
+  end
+
+  def test_worker_with_for_each_step
+    dynamic_class = Class.new do
+      include Sidekiq::Worker
+      include AcidicJob
+
+      attr_reader :processed_items
+
+      def initialize
+        @processed_items = []
+        super()
+      end
+
+      def perform
+        with_acidity providing: { items: (1..10).to_a } do
+          step :work_with_individual_item, for_each: :items
+        end
+      end
+
+      def work_with_individual_item(item)
+        @processed_items << item
+      end
+    end
+    Object.const_set("WorkerWithForEachStep", dynamic_class)
+
+    job = WorkerWithForEachStep.new
+    job.perform
+    assert_equal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], job.processed_items
+  end
 end
