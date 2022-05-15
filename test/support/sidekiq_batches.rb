@@ -30,6 +30,8 @@ module Support
         super()
         @bid = bid || SecureRandom.hex(8)
         @callbacks = []
+        # force clear out any previous instances of `NullBatch` and the like
+        GC.start
       end
 
       def status
@@ -86,7 +88,8 @@ module Support
     class Workflow
       def batch
         ObjectSpace.each_object(Support::Sidekiq::NullBatch).find do |null_batch|
-          success_callback = null_batch.instance_variable_get(:@callbacks).find { |on, *| on == :success }
+          callbacks = null_batch.instance_variable_get(:@callbacks)
+          success_callback = callbacks.find { |on, *| on == :success }
           success_callback&.second == self.class
         end
       end
