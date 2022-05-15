@@ -309,4 +309,75 @@ class TestEdgeCases < TestCase
     job.perform
     assert_equal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], job.processed_items
   end
+
+  def test_job_with_multiple_for_each_steps
+    dynamic_class = Class.new(ActiveJob::Base) do
+      include AcidicJob
+
+      attr_reader :step_one_processed_items, :step_two_processed_items
+
+      def initialize
+        @step_one_processed_items = []
+        @step_two_processed_items = []
+        super()
+      end
+
+      def perform
+        with_acidity providing: { items: (1..10).to_a } do
+          step :step_one, for_each: :items
+          step :step_two, for_each: :items
+        end
+      end
+
+      def step_one(item)
+        @step_one_processed_items << item
+      end
+
+      def step_two(item)
+        @step_two_processed_items << item
+      end
+    end
+    Object.const_set("JobWithMultipleForEachSteps", dynamic_class)
+
+    job = JobWithMultipleForEachSteps.new
+    job.perform_now
+    assert_equal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], job.step_one_processed_items
+    assert_equal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], job.step_two_processed_items
+  end
+
+  def test_worker_with_multiple_for_each_steps
+    dynamic_class = Class.new do
+      include Sidekiq::Worker
+      include AcidicJob
+
+      attr_reader :step_one_processed_items, :step_two_processed_items
+
+      def initialize
+        @step_one_processed_items = []
+        @step_two_processed_items = []
+        super()
+      end
+
+      def perform
+        with_acidity providing: { items: (1..10).to_a } do
+          step :step_one, for_each: :items
+          step :step_two, for_each: :items
+        end
+      end
+
+      def step_one(item)
+        @step_one_processed_items << item
+      end
+
+      def step_two(item)
+        @step_two_processed_items << item
+      end
+    end
+    Object.const_set("WorkerWithMultipleForEachSteps", dynamic_class)
+
+    job = WorkerWithMultipleForEachSteps.new
+    job.perform
+    assert_equal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], job.step_one_processed_items
+    assert_equal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], job.step_two_processed_items
+  end
 end

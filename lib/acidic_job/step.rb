@@ -54,9 +54,9 @@ module AcidicJob
       next_step = step["then"]
       # to support iteration within steps
       iterable_key = step["for_each"]
-      iterated_key = "processed_#{iterable_key}"
-      iterables = @run.attr_accessors.fetch(iterable_key, [])
-      iterateds = @run.attr_accessors.fetch(iterated_key, [])
+      iterated_key = "processed_#{current_step}_#{iterable_key}"
+      iterables = @run.attr_accessors.fetch(iterable_key, []) || []
+      iterateds = @run.attr_accessors.fetch(iterated_key, []) || []
       next_item = iterables.reject { |item| iterateds.include? item }.first
 
       # jobs can have no-op steps, especially so that they can use only the async/await mechanism for that step
