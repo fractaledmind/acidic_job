@@ -47,6 +47,7 @@ module AcidicJob
       raise UnknownJobAdapter
     end
 
+    # TODO: write test for a staged job that uses awaits
     klass.set_callback :perform, :after, :delete_staged_job_record, if: :was_staged_job?
     klass.define_callbacks :finish
 
