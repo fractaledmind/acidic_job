@@ -24,8 +24,6 @@ module Support
         super()
         @bid = bid || SecureRandom.hex(8)
         @callbacks = []
-        # force clear out any previous instances of `NullBatch` and the like
-        GC.start
       end
 
       def status
@@ -91,8 +89,17 @@ module Support
 
     class StepWorker
       include ::Sidekiq::Worker
+      include ::AcidicJob
+
+      def self.inherited(subclass)
+        super
+        subclass.set_callback :perform, :after, :call_batch_success_callback
+        subclass.set_callback :finish, :after, :call_batch_success_callback
+      end
 
       def call_batch_success_callback
+        return if instance_variable_get(:@run).present? && !instance_variable_get(:@run).finished?
+
         # simulate the Sidekiq::Batch success callback
         success_callback = batch.instance_variable_get(:@callbacks).find { |on, *| on == :success }
         _, method_sig, options = success_callback
@@ -103,9 +110,9 @@ module Support
       def batch
         ObjectSpace.each_object(Support::Sidekiq::NullBatch).find do |null_batch|
           success_callback = null_batch.instance_variable_get(:@callbacks).find { |on, *| on == :success }
-          _event, receiver = success_callback
+          _event, receiver, options = success_callback
 
-          receiver.is_a?(String) && receiver.end_with?("#step_done")
+          receiver.is_a?(String) && receiver.end_with?("#step_done") && options["job_names"].include?(self.class.name)
         end
       end
     end
