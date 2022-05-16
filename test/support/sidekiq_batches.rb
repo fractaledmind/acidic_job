@@ -98,7 +98,7 @@ module Support
       end
 
       def call_batch_success_callback
-        return if instance_variable_get(:@run).present? && !instance_variable_get(:@run).finished?
+        return if acidic_job_run.present? && !acidic_job_run.finished?
 
         # simulate the Sidekiq::Batch success callback
         success_callback = batch.instance_variable_get(:@callbacks).find { |on, *| on == :success }
