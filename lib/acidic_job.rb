@@ -55,6 +55,7 @@ module AcidicJob
     klass.define_singleton_method(:acidic_by_job_id) { @acidic_identifier = :job_id }
     klass.define_singleton_method(:acidic_by_job_args) { @acidic_identifier = :job_args }
     klass.define_singleton_method(:acidic_by) { |proc| @acidic_identifier = proc }
+    klass.attr_reader(:acidic_job_run)
   end
 
   included do
@@ -96,10 +97,10 @@ module AcidicJob
     # convert the array of steps into a hash of recovery_points and next steps
     workflow = define_workflow(@__acidic_job_steps)
 
-    @run = ensure_run_record(workflow, providing)
+    @acidic_job_run = ensure_run_record(workflow, providing)
 
     # begin the workflow
-    process_run(@run)
+    process_run(@acidic_job_run)
   end
 
   # DEPRECATED

@@ -20,6 +20,8 @@ module Support
       attr_accessor :description
       attr_reader :bid
 
+      @@batches = [] # rubocop:disable Style/ClassVars
+
       def initialize(bid = nil)
         super()
         @bid = bid || SecureRandom.hex(8)
@@ -32,6 +34,7 @@ module Support
 
       def on(*args)
         @callbacks << args
+        @@batches << self
       end
 
       def jobs(*)
@@ -42,7 +45,7 @@ module Support
     class NullStatus < NullObject
       attr_reader :bid
 
-      def initialize(bid = SecureRandom.hex(8), callbacks = [])
+      def initialize(bid, callbacks = [])
         super()
         @bid = bid
         @callbacks = callbacks
@@ -77,15 +80,7 @@ module Support
       # :nocov:
     end
 
-    class Workflow
-      def batch
-        ObjectSpace.each_object(Support::Sidekiq::NullBatch).find do |null_batch|
-          callbacks = null_batch.instance_variable_get(:@callbacks)
-          success_callback = callbacks.find { |on, *| on == :success }
-          success_callback&.second == self.class
-        end
-      end
-    end
+    class Workflow; end # rubocop:disable Lint/EmptyClass
 
     class StepWorker
       include ::Sidekiq::Worker
@@ -98,7 +93,7 @@ module Support
       end
 
       def call_batch_success_callback
-        return if instance_variable_get(:@run).present? && !instance_variable_get(:@run).finished?
+        return if acidic_job_run.present? && !acidic_job_run.finished?
 
         # simulate the Sidekiq::Batch success callback
         success_callback = batch.instance_variable_get(:@callbacks).find { |on, *| on == :success }

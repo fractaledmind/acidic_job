@@ -15,7 +15,7 @@ module Sidekiq
       # ignore, will be pushed back onto queue during hard_shutdown
       raise e
     rescue StandardError => e
-      # p e
+      p e
 
       # ignore, will be pushed back onto queue during hard_shutdown
       raise Sidekiq::Shutdown if exception_caused_by_shutdown?(e)

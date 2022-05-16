@@ -60,7 +60,7 @@ class RideCreateWorker
                                        # Pass through our own unique ID rather than the value
                                        # transmitted to us so that we can guarantee uniqueness to Stripe
                                        # across all Rocket Rides accounts.
-                                       idempotency_key: "rocket-rides-atomic-#{@run.id}"
+                                       idempotency_key: "rocket-rides-atomic-#{acidic_job_run.id}"
                                      })
     rescue Stripe::CardError
       # Short circuits execution by sending execution right to 'finished'.

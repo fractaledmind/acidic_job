@@ -380,4 +380,27 @@ class TestEdgeCases < TestCase
     assert_equal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], job.step_one_processed_items
     assert_equal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], job.step_two_processed_items
   end
+
+  def test_after_finish_callback_to_destroy_run_record
+    dynamic_class = Class.new do
+      include Sidekiq::Worker
+      include AcidicJob
+      set_callback :finish, :after, :delete_run_record
+
+      def perform
+        with_acidity do
+          step :do_something
+        end
+      end
+
+      def delete_run_record
+        acidic_job_run.destroy!
+      end
+    end
+    Object.const_set("WorkerWithAfterFinishCallback", dynamic_class)
+
+    WorkerWithAfterFinishCallback.new.perform
+
+    assert_equal 0, AcidicJob::Run.count
+  end
 end
