@@ -68,8 +68,10 @@ It provides a suite of functionality that empowers you to create complex, robust
 * Persisted Attributes — when retrying jobs at later steps, we need to ensure that data created in previous steps is still available to later steps on retry.
 * Transactionally Staged Jobs — enqueue additional jobs within the acidic transaction safely
 * Custom Idempotency Keys — use something other than the job ID for the idempotency key of the job run
+* Iterable Steps — define steps that iterate over some collection fully until moving on to the next step
 * Sidekiq Callbacks — bring ActiveJob-like callbacks into your pure Sidekiq Workers
 * Sidekiq Batches — leverage the power of Sidekiq Pro's `batch` functionality without the hassle
+* Run Finished Callbacks — set callbacks for when a job run finishes fully
 
 ### Transactional Steps
 
@@ -80,9 +82,10 @@ class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
   def perform(user_id, ride_params)
-    user = User.find(user_id)
+    @user = User.find(user_id)
+    @params = ride_params
 
-    with_acidity providing: { user: user, params: ride_params, ride: nil } do
+    with_acidity providing: { ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -128,7 +131,7 @@ class RideCreateJob < ActiveJob::Base
   end
 
   def create_stripe_charge
-    Stripe::Charge.create(amount: 20_00, customer: self.ride.user)
+    Stripe::Charge.create(amount: 20_00, customer: @ride.user)
   end
 
   # ...
@@ -138,6 +141,8 @@ end
 **Note:** This does mean that you are restricted to objects that can be serialized by ActiveRecord, thus no Procs, for example.
 
 **Note:** You will note the use of `self.ride = ...` in the code sample above. In order to call the attribute setter method that will sync with the database record, you _must_ use this style. `@ride = ...` and/or `ride = ...` will both fail to sync the value with the database record.
+
+The default pattern you should follow when defining your `perform` method is to make any values that your `step` methods need access to, but are present at the start of the `perform` method simply instance variables. You only need to `provide` attributes that will be set _during a step_. This means, the initial value will almost always be `nil`.
 
 ### Transactionally Staged Jobs
 
@@ -150,9 +155,10 @@ class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
   def perform(user_id, ride_params)
-    user = User.find(user_id)
+    @user = User.find(user_id)
+    @params = ride_params
     
-    with_acidity providing: { user: user, params: ride_params, ride: nil } do
+    with_acidity providing: { ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
       step :send_receipt
@@ -211,6 +217,28 @@ end
 
 > **Note:** The signature of the `acidic_by` proc _needs to match the signature_ of the job's `perform` method.
 
+### Iterable Steps
+
+Sometimes our workflows have steps that need to iterate over a collection and perform an action for each item in the collection before moving on to the next step in the workflow. In these cases, we can use the `for_each` option when defining our step to specific the collection, and `acidic_job` will pass each item into your step method for processing, keeping the same transactional guarantees as for any step. This means that if your step encounters an error in processing any item in the collection, when your job is retried, the job will jump right back to that step and right back to that item in the collection to try again.
+
+```ruby
+class ExampleJob < ActiveJob::Base
+  include AcidicJob
+
+  def perform(record:)
+    with_acidity providing: { collection: [1, 2, 3, 4, 5] } do
+      step :process_item, for_each: :collection
+      step :next_step
+    end
+  end
+  
+  def process_item(item)
+    # do whatever work needs to be done with this individual item
+  end
+end
+```
+
+**Note:** The same restrictions apply here as for any persisted attribute — you can only use objects that can be serialized by ActiveRecord.
 
 ### Sidekiq Callbacks
 
@@ -229,13 +257,44 @@ class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
   def perform(user_id, ride_params)
-    user = User.find(user_id)
+    @user = User.find(user_id)
+    @params = ride_params
 
-    with_acidity providing: { user: user, params: ride_params, ride: nil } do
+    with_acidity providing: { ride: nil } do
       step :create_ride_and_audit_record, awaits: [SomeJob]
       step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
       step :send_receipt
     end
+  end
+end
+```
+
+### Run Finished Callbacks
+
+When working with workflow jobs that make use of the `awaits` feature for a step, it is important to remember that the `after_perform` callback will be called _as soon as the first `awaits` step has enqueued job_, and **not** when the entire job run has finished. `acidic_job` allows the `perform` method to finish so that the queue for the workflow job is cleared to pick up new work while the `awaits` jobs are running. `acidic_job` will automatically re-enqueue the workflow job and progress to the next step when all of the `awaits` jobs have successfully finished. However, this means that `after_perform` **is not necessarily** the same as `after_finish`. In order to provide the opportunity for you to execute callback logic _if and only if_ a job run has finished, we provide callback hooks for the `finish` event.
+
+For example, you could use this hook to immediately clean up the `AcidicJob::Run` database record whenever the workflow job finishes successfully like so:
+
+```ruby
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+  set_callback :finish, :after, :delete_run_record
+
+  def perform(user_id, ride_params)
+    @user = User.find(user_id)
+    @params = ride_params
+
+    with_acidity providing: { ride: nil } do
+      step :create_ride_and_audit_record, awaits: [SomeJob]
+      step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
+      step :send_receipt
+    end
+  end
+  
+  def delete_run_record
+    return unless acidic_job_run.succeeded?
+
+    acidic_job_run.destroy!
   end
 end
 ```
