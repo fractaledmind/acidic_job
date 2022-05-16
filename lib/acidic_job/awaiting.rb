@@ -17,8 +17,11 @@ module AcidicJob
         "#{self.class.name}#step_done",
         # NOTE: options are marshalled through JSON so use only basic types.
         { "run_id" => run.id,
-          "step_result_yaml" => step_result.to_yaml.strip }
+          "step_result_yaml" => step_result.to_yaml.strip,
+          "parent_worker" => self.class.name,
+          "job_names" => jobs.map(&:to_s) }
       )
+
       # NOTE: The jobs method is atomic.
       # All jobs created in the block are actually pushed atomically at the end of the block.
       # If an error is raised, none of the jobs will go to Redis.
@@ -26,7 +29,8 @@ module AcidicJob
         jobs.each do |worker_name|
           # TODO: handle Symbols as well
           worker = worker_name.is_a?(String) ? worker_name.constantize : worker_name
-          if worker.instance_method(:perform).arity.zero?
+
+          if worker.instance_method(:perform).arity.presence_in [0, -1]
             worker.perform_async
           elsif worker.instance_method(:perform).arity == 1
             worker.perform_async(run.id)

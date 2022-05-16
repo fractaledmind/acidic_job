@@ -47,7 +47,9 @@ module AcidicJob
       raise UnknownJobAdapter
     end
 
+    # TODO: write test for a staged job that uses awaits
     klass.set_callback :perform, :after, :delete_staged_job_record, if: :was_staged_job?
+    klass.define_callbacks :finish
 
     klass.instance_variable_set(:@acidic_identifier, :job_id)
     klass.define_singleton_method(:acidic_by_job_id) { @acidic_identifier = :job_id }
@@ -128,7 +130,7 @@ module AcidicJob
 
   def process_run(run)
     # if the run record is already marked as finished, immediately return its result
-    return run.succeeded? if run.finished?
+    return finish_run(run) if run.finished?
 
     # otherwise, we will enter a loop to process each step of the workflow
     loop do
@@ -167,7 +169,13 @@ module AcidicJob
     end
 
     # the loop will break once the job is finished, so simply report the status
-    run.succeeded?
+    finish_run(run)
+  end
+
+  def finish_run(run)
+    run_callbacks :finish do
+      run.succeeded?
+    end
   end
 
   def step(method_name, awaits: [], for_each: nil)

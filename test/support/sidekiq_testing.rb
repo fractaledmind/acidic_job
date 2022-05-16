@@ -8,6 +8,30 @@ Sidekiq::Testing.fake!
 
 # inject retry logic into the testing harness
 module Sidekiq
+  class JobRetry
+    def local(jobinst, jobstr, queue)
+      yield
+    rescue Handled, Sidekiq::Shutdown => e
+      # ignore, will be pushed back onto queue during hard_shutdown
+      raise e
+    rescue StandardError => e
+      # p e
+
+      # ignore, will be pushed back onto queue during hard_shutdown
+      raise Sidekiq::Shutdown if exception_caused_by_shutdown?(e)
+
+      msg = Sidekiq.load_json(jobstr)
+      msg["retry"] = jobinst.class.get_sidekiq_options["retry"] if msg["retry"].nil?
+
+      raise e unless msg["retry"]
+
+      attempt_retry(jobinst, msg, queue, e)
+      # We've handled this error associated with this job, don't
+      # need to handle it at the global level
+      raise Skip
+    end
+  end
+
   module Worker
     module ClassMethods
       def process_job(job)

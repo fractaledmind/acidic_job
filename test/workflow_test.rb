@@ -18,25 +18,13 @@ class TestWorkflows < TestCase
     @sidekiq_queue.clear
   end
 
-  def mocking_sidekiq_batches(&block)
-    Sidekiq::Batch.stub(:new, ->(*) { Support::Sidekiq::NullBatch.new }) do
-      Sidekiq::Batch::Status.stub(:new, ->(*) { Support::Sidekiq::NullStatus.new }) do
-        Sidekiq::Testing.fake! do
-          block.call
-        end
-      end
-    end
-  end
-
   def test_step_with_awaits_is_run_properly
     dynamic_class = Class.new(Support::Sidekiq::Workflow) do
       include Sidekiq::Worker
       include AcidicJob
 
       dynamic_step_job = Class.new(Support::Sidekiq::StepWorker) do
-        def perform
-          call_batch_success_callback
-        end
+        def perform; end
       end
       Object.const_set("SuccessfulAsyncWorker", dynamic_step_job)
 
@@ -48,10 +36,7 @@ class TestWorkflows < TestCase
     end
     Object.const_set("WorkerWithSuccessfulAwaitStep", dynamic_class)
 
-    mocking_sidekiq_batches do
-      WorkerWithSuccessfulAwaitStep.new.perform
-    end
-
+    WorkerWithSuccessfulAwaitStep.new.perform
     Sidekiq::Worker.drain_all
 
     assert_equal 1, AcidicJob::Run.count
@@ -79,9 +64,7 @@ class TestWorkflows < TestCase
     end
     Object.const_set("WorkerWithErroringAwaitStep", dynamic_class)
 
-    mocking_sidekiq_batches do
-      WorkerWithErroringAwaitStep.new.perform
-    end
+    WorkerWithErroringAwaitStep.new.perform
 
     assert_raises Sidekiq::JobRetry::Handled do
       Sidekiq::Worker.drain_all
@@ -91,5 +74,88 @@ class TestWorkflows < TestCase
     assert_equal "await_step", AcidicJob::Run.first.recovery_point
     assert_nil AcidicJob::Run.first.error_object
     assert_equal 1, Sidekiq::RetrySet.new.size
+  end
+
+  def test_step_with_nested_awaits_jobs_is_run_properly
+    dynamic_class = Class.new(Support::Sidekiq::Workflow) do
+      include Sidekiq::Worker
+      include AcidicJob
+
+      erroring_async_worker = Class.new(Support::Sidekiq::StepWorker) do
+        def perform
+          true
+        end
+      end
+      Object.const_set("NestedSuccessfulWorker", erroring_async_worker)
+
+      nested_awaits_job = Class.new(Support::Sidekiq::StepWorker) do
+        def perform
+          with_acidity providing: {} do
+            step :await_nested_step, awaits: [NestedSuccessfulWorker]
+          end
+        end
+      end
+      Object.const_set("NestedSuccessfulAwaitsWorker", nested_awaits_job)
+
+      def perform
+        with_acidity providing: {} do
+          step :await_step, awaits: [NestedSuccessfulAwaitsWorker]
+        end
+      end
+    end
+    Object.const_set("WorkerWithSuccessfulNestedAwaitSteps", dynamic_class)
+
+    WorkerWithSuccessfulNestedAwaitSteps.new.perform
+
+    Sidekiq::Worker.drain_all
+
+    assert_equal 2, AcidicJob::Run.count
+    assert_equal "FINISHED", AcidicJob::Run.first.recovery_point
+    assert_equal "FINISHED", AcidicJob::Run.second.recovery_point
+    assert_equal 0, Sidekiq::RetrySet.new.size
+  end
+
+  def test_step_with_nested_awaits_jobs_that_errors_in_second_level
+    dynamic_class = Class.new(Support::Sidekiq::Workflow) do
+      include Sidekiq::Worker
+      include AcidicJob
+
+      erroring_async_worker = Class.new(Support::Sidekiq::StepWorker) do
+        def perform
+          raise CustomErrorForTesting
+        end
+      end
+      Object.const_set("NestedErroringWorker", erroring_async_worker)
+
+      nested_awaits_job = Class.new(Support::Sidekiq::StepWorker) do
+        def perform
+          with_acidity providing: {} do
+            step :await_nested_step, awaits: [NestedErroringWorker]
+          end
+        end
+      end
+      Object.const_set("NestedErroringAwaitsWorker", nested_awaits_job)
+
+      def perform
+        with_acidity providing: {} do
+          step :await_step, awaits: [NestedErroringAwaitsWorker]
+        end
+      end
+    end
+    Object.const_set("WorkerWithErroringNestedAwaitSteps", dynamic_class)
+
+    WorkerWithErroringNestedAwaitSteps.new.perform
+
+    assert_raises Sidekiq::JobRetry::Handled do
+      Sidekiq::Worker.drain_all
+    end
+
+    assert_equal 2, AcidicJob::Run.count
+    assert_equal "await_step", AcidicJob::Run.first.recovery_point
+    assert_equal "await_nested_step", AcidicJob::Run.second.recovery_point
+
+    retry_set = Sidekiq::RetrySet.new
+    assert_equal 1, retry_set.size
+    assert_equal ["NestedErroringWorker"], retry_set.map { _1.item["class"] }
   end
 end
