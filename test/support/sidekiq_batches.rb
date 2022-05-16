@@ -2,12 +2,6 @@
 
 require_relative "sidekiq_testing"
 
-module Sidekiq
-  class Batch
-    class Status; end # rubocop:disable Lint/EmptyClass
-  end
-end
-
 module Support
   module Sidekiq
     class NullObject
@@ -115,5 +109,11 @@ module Support
         end
       end
     end
+  end
+end
+
+module Sidekiq
+  class Batch < Support::Sidekiq::NullBatch
+    class Status < Support::Sidekiq::NullStatus; end
   end
 end
