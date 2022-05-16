@@ -19,23 +19,36 @@ module AcidicJob
         { "run_id" => run.id,
           "step_result_yaml" => step_result.to_yaml.strip,
           "parent_worker" => self.class.name,
-          "job_names" => jobs.map(&:to_s) }
+          "job_names" => jobs.map do |job|
+                           if job.is_a?(Class)
+                             job.to_s
+                           else
+                             job.is_a?(String) ? job : job.class.name
+                           end
+                         end }
       )
 
       # NOTE: The jobs method is atomic.
       # All jobs created in the block are actually pushed atomically at the end of the block.
       # If an error is raised, none of the jobs will go to Redis.
       step_batch.jobs do
-        jobs.each do |worker_name|
-          # TODO: handle Symbols as well
-          worker = worker_name.is_a?(String) ? worker_name.constantize : worker_name
+        jobs.each do |job|
+          worker, args, kwargs = case job
+                                 when Class
+                                   [job, [], {}]
+                                 when String
+                                   [job.constantize, [], {}]
+                                 when Symbol
+                                   [job.to_s.constantize, [], {}]
+                                 else
+                                   [job.class, job.instance_variable_get(:@__acidic_job_args),
+                                    job.instance_variable_get(:@__acidic_job_kwargs)]
+                                 end
 
-          if worker.instance_method(:perform).arity.presence_in [0, -1]
+          if worker.instance_method(:perform).arity.zero?
             worker.perform_async
-          elsif worker.instance_method(:perform).arity == 1
-            worker.perform_async(run.id)
           else
-            raise TooManyParametersForParallelJob
+            worker.perform_async(*args, **kwargs)
           end
         end
       end

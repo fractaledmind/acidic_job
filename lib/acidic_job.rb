@@ -68,6 +68,10 @@ module AcidicJob
       super
     end
 
+    def with(*args, **kwargs)
+      new(*args, **kwargs)
+    end
+
     def acidic_identifier
       @acidic_identifier
     end
