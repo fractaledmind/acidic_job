@@ -8,9 +8,16 @@ module AcidicJob
 
     private
 
-    def enqueue_step_parallel_jobs(jobs, run, step_result)
+    def enqueue_step_parallel_jobs(jobs_or_jobs_getter, run, step_result)
       # `batch` is available from Sidekiq::Pro
       raise SidekiqBatchRequired unless defined?(Sidekiq::Batch)
+
+      jobs = case jobs_or_jobs_getter
+             when Array
+               jobs_or_jobs_getter
+             when Symbol, String
+               method(jobs_or_jobs_getter).call
+             end
 
       step_batch = Sidekiq::Batch.new
       # step_batch.description = "AcidicJob::Workflow Step: #{step}"

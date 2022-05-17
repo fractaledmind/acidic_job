@@ -11,13 +11,6 @@ class TestWorkflows < TestCase
     @sidekiq_queue = Sidekiq::Queues["default"]
   end
 
-  def assert_enqueued_with(worker:, args: [], size: 1)
-    assert_equal size, @sidekiq_queue.size
-    assert_equal worker.to_s, @sidekiq_queue.first["class"]
-    assert_equal args, @sidekiq_queue.first["args"]
-    @sidekiq_queue.clear
-  end
-
   def test_step_with_awaits_is_run_properly
     dynamic_class = Class.new(Support::Sidekiq::Workflow) do
       include Sidekiq::Worker
@@ -167,11 +160,11 @@ class TestWorkflows < TestCase
       dynamic_step_job = Class.new(Support::Sidekiq::StepWorker) do
         def perform(arg); end
       end
-      Object.const_set("SuccessfulArgAsyncWorker", dynamic_step_job)
+      Object.const_set("SuccessfulArgWorker", dynamic_step_job)
 
       def perform
         with_acidity providing: {} do
-          step :await_step, awaits: [SuccessfulArgAsyncWorker.with(123)]
+          step :await_step, awaits: [SuccessfulArgWorker.with(123)]
         end
       end
     end
@@ -183,5 +176,101 @@ class TestWorkflows < TestCase
     assert_equal 1, AcidicJob::Run.count
     assert_equal "FINISHED", AcidicJob::Run.first.recovery_point
     assert_equal 0, Sidekiq::RetrySet.new.size
+  end
+
+  def test_step_with_dynamic_awaits_as_symbol_is_run_properly
+    dynamic_class = Class.new(Support::Sidekiq::Workflow) do
+      include Sidekiq::Worker
+      include AcidicJob
+
+      successful_step_job = Class.new(Support::Sidekiq::StepWorker) do
+        def perform(arg); end
+      end
+      Object.const_set("SuccessfulDynamicAwaitFromSymbolWorker", successful_step_job)
+
+      erroring_step_job = Class.new(Support::Sidekiq::StepWorker) do
+        def perform
+          raise CustomErrorForTesting
+        end
+      end
+      Object.const_set("ErroringDynamicAwaitFromSymbolWorker", erroring_step_job)
+
+      def perform(bool)
+        @bool = bool
+
+        with_acidity providing: {} do
+          step :await_step, awaits: :dynamic_awaiting
+        end
+      end
+
+      def dynamic_awaiting
+        if @bool
+          [SuccessfulDynamicAwaitFromSymbolWorker.with(123)]
+        else
+          [ErroringDynamicAwaitFromSymbolWorker]
+        end
+      end
+    end
+    Object.const_set("WorkerWithDynamicAwaitsAsSymbol", dynamic_class)
+
+    WorkerWithDynamicAwaitsAsSymbol.new.perform(true)
+    Sidekiq::Worker.drain_all
+
+    assert_equal 1, AcidicJob::Run.count
+    assert_equal "FINISHED", AcidicJob::Run.first.recovery_point
+    assert_equal 0, Sidekiq::RetrySet.new.size
+
+    WorkerWithDynamicAwaitsAsSymbol.new.perform(false)
+    assert_raises Sidekiq::JobRetry::Handled do
+      Sidekiq::Worker.drain_all
+    end
+  end
+
+  def test_step_with_dynamic_awaits_as_string_is_run_properly
+    dynamic_class = Class.new(Support::Sidekiq::Workflow) do
+      include Sidekiq::Worker
+      include AcidicJob
+
+      successful_step_job = Class.new(Support::Sidekiq::StepWorker) do
+        def perform(arg); end
+      end
+      Object.const_set("SuccessfulDynamicAwaitFromStringWorker", successful_step_job)
+
+      erroring_step_job = Class.new(Support::Sidekiq::StepWorker) do
+        def perform
+          raise CustomErrorForTesting
+        end
+      end
+      Object.const_set("ErroringDynamicAwaitFromSymbolWorker", erroring_step_job)
+
+      def perform(bool)
+        @bool = bool
+
+        with_acidity providing: {} do
+          step :await_step, awaits: "dynamic_awaiting"
+        end
+      end
+
+      def dynamic_awaiting
+        if @bool
+          [SuccessfulDynamicAwaitFromStringWorker.with(123)]
+        else
+          [ErroringDynamicAwaitFromSymbolWorker]
+        end
+      end
+    end
+    Object.const_set("WorkerWithDynamicAwaitsAsString", dynamic_class)
+
+    WorkerWithDynamicAwaitsAsString.new.perform(true)
+    Sidekiq::Worker.drain_all
+
+    assert_equal 1, AcidicJob::Run.count
+    assert_equal "FINISHED", AcidicJob::Run.first.recovery_point
+    assert_equal 0, Sidekiq::RetrySet.new.size
+
+    WorkerWithDynamicAwaitsAsString.new.perform(false)
+    assert_raises Sidekiq::JobRetry::Handled do
+      Sidekiq::Worker.drain_all
+    end
   end
 end
