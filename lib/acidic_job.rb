@@ -148,7 +148,7 @@ module AcidicJob
         break
       elsif current_step.nil?
         raise UnknownRecoveryPoint, "Defined workflow does not reference this step: #{recovery_point}"
-      elsif (jobs = current_step.fetch("awaits", [])).any?
+      elsif !(jobs = current_step.fetch("awaits", []) || []).empty?
         step = Step.new(current_step, run, self)
         # Only execute the current step, without yet progressing the recovery_point to the next step.
         # This ensures that any failures in parallel jobs will have this step retried in the main workflow
