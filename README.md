@@ -269,6 +269,25 @@ class RideCreateJob < ActiveJob::Base
 end
 ```
 
+If you need to await a job that takes arguments, you can prepare that job along with its arguments using the `with` class method that `acidic_job` will add to your jobs:
+
+```ruby
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+
+  def perform(user_id, ride_params)
+    @user = User.find(user_id)
+    @params = ride_params
+
+    with_acidity providing: { ride: nil } do
+      step :create_ride_and_audit_record, awaits: [SomeJob]
+      step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
+      step :send_receipt
+    end
+  end
+end
+```
+
 ### Run Finished Callbacks
 
 When working with workflow jobs that make use of the `awaits` feature for a step, it is important to remember that the `after_perform` callback will be called _as soon as the first `awaits` step has enqueued job_, and **not** when the entire job run has finished. `acidic_job` allows the `perform` method to finish so that the queue for the workflow job is cleared to pick up new work while the `awaits` jobs are running. `acidic_job` will automatically re-enqueue the workflow job and progress to the next step when all of the `awaits` jobs have successfully finished. However, this means that `after_perform` **is not necessarily** the same as `after_finish`. In order to provide the opportunity for you to execute callback logic _if and only if_ a job run has finished, we provide callback hooks for the `finish` event.
@@ -285,7 +304,7 @@ class RideCreateJob < ActiveJob::Base
     @params = ride_params
 
     with_acidity providing: { ride: nil } do
-      step :create_ride_and_audit_record, awaits: [SomeJob]
+      step :create_ride_and_audit_record, awaits: [SomeJob.with('argument_1', keyword: 'value')]
       step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
       step :send_receipt
     end
@@ -298,6 +317,8 @@ class RideCreateJob < ActiveJob::Base
   end
 end
 ```
+
+You can also await a batch of jobs by simply passing multiple jobs to the `awaits` array (e.g. `awaits: [SomeJob, AnotherJob.with('argument_1', keyword: 'value')]`). Your top level workflow job will only continue to the next step once all of the jobs in your `awaits` array have successfully finished.
 
 ## Testing
 

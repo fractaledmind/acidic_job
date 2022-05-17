@@ -158,4 +158,30 @@ class TestWorkflows < TestCase
     assert_equal 1, retry_set.size
     assert_equal ["NestedErroringWorker"], retry_set.map { _1.item["class"] }
   end
+
+  def test_step_with_awaits_that_takes_args_is_run_properly
+    dynamic_class = Class.new(Support::Sidekiq::Workflow) do
+      include Sidekiq::Worker
+      include AcidicJob
+
+      dynamic_step_job = Class.new(Support::Sidekiq::StepWorker) do
+        def perform(arg); end
+      end
+      Object.const_set("SuccessfulArgAsyncWorker", dynamic_step_job)
+
+      def perform
+        with_acidity providing: {} do
+          step :await_step, awaits: [SuccessfulArgAsyncWorker.with(123)]
+        end
+      end
+    end
+    Object.const_set("WorkerWithSuccessfulArgAwaitStep", dynamic_class)
+
+    WorkerWithSuccessfulArgAwaitStep.new.perform
+    Sidekiq::Worker.drain_all
+
+    assert_equal 1, AcidicJob::Run.count
+    assert_equal "FINISHED", AcidicJob::Run.first.recovery_point
+    assert_equal 0, Sidekiq::RetrySet.new.size
+  end
 end
