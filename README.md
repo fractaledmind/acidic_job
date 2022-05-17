@@ -280,13 +280,44 @@ class RideCreateJob < ActiveJob::Base
     @params = ride_params
 
     with_acidity providing: { ride: nil } do
-      step :create_ride_and_audit_record, awaits: [SomeJob]
+      step :create_ride_and_audit_record, awaits: awaits: [SomeJob.with('argument_1', keyword: 'value')]
       step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
       step :send_receipt
     end
   end
 end
 ```
+
+You can also await a batch of jobs by simply passing multiple jobs to the `awaits` array (e.g. `awaits: [SomeJob, AnotherJob.with('argument_1', keyword: 'value')]`). Your top level workflow job will only continue to the next step once all of the jobs in your `awaits` array have successfully finished.
+
+In some cases, you may need to _dynamically_ determine the collection of jobs that the step should wait for; in these cases, you can pass the name of a method to the `awaits` option:
+
+```ruby
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+  set_callback :finish, :after, :delete_run_record
+
+  def perform(user_id, ride_params)
+    @user = User.find(user_id)
+    @params = ride_params
+
+    with_acidity providing: { ride: nil } do
+      step :create_ride_and_audit_record, awaits: :dynamic_awaits
+      step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
+      step :send_receipt
+    end
+  end
+  
+  def dynamic_awaits
+    if @params["key"].present?
+      [SomeJob.with('argument_1', keyword: 'value')]
+    else
+      [AnotherJob]
+    end
+  end
+end
+```
+
 
 ### Run Finished Callbacks
 
@@ -317,8 +348,6 @@ class RideCreateJob < ActiveJob::Base
   end
 end
 ```
-
-You can also await a batch of jobs by simply passing multiple jobs to the `awaits` array (e.g. `awaits: [SomeJob, AnotherJob.with('argument_1', keyword: 'value')]`). Your top level workflow job will only continue to the next step once all of the jobs in your `awaits` array have successfully finished.
 
 ## Testing
 
