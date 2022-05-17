@@ -83,11 +83,11 @@ module AcidicJob
     @__acidic_job_args = args
     @__acidic_job_kwargs = kwargs
 
-    if method(__method__).super_method.arity.zero?
-      super()
-    else
-      super(*args, **kwargs)
-    end
+    super(*args, **kwargs)
+  rescue ArgumentError => e
+    raise e unless e.message.include?("wrong number of arguments")
+
+    super()
   end
 
   def with_acidity(providing: {})
