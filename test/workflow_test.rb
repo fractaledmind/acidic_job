@@ -204,11 +204,9 @@ class TestWorkflows < TestCase
       end
 
       def dynamic_awaiting
-        if @bool
-          [SuccessfulDynamicAwaitFromSymbolWorker.with(123)]
-        else
-          [ErroringDynamicAwaitFromSymbolWorker]
-        end
+        return [SuccessfulDynamicAwaitFromSymbolWorker.with(123)] if @bool
+
+        [ErroringDynamicAwaitFromSymbolWorker]
       end
     end
     Object.const_set("WorkerWithDynamicAwaitsAsSymbol", dynamic_class)
@@ -252,11 +250,9 @@ class TestWorkflows < TestCase
       end
 
       def dynamic_awaiting
-        if @bool
-          [SuccessfulDynamicAwaitFromStringWorker.with(123)]
-        else
-          [ErroringDynamicAwaitFromSymbolWorker]
-        end
+        return [SuccessfulDynamicAwaitFromStringWorker.with(123)] if @bool
+
+        [ErroringDynamicAwaitFromSymbolWorker]
       end
     end
     Object.const_set("WorkerWithDynamicAwaitsAsString", dynamic_class)
