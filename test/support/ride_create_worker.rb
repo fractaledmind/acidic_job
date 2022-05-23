@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "sidekiq"
+
 class SendRideReceiptWorker
   include Sidekiq::Worker
   include AcidicJob
