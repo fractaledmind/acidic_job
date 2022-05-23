@@ -7,13 +7,13 @@ module AcidicJob
       @job = job
       @workflow = Workflow.new(run, job)
     end
-  
+
     def process_run
       # if the run record is already marked as finished, immediately return its result
       return @run.succeeded? if @run.finished?
-  
+
       AcidicJob.logger.debug("Processing #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key})...")
-  
+
       loop do
         if @run.finished?
           break
@@ -42,61 +42,61 @@ module AcidicJob
         end
       end
       AcidicJob.logger.debug("Processed #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key}).")
-  
+
       @run.succeeded?
     end
-  
+
     private
-  
-      def enqueue_awaited_jobs(jobs_or_jobs_getter, step_result)
-        awaited_jobs = jobs_from(jobs_or_jobs_getter)
-    
-        AcidicJob.logger.debug("Enqueuing #{awaited_jobs.count} jobs awaited by #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key})...")
-    
-        # All jobs created in the block are actually pushed atomically at the end of the block.
-        AcidicJob::Run.transaction do
-          awaited_jobs.each do |awaited_job|
-            worker_class, args, kwargs = job_args_and_kwargs(awaited_job)
-    
-            job = worker_class.new(*args, **kwargs)
-    
-            AcidicJob::Run.create!(
-              staged: true,
-              awaited_by: @run,
-              returning_to: step_result,
-              job_class: worker_class,
-              serialized_job: job.serialize,
-              idempotency_key: IdempotencyKey.new(job).value(acidic_by: worker_class.try(:acidic_identifier))
-            )
-          end
-        end
-    
-        AcidicJob.logger.debug("Enqueued #{awaited_jobs.count} jobs awaited by #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key}).")
-      end
-    
-      def jobs_from(jobs_or_jobs_getter)
-        case jobs_or_jobs_getter
-        when Array
-          jobs_or_jobs_getter
-        when Symbol, String
-          @job.method(jobs_or_jobs_getter).call
-        else
-          raise UnknownAwaitedJob,
-          "Option passed to `awaits` is invalid; must be either an Array of jobs or a method name, was: #{jobs_or_jobs_getter.class.name}"
+
+    def enqueue_awaited_jobs(jobs_or_jobs_getter, step_result)
+      awaited_jobs = jobs_from(jobs_or_jobs_getter)
+
+      AcidicJob.logger.debug("Enqueuing #{awaited_jobs.count} jobs awaited by #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key})...")
+
+      # All jobs created in the block are actually pushed atomically at the end of the block.
+      AcidicJob::Run.transaction do
+        awaited_jobs.each do |awaited_job|
+          worker_class, args, kwargs = job_args_and_kwargs(awaited_job)
+
+          job = worker_class.new(*args, **kwargs)
+
+          AcidicJob::Run.create!(
+            staged: true,
+            awaited_by: @run,
+            returning_to: step_result,
+            job_class: worker_class,
+            serialized_job: job.serialize,
+            idempotency_key: IdempotencyKey.new(job).value(acidic_by: worker_class.try(:acidic_identifier))
+          )
         end
       end
-    
-      def job_args_and_kwargs(job)
-        case job
-        when Class
-          [job, [], {}]
-        else
-          [
-            job.class,
-            job.arguments,
-            {}
-          ]
-        end
+
+      AcidicJob.logger.debug("Enqueued #{awaited_jobs.count} jobs awaited by #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key}).")
+    end
+
+    def jobs_from(jobs_or_jobs_getter)
+      case jobs_or_jobs_getter
+      when Array
+        jobs_or_jobs_getter
+      when Symbol, String
+        @job.method(jobs_or_jobs_getter).call
+      else
+        raise UnknownAwaitedJob,
+              "Option passed to `awaits` is invalid; must be either an Array of jobs or a method name, was: #{jobs_or_jobs_getter.class.name}"
       end
+    end
+
+    def job_args_and_kwargs(job)
+      case job
+      when Class
+        [job, [], {}]
+      else
+        [
+          job.class,
+          job.arguments,
+          {}
+        ]
+      end
+    end
   end
 end

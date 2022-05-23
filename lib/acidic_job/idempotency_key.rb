@@ -5,7 +5,7 @@ module AcidicJob
     def initialize(job)
       @job = job
     end
-  
+
     def value(acidic_by: :job_id)
       case acidic_by
       when Proc

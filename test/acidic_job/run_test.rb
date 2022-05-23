@@ -5,7 +5,7 @@ require_relative "../support/test_case"
 
 class MyJob
   def self.deserialize(_serialized_job)
-    new()
+    new
   end
 
   def enqueue; end

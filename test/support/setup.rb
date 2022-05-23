@@ -105,7 +105,7 @@ end
 class Notification < ApplicationRecord
   include Noticed::Model
 end
-  
+
 class Performance
   def self.reset!
     @performances = 0
@@ -115,8 +115,8 @@ class Performance
     @performances += 1
   end
 
-  def self.performances
-    @performances
+  class << self
+    attr_reader :performances
   end
 
   def self.performed?

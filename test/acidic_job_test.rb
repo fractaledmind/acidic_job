@@ -3,6 +3,7 @@
 require "test_helper"
 require "active_job/test_helper"
 
+# rubocop:disable Lint/ConstantDefinitionInBlock
 class TestCases < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
@@ -1174,3 +1175,4 @@ class TestCases < ActiveSupport::TestCase
     assert_equal true, child_run.awaited?
   end
 end
+# rubocop:enable Lint/ConstantDefinitionInBlock
