@@ -25,7 +25,7 @@ module AcidicJob
     @logger ||= ActiveSupport::TaggedLogging.new(AcidicJob::Logger.new($stdout, level: :debug))
   end
 
-  def self.logger=(new_logger)
-    @logger = ActiveSupport::TaggedLogging.new(new_logger)
+  def self.silence_logger!
+    @logger = ActiveSupport::TaggedLogging.new(AcidicJob::Logger.new(IO::NULL, level: :debug))
   end
 end
