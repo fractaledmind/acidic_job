@@ -159,10 +159,10 @@ module AcidicJob
       workflow.progress_to_next_step
 
       # when a batch of jobs for a step succeeds, we begin processing the `AcidicJob::Run` record again
-      unless run.finished?
-        run.enqueue_job
-      end
+      return if run.finished?
+
       AcidicJob.logger.log_run_event("Re-enqueuing parent job...", job, run)
+      run.enqueue_job
       AcidicJob.logger.log_run_event("Re-enqueued parent job.", job, run)
     end
   end

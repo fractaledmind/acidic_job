@@ -14,9 +14,9 @@ module AcidicJob
 
       AcidicJob.logger.log_run_event("Processing #{@workflow.current_step_name}...", @job, @run)
       loop do
-        if @run.finished?
-          break
-        elsif !@run.known_recovery_point?
+        break if @run.finished?
+
+        if !@run.known_recovery_point?
           raise UnknownRecoveryPoint,
                 "Defined workflow does not reference this step: #{@workflow.current_step_name.inspect}"
         elsif !(awaited_jobs = @workflow.current_step_hash.fetch("awaits", []) || []).empty?

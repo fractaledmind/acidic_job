@@ -85,8 +85,9 @@ module AcidicJob
         callable = current_step_method
 
         # STEP ITERATION
-        # the `iterable_key` represents the name of the collection accessor that must be present in `@run.attr_accessors`,
-        # that is, it must have been passed to `providing` when calling `with_acidity`
+        # the `iterable_key` represents the name of the collection accessor
+        # that must be present in `@run.attr_accessors`; that is,
+        # it must have been passed to `providing` when calling `with_acidity`
         iterable_key = current_step_hash["for_each"]
         raise UnknownForEachCollection if iterable_key.present? && !@run.attr_accessors.key?(iterable_key)
 
