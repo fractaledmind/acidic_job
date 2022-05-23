@@ -4,12 +4,10 @@
 # return from an #atomic_phase block.
 module AcidicJob
   class RecoveryPoint
-    attr_accessor :name
-
     def initialize(name)
       @name = name
     end
-
+  
     def call(run:)
       # Skip AR callbacks as there are none on the model
       run.update_column(:recovery_point, @name)

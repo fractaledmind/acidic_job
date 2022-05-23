@@ -2,26 +2,13 @@
 
 module AcidicJob
   class Error < StandardError; end
-
-  class MismatchedIdempotencyKeyAndJobArguments < Error; end
-
-  class LockedIdempotencyKey < Error; end
-
+  class MissingWorkflowBlock < Error; end
   class UnknownRecoveryPoint < Error; end
-
-  class UnknownAtomicPhaseType < Error; end
-
-  class SerializedTransactionConflict < Error; end
-
-  class UnknownJobAdapter < Error; end
-
   class NoDefinedSteps < Error; end
-
-  class SidekiqBatchRequired < Error; end
-
-  class TooManyParametersForStepMethod < Error; end
-
-  class TooManyParametersForParallelJob < Error; end
-
-  class UnknownSerializedJobIdentifier < Error; end
+  class RedefiningWorkflow < Error; end
+  class UndefinedStepMethod < Error; end
+  class UnknownForEachCollection < Error; end
+  class UniterableForEachCollection < Error; end
+  class UnknownJobAdapter < Error; end
+  class UnknownAwaitedJob < Error; end
 end
