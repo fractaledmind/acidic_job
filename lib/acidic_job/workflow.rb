@@ -55,20 +55,20 @@ module AcidicJob
     def run_current_step
       wrapped_method = wrapped_current_step_method
 
-      AcidicJob.logger.debug("Executing #{@job.class.name}:#{@job.object_id} -> #{current_step_name} (Run ID: #{@run.idempotency_key})...")
+      AcidicJob.logger.log_run_event("Executing #{current_step_name}...", @job, @run)
       @run.with_lock do
         @step_result = wrapped_method.call(@run)
       end
-      AcidicJob.logger.debug("Executed #{@job.class.name}:#{@job.object_id} -> #{current_step_name} (Run ID: #{@run.idempotency_key}).")
+      AcidicJob.logger.log_run_event("Executed #{current_step_name}.", @job, @run)
     end
 
     def run_step_result
       next_step = next_step_name
-      AcidicJob.logger.debug("Progressing to #{@job.class.name}:#{@job.object_id} -> #{next_step} (Run ID: #{@run.idempotency_key})...")
+      AcidicJob.logger.log_run_event("Progressing to #{next_step}...", @job, @run)
       @run.with_lock do
         @step_result.call(run: @run)
       end
-      AcidicJob.logger.debug("Progressed to #{@job.class.name}:#{@job.object_id} -> #{next_step} (Run ID: #{@run.idempotency_key}).")
+      AcidicJob.logger.log_run_event("Progressed to #{next_step}.", @job, @run)
     end
 
     def next_step_name

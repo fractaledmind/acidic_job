@@ -12,8 +12,7 @@ module AcidicJob
       # if the run record is already marked as finished, immediately return its result
       return @run.succeeded? if @run.finished?
 
-      AcidicJob.logger.debug("Processing #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key})...")
-
+      AcidicJob.logger.log_run_event("Processing #{@workflow.current_step_name}...", @job, @run)
       loop do
         if @run.finished?
           break
@@ -41,7 +40,7 @@ module AcidicJob
           @workflow.progress_to_next_step
         end
       end
-      AcidicJob.logger.debug("Processed #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key}).")
+      AcidicJob.logger.log_run_event("Processed #{@workflow.current_step_name}.", @job, @run)
 
       @run.succeeded?
     end
@@ -51,8 +50,7 @@ module AcidicJob
     def enqueue_awaited_jobs(jobs_or_jobs_getter, step_result)
       awaited_jobs = jobs_from(jobs_or_jobs_getter)
 
-      AcidicJob.logger.debug("Enqueuing #{awaited_jobs.count} jobs awaited by #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key})...")
-
+      AcidicJob.logger.log_run_event("Enqueuing #{awaited_jobs.count} awaited jobs...", @job, @run)
       # All jobs created in the block are actually pushed atomically at the end of the block.
       AcidicJob::Run.transaction do
         awaited_jobs.each do |awaited_job|
@@ -70,8 +68,7 @@ module AcidicJob
           )
         end
       end
-
-      AcidicJob.logger.debug("Enqueued #{awaited_jobs.count} jobs awaited by #{@job.class.name}:#{@job.object_id} -> #{@workflow.current_step_name} (Run ID: #{@run.idempotency_key}).")
+      AcidicJob.logger.log_run_event("Enqueued #{awaited_jobs.count} awaited jobs.", @job, @run)
     end
 
     def jobs_from(jobs_or_jobs_getter)

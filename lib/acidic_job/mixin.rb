@@ -58,7 +58,7 @@ module AcidicJob
       # convert the array of steps into a hash of recovery_points and next steps
       workflow = WorkflowBuilder.define_workflow(@workflow_builder.steps)
 
-      AcidicJob.logger.debug("Initializing run for #{self.class.name}:#{object_id} (Run ID: #{idempotency_key})...")
+      AcidicJob.logger.log_run_event("Initializing run...", self, nil)
       @acidic_job_run = ActiveRecord::Base.transaction(isolation: :read_uncommitted) do
         run = Run.find_by(idempotency_key: idempotency_key)
 
@@ -109,7 +109,7 @@ module AcidicJob
 
         run
       end
-      AcidicJob.logger.debug("Initialized run for #{self.class.name}:#{object_id} (Run ID: #{idempotency_key}).")
+      AcidicJob.logger.log_run_event("Initialized run.", self, @acidic_job_run)
 
       Processor.new(@acidic_job_run, self).process_run
     rescue LocalJumpError
@@ -160,10 +160,10 @@ module AcidicJob
 
       # when a batch of jobs for a step succeeds, we begin processing the `AcidicJob::Run` record again
       unless run.finished?
-        AcidicJob.logger.debug("Re-enqueuing #{job.class.name}:#{job.object_id} (Run ID: #{run.idempotency_key})...")
         run.enqueue_job
-        AcidicJob.logger.debug("Re-enqueued #{job.class.name}:#{job.object_id} (Run ID: #{run.idempotency_key}).")
       end
+      AcidicJob.logger.log_run_event("Re-enqueuing parent job...", job, run)
+      AcidicJob.logger.log_run_event("Re-enqueued parent job.", job, run)
     end
   end
 end
