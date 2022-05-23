@@ -149,7 +149,7 @@ class TestCases < ActiveSupport::TestCase
   end
 
   test "calling `idempotency_key` when `acidic_by` is a block returns hexidigest" do
-    class JobWithAcidicByArguments < AcidicJob::Base
+    class JobWithAcidicByProc < AcidicJob::Base
       acidic_by do
         "a"
       end
@@ -157,8 +157,8 @@ class TestCases < ActiveSupport::TestCase
       def perform; end
     end
 
-    job = JobWithAcidicByArguments.new
-    assert_equal "18a3c264100a68264d95a9a98d1aa115bd92107f", job.idempotency_key
+    job = JobWithAcidicByProc.new
+    assert_equal "4f0b52724457a68e582c559e28b5add944609135", job.idempotency_key
   end
 
   test "basic one step workflow runs successfully" do
@@ -756,45 +756,35 @@ class TestCases < ActiveSupport::TestCase
   end
 
   test "workflow job with dynamic `awaits` method as Symbol that returns successful awaited job" do
-    class JobWithDynamicAwaitsAsSymbol < AcidicJob::Base
+    class JobWithSuccessfulDynamicAwaitsAsSymbol < AcidicJob::Base
       class SuccessfulDynamicAwaitFromSymbolJob < AcidicJob::Base
         def perform(_arg)
           Performance.performed!
         end
       end
 
-      class ErroringDynamicAwaitFromSymbolJob < AcidicJob::Base
-        def perform
-          raise CustomErrorForTesting
-        end
-      end
-
-      def perform(bool)
-        @bool = bool
-
+      def perform
         with_acidic_workflow do |workflow|
           workflow.step :await_step, awaits: :dynamic_awaiting
         end
       end
 
       def dynamic_awaiting
-        return [SuccessfulDynamicAwaitFromSymbolJob.with(123)] if @bool
-
-        [ErroringDynamicAwaitFromSymbolJob]
+        [SuccessfulDynamicAwaitFromSymbolJob.with(123)]
       end
     end
 
     perform_enqueued_jobs do
-      JobWithDynamicAwaitsAsSymbol.perform_later(true)
+      JobWithSuccessfulDynamicAwaitsAsSymbol.perform_later
     end
 
-    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithDynamicAwaitsAsSymbol")
+    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithSuccessfulDynamicAwaitsAsSymbol")
     assert_equal "FINISHED", parent_run.recovery_point
     assert_nil parent_run.error_object
     assert_equal false, parent_run.staged?
 
     child_run = AcidicJob::Run.find_by(
-      job_class: "TestCases::JobWithDynamicAwaitsAsSymbol::SuccessfulDynamicAwaitFromSymbolJob"
+      job_class: "TestCases::JobWithSuccessfulDynamicAwaitsAsSymbol::SuccessfulDynamicAwaitFromSymbolJob"
     )
     assert_nil child_run.recovery_point
     assert_nil child_run.error_object
@@ -804,47 +794,37 @@ class TestCases < ActiveSupport::TestCase
   end
 
   test "workflow job with dynamic `awaits` method as Symbol that returns erroring awaited job" do
-    class JobWithDynamicAwaitsAsSymbol < AcidicJob::Base
-      class SuccessfulDynamicAwaitFromSymbolJob < AcidicJob::Base
-        def perform(_arg)
-          Performance.performed!
-        end
-      end
-
+    class JobWithErroringDynamicAwaitsAsSymbol < AcidicJob::Base
       class ErroringDynamicAwaitFromSymbolJob < AcidicJob::Base
         def perform
           raise CustomErrorForTesting
         end
       end
 
-      def perform(bool)
-        @bool = bool
-
+      def perform
         with_acidic_workflow do |workflow|
           workflow.step :await_step, awaits: :dynamic_awaiting
         end
       end
 
       def dynamic_awaiting
-        return [SuccessfulDynamicAwaitFromSymbolJob.with(123)] if @bool
-
         [ErroringDynamicAwaitFromSymbolJob]
       end
     end
 
     perform_enqueued_jobs do
       assert_raises CustomErrorForTesting do
-        JobWithDynamicAwaitsAsSymbol.perform_later(false)
+        JobWithErroringDynamicAwaitsAsSymbol.perform_later
       end
     end
 
-    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithDynamicAwaitsAsSymbol")
+    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithErroringDynamicAwaitsAsSymbol")
     assert_equal "await_step", parent_run.recovery_point
     assert_nil parent_run.error_object
     assert_equal false, parent_run.staged?
 
     child_run = AcidicJob::Run.find_by(
-      job_class: "TestCases::JobWithDynamicAwaitsAsSymbol::ErroringDynamicAwaitFromSymbolJob"
+      job_class: "TestCases::JobWithErroringDynamicAwaitsAsSymbol::ErroringDynamicAwaitFromSymbolJob"
     )
     assert_nil child_run.recovery_point
     assert_nil child_run.error_object
@@ -854,45 +834,35 @@ class TestCases < ActiveSupport::TestCase
   end
 
   test "workflow job with dynamic `awaits` method as String that returns successful awaited job" do
-    class JobWithDynamicAwaitsAsString < AcidicJob::Base
+    class JobWithSuccessfulDynamicAwaitsAsString < AcidicJob::Base
       class SuccessfulDynamicAwaitFromStringJob < AcidicJob::Base
         def perform(_arg)
           Performance.performed!
         end
       end
 
-      class ErroringDynamicAwaitFromStringJob < AcidicJob::Base
-        def perform
-          raise CustomErrorForTesting
-        end
-      end
-
-      def perform(bool)
-        @bool = bool
-
+      def perform
         with_acidic_workflow do |workflow|
           workflow.step :await_step, awaits: "dynamic_awaiting"
         end
       end
 
       def dynamic_awaiting
-        return [SuccessfulDynamicAwaitFromStringJob.with(123)] if @bool
-
-        [ErroringDynamicAwaitFromStringJob]
+        [SuccessfulDynamicAwaitFromStringJob.with(123)]
       end
     end
 
     perform_enqueued_jobs do
-      JobWithDynamicAwaitsAsString.perform_later(true)
+      JobWithSuccessfulDynamicAwaitsAsString.perform_later
     end
 
-    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithDynamicAwaitsAsString")
+    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithSuccessfulDynamicAwaitsAsString")
     assert_equal "FINISHED", parent_run.recovery_point
     assert_nil parent_run.error_object
     assert_equal false, parent_run.staged?
 
     child_run = AcidicJob::Run.find_by(
-      job_class: "TestCases::JobWithDynamicAwaitsAsString::SuccessfulDynamicAwaitFromStringJob"
+      job_class: "TestCases::JobWithSuccessfulDynamicAwaitsAsString::SuccessfulDynamicAwaitFromStringJob"
     )
     assert_nil child_run.recovery_point
     assert_nil child_run.error_object
@@ -902,49 +872,39 @@ class TestCases < ActiveSupport::TestCase
   end
 
   test "workflow job with dynamic `awaits` method as String that returns erroring awaited job" do
-    class JobWithDynamicAwaitsAsString < AcidicJob::Base
-      class SuccessfulDynamicAwaitFromStringJob < AcidicJob::Base
-        def perform(_arg)
-          Performance.performed!
-        end
-      end
-
+    class JobWithErroringDynamicAwaitsAsString < AcidicJob::Base
       class ErroringDynamicAwaitFromStringJob < AcidicJob::Base
         def perform
           raise CustomErrorForTesting
         end
       end
 
-      def perform(bool)
-        @bool = bool
-
+      def perform
         with_acidic_workflow do |workflow|
           workflow.step :await_step, awaits: "dynamic_awaiting"
         end
       end
 
       def dynamic_awaiting
-        return [SuccessfulDynamicAwaitFromStringJob.with(123)] if @bool
-
         [ErroringDynamicAwaitFromStringJob]
       end
     end
 
     perform_enqueued_jobs do
       assert_raises CustomErrorForTesting do
-        JobWithDynamicAwaitsAsString.perform_later(false)
+        JobWithErroringDynamicAwaitsAsString.perform_later
       end
     end
 
     assert_equal 2, AcidicJob::Run.count
 
-    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithDynamicAwaitsAsString")
+    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithErroringDynamicAwaitsAsString")
     assert_equal "await_step", parent_run.recovery_point
     assert_nil parent_run.error_object
     assert_equal false, parent_run.staged?
 
     child_run = AcidicJob::Run.find_by(
-      job_class: "TestCases::JobWithDynamicAwaitsAsString::ErroringDynamicAwaitFromStringJob"
+      job_class: "TestCases::JobWithErroringDynamicAwaitsAsString::ErroringDynamicAwaitFromStringJob"
     )
     assert_nil child_run.recovery_point
     assert_nil child_run.error_object
@@ -1060,7 +1020,7 @@ class TestCases < ActiveSupport::TestCase
       end
     end
 
-    class AwaitingJob < AcidicJob::Base
+    class JobAwaitingNonWorkflowStagedAwaited < AcidicJob::Base
       def perform
         with_acidic_workflow do |workflow|
           workflow.step :await_step, awaits: [JobNonWorkflowStagedAwaited]
@@ -1069,13 +1029,13 @@ class TestCases < ActiveSupport::TestCase
     end
 
     perform_enqueued_jobs do
-      AwaitingJob.perform_now
+      JobAwaitingNonWorkflowStagedAwaited.perform_now
     end
 
     assert_equal 2, AcidicJob::Run.count
     assert_equal 1, Performance.performances
 
-    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::AwaitingJob")
+    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobAwaitingNonWorkflowStagedAwaited")
     assert_equal "FINISHED", parent_run.recovery_point
     assert_equal true, parent_run.workflow?
     assert_equal false, parent_run.staged?
@@ -1116,7 +1076,7 @@ class TestCases < ActiveSupport::TestCase
   end
 
   test "workflow, unstaged, awaited job is invalid" do
-    class AwaitingJob < AcidicJob::Base; end
+    class JobAwaitingWorkflowUnstagedAwaited < AcidicJob::Base; end
 
     class JobWorkflowUnstagedAwaited < AcidicJob::Base
       def perform
@@ -1148,7 +1108,7 @@ class TestCases < ActiveSupport::TestCase
         awaited_by: AcidicJob::Run.create!(
           idempotency_key: "67b823ea-34f0-40a0-88d9-7e3b7ff9e769",
           serialized_job: {
-            "job_class" => "TestCases::AwaitingJob",
+            "job_class" => "TestCases::JobAwaitingWorkflowUnstagedAwaited",
             "job_id" => "67b823ea-34f0-40a0-88d9-7e3b7ff9e769",
             "provider_job_id" => nil,
             "queue_name" => "default",
@@ -1160,7 +1120,7 @@ class TestCases < ActiveSupport::TestCase
             "timezone" => "UTC",
             "enqueued_at" => ""
           },
-          job_class: "TestCases::AwaitingJob",
+          job_class: "TestCases::JobAwaitingWorkflowUnstagedAwaited",
           staged: false
         )
       )
@@ -1209,7 +1169,7 @@ class TestCases < ActiveSupport::TestCase
       end
     end
 
-    class AwaitingJob < AcidicJob::Base
+    class JobAwaitingWorkflowStagedAwaited < AcidicJob::Base
       def perform
         with_acidic_workflow do |workflow|
           workflow.step :await_step, awaits: [JobWorkflowStagedAwaited]
@@ -1218,13 +1178,13 @@ class TestCases < ActiveSupport::TestCase
     end
 
     perform_enqueued_jobs do
-      AwaitingJob.perform_now
+      JobAwaitingWorkflowStagedAwaited.perform_now
     end
 
     assert_equal 2, AcidicJob::Run.count
     assert_equal 1, Performance.performances
 
-    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::AwaitingJob")
+    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobAwaitingWorkflowStagedAwaited")
     assert_equal "FINISHED", parent_run.recovery_point
     assert_equal true, parent_run.workflow?
     assert_equal false, parent_run.staged?
