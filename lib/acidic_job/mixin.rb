@@ -32,12 +32,10 @@ module AcidicJob
       end
 
       def with(*args, **kwargs)
-        # force the job to resolve the `queue_name`, so that we don't try to serialize a Proc into ActiveRecord
         job = new(*args, **kwargs)
-        serialized = job.serialize
-        final = deserialize(serialized)
-        final.send :deserialize_arguments_if_needed
-        final
+        # force the job to resolve the `queue_name`, so that we don't try to serialize a Proc into ActiveRecord
+        job.queue_name
+        job
       end
     end
 
