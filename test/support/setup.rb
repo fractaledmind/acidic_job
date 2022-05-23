@@ -118,18 +118,6 @@ class Performance
   class << self
     attr_reader :performances
   end
-
-  def self.performed?
-    return true if performances.positive?
-
-    false
-  end
-
-  def self.performed_once?
-    return true if performances == 1
-
-    false
-  end
 end
 
 class CustomErrorForTesting < StandardError; end
@@ -155,17 +143,17 @@ ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(IO::NULL) && Aci
 
 # MOCKS ------------------------------------------------------------------------
 
-module Stripe
-  class CardError < StandardError; end
-
-  class StripeError < StandardError; end
-
-  class Charge
-    def self.create(params, _args)
-      raise CardError, "Your card was declined." if params[:customer] == "tok_chargeCustomerFail"
-
-      charge_struct = Struct.new(:id)
-      charge_struct.new(123)
-    end
-  end
-end
+# module Stripe
+#   class CardError < StandardError; end
+# 
+#   class StripeError < StandardError; end
+# 
+#   class Charge
+#     def self.create(params, _args)
+#       raise CardError, "Your card was declined." if params[:customer] == "tok_chargeCustomerFail"
+# 
+#       charge_struct = Struct.new(:id)
+#       charge_struct.new(123)
+#     end
+#   end
+# end

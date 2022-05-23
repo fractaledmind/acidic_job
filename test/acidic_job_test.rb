@@ -176,7 +176,7 @@ class TestCases < ActiveSupport::TestCase
 
     result = BasicJob.perform_now
     assert_equal true, result
-    assert_equal true, Performance.performed_once?
+    assert_equal 1, Performance.performances
   end
 
   test "an error raised in a step method is stored in the run record" do
@@ -502,7 +502,7 @@ class TestCases < ActiveSupport::TestCase
 
     result = JobWithArbitraryReturnValue.perform_now
     assert_equal true, result
-    assert_equal true, Performance.performed_once?
+    assert_equal 1, Performance.performances
   end
 
   test "staged workflow job only creates on `AcidicJob::Run` record" do
