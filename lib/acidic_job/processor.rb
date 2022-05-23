@@ -79,7 +79,7 @@ module AcidicJob
         @job.method(jobs_or_jobs_getter).call
       else
         raise UnknownAwaitedJob,
-              "Option passed to `awaits` is invalid; must be either an Array of jobs or a method name, was: #{jobs_or_jobs_getter.class.name}"
+              "Invalid `awaits`; must be either an jobs Array or method name, was: #{jobs_or_jobs_getter.class.name}"
       end
     end
 

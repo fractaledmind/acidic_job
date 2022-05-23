@@ -150,7 +150,7 @@ end
 
 # LOGGING ----------------------------------------------------------------------
 
-ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(IO::NULL); AcidicJob.silence_logger!
+ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(IO::NULL) && AcidicJob.silence_logger!
 # ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new($stdout)
 
 # MOCKS ------------------------------------------------------------------------
