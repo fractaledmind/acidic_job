@@ -126,7 +126,9 @@ module AcidicJob
     end
 
     def was_workflow_job?
-      defined?(@acidic_job_run) && @acidic_job_run.present?
+      return false unless defined? @acidic_job_run
+
+      @acidic_job_run.present?
     end
 
     def was_awaited_job?
