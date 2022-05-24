@@ -560,7 +560,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal false, parent_run.staged?
 
     child_run = AcidicJob::Run.find_by(job_class: "TestCases::SimpleWorkflowJob::SuccessfulAsyncJob")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_equal true, child_run.staged?
 
     assert_equal 2, Performance.performances
@@ -748,7 +748,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal false, parent_run.staged?
 
     child_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithSuccessfulArgAwaitStep::SuccessfulArgJob")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_nil child_run.error_object
     assert_equal true, child_run.staged?
 
@@ -786,7 +786,7 @@ class TestCases < ActiveSupport::TestCase
     child_run = AcidicJob::Run.find_by(
       job_class: "TestCases::JobWithSuccessfulDynamicAwaitsAsSymbol::SuccessfulDynamicAwaitFromSymbolJob"
     )
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_nil child_run.error_object
     assert_equal true, child_run.staged?
 
@@ -864,7 +864,7 @@ class TestCases < ActiveSupport::TestCase
     child_run = AcidicJob::Run.find_by(
       job_class: "TestCases::JobWithSuccessfulDynamicAwaitsAsString::SuccessfulDynamicAwaitFromStringJob"
     )
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_nil child_run.error_object
     assert_equal true, child_run.staged?
 
@@ -1006,7 +1006,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal 1, Performance.performances
 
     run = AcidicJob::Run.find_by(job_class: "TestCases::NowJobNonWorkflowStagedUnawaited")
-    assert_nil run.recovery_point
+    assert_equal "FINISHED", run.recovery_point
     assert_nil run.error_object
     assert_equal false, run.workflow?
     assert_equal true, run.staged?
@@ -1042,7 +1042,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal false, parent_run.awaited?
 
     child_run = AcidicJob::Run.find_by(job_class: "TestCases::JobNonWorkflowStagedAwaited")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_equal false, child_run.workflow?
     assert_equal true, child_run.staged?
     assert_equal true, child_run.awaited?

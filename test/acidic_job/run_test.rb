@@ -116,7 +116,7 @@ class TestAcidicJobRun < TestCase
                                                     idempotency_key: rand))
 
     assert_equal 4, AcidicJob::Run.count
-    assert_equal 1, AcidicJob::Run.clear_finished
+    assert_equal 2, AcidicJob::Run.clear_finished
   end
 
   def test_purging_finished_runs_with_relation
