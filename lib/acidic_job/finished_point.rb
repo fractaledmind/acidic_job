@@ -8,7 +8,7 @@ require_relative "run"
 module AcidicJob
   class FinishedPoint
     def call(run:)
-      # Skip AR callbacks as there are none on the model
+      # Skip AR callbacks and validations
       run.update_columns(
         locked_at: nil,
         recovery_point: Run::FINISHED_RECOVERY_POINT

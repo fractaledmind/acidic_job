@@ -9,7 +9,7 @@ module AcidicJob
     end
 
     def call(run:)
-      # Skip AR callbacks as there are none on the model
+      # Skip AR callbacks and validations
       run.update_column(:recovery_point, @name)
     end
   end
