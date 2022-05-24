@@ -145,13 +145,13 @@ ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(IO::NULL) && Aci
 
 # module Stripe
 #   class CardError < StandardError; end
-# 
+#
 #   class StripeError < StandardError; end
-# 
+#
 #   class Charge
 #     def self.create(params, _args)
 #       raise CardError, "Your card was declined." if params[:customer] == "tok_chargeCustomerFail"
-# 
+#
 #       charge_struct = Struct.new(:id)
 #       charge_struct.new(123)
 #     end
