@@ -95,7 +95,7 @@ class TestAcidicJobRun < TestCase
     unstaged_job.send(:enqueue_job)
   end
 
-  def test_purging_successfully_completed_runs_without_relation
+  def test_purging_finished_runs_without_relation
     default_attributes = {
       staged: false,
       job_class: MyJob,
@@ -116,10 +116,10 @@ class TestAcidicJobRun < TestCase
                                                     idempotency_key: rand))
 
     assert_equal 4, AcidicJob::Run.count
-    assert_equal 1, AcidicJob::Run.clear_succeeded
+    assert_equal 1, AcidicJob::Run.clear_finished
   end
 
-  def test_purging_successfully_completed_runs_with_relation
+  def test_purging_finished_runs_with_relation
     default_attributes = {
       staged: false,
       job_class: MyJob,
@@ -140,6 +140,6 @@ class TestAcidicJobRun < TestCase
                                                     idempotency_key: rand))
 
     assert_equal 4, AcidicJob::Run.count
-    assert_equal 0, AcidicJob::Run.where(recovery_point: :started).clear_succeeded
+    assert_equal 0, AcidicJob::Run.where(recovery_point: :started).clear_finished
   end
 end
