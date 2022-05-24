@@ -2,22 +2,20 @@
 
 module AcidicJob
   class WorkflowBuilder
+    attr_reader :steps
+
     def initialize
-      @__acidic_job_steps = []
+      @steps = []
     end
 
     def step(method_name, awaits: [], for_each: nil)
-      @__acidic_job_steps << {
+      @steps << {
         "does" => method_name.to_s,
         "awaits" => awaits,
         "for_each" => for_each
       }
 
-      @__acidic_job_steps
-    end
-
-    def steps
-      @__acidic_job_steps
+      @steps
     end
 
     def self.define_workflow(steps)
