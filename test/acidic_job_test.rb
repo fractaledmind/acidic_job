@@ -721,7 +721,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal 0, Performance.performances
   end
 
-  test "workflow job with successful `awaits` initialized with arguments" do
+  test "workflow job with successful awaits initialized with arguments" do
     class JobWithSuccessfulArgAwaitStep < AcidicJob::Base
       class SuccessfulArgJob < AcidicJob::Base
         def perform(_arg)

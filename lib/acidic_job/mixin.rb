@@ -11,7 +11,7 @@ module AcidicJob
       other.define_singleton_method(:acidic_by_job_identifier) { @acidic_identifier = :job_identifier }
       other.define_singleton_method(:acidic_by_job_arguments) { @acidic_identifier = :job_arguments }
       other.define_singleton_method(:acidic_by) { |&block| @acidic_identifier = block }
-      other.define_singleton_method(:acidic_identifier) { @acidic_identifier }
+      other.define_singleton_method(:acidic_identifier) { defined? @acidic_identifier }
 
       # other.set_callback :perform, :after, :finish_staged_job, if: -> { was_staged_job? && !was_workflow_job? }
       other.set_callback :perform, :after, :reenqueue_awaited_by_job, if: -> { was_awaited_job? && !was_workflow_job? }
@@ -31,8 +31,11 @@ module AcidicJob
         )
       end
 
-      def with(*args, **kwargs)
-        job = new(*args, **kwargs)
+      # If you do not need compatibility with Ruby 2.6 or prior and you don’t alter any arguments,
+      # you can use the new delegation syntax (...) that is introduced in Ruby 2.7.
+      # https://www.ruby-lang.org/en/news/2019/12/12/separation-of-positional-and-keyword-arguments-in-ruby-3-0/
+      def with(...)
+        job = new(...)
         # force the job to resolve the `queue_name`, so that we don't try to serialize a Proc into ActiveRecord
         job.queue_name
         job
@@ -40,8 +43,12 @@ module AcidicJob
     end
 
     def idempotency_key
-      acidic_identifier = self.class.instance_variable_get(:@acidic_identifier)
-      IdempotencyKey.new(self).value(acidic_by: acidic_identifier)
+      if self.class.instance_variable_defined?(:@acidic_identifier)
+        acidic_identifier = self.class.instance_variable_get(:@acidic_identifier)
+        IdempotencyKey.new(self).value(acidic_by: acidic_identifier)
+      else
+        IdempotencyKey.new(self).value
+      end
     end
 
     # &block
@@ -121,7 +128,7 @@ module AcidicJob
     end
 
     def was_workflow_job?
-      @acidic_job_run.present?
+      defined?(@acidic_job_run) && @acidic_job_run.present?
     end
 
     def was_awaited_job?
