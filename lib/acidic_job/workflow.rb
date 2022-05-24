@@ -76,7 +76,7 @@ module AcidicJob
     end
 
     def next_step_finishes?
-      next_step_name.to_s == Run::FINISHED_RECOVERY_POINT.to_s
+      next_step_name.to_s == Run::FINISHED_RECOVERY_POINT
     end
 
     def wrapped_current_step_method
