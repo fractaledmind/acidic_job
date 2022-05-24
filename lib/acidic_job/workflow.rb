@@ -35,6 +35,7 @@ module AcidicJob
     end
 
     def progress_to_next_step
+      return if current_step_finished?
       return run_step_result unless next_step_finishes?
 
       @job.run_callbacks :finish do
@@ -72,11 +73,15 @@ module AcidicJob
     end
 
     def next_step_name
-      current_step_hash["then"]
+      current_step_hash&.fetch("then")
     end
 
     def next_step_finishes?
       next_step_name.to_s == Run::FINISHED_RECOVERY_POINT
+    end
+    
+    def current_step_finished?
+      current_step_name.to_s == Run::FINISHED_RECOVERY_POINT
     end
 
     def wrapped_current_step_method
