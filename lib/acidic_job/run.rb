@@ -40,11 +40,9 @@ module AcidicJob
     scope :staged, -> { where(staged: true) }
     scope :unstaged, -> { where(staged: false) }
     scope :finished, -> { where(recovery_point: FINISHED_RECOVERY_POINT) }
-    scope :failed, -> { where.not(error_object: nil) }
-    scope :succeeded, -> { finished.merge(where(error_object: nil)) }
     scope :outstanding, -> { where.not(recovery_point: FINISHED_RECOVERY_POINT).or(where(recovery_point: [nil, ""])) }
+    scope :errored, -> { where.not(error_object: nil) }
 
-    def self.clear_succeeded
     def finish!
       self.recovery_point = FINISHED_RECOVERY_POINT
       unlock.save!
@@ -57,17 +55,15 @@ module AcidicJob
       self
     end
 
+    def self.clear_finished
       # over-write any pre-existing relation queries on `recovery_point` and/or `error_object`
-      to_purge = where(
-        recovery_point: FINISHED_RECOVERY_POINT,
-        error_object: nil
-      )
+      to_purge = finished
 
       count = to_purge.count
 
       return 0 if count.zero?
 
-      AcidicJob.logger.info("Deleting #{count} successfully completed AcidicJob runs")
+      AcidicJob.logger.info("Deleting #{count} finished AcidicJob runs")
       to_purge.delete_all
     end
     
@@ -95,9 +91,12 @@ module AcidicJob
     end
 
     def job
+      return @job if defined? @job
+
       serialized_job_for_run = serialized_job.merge("job_id" => job_id)
       job_class_for_run = job_class.constantize
-      job_class_for_run.deserialize(serialized_job_for_run)
+
+      @job = job_class_for_run.deserialize(serialized_job_for_run)
     end
 
     def awaited?
@@ -109,14 +108,14 @@ module AcidicJob
     end
 
     def succeeded?
-      finished? && !failed?
+      finished? && !errored?
     end
 
     def finished?
       recovery_point.to_s == FINISHED_RECOVERY_POINT
     end
 
-    def failed?
+    def errored?
       error_object.present?
     end
 
