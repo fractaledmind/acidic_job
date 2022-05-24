@@ -14,7 +14,7 @@ module AcidicJob
       when :job_arguments
         Digest::SHA1.hexdigest [@job.class.name, @job.arguments].flatten.join
       else
-        if @job.job_id.start_with? "STG_"
+        if @job.job_id.start_with? Run::STAGED_JOB_ID_PREFIX
           # "STG__#{idempotency_key}__#{encoded_global_id}"
           _prefix, idempotency_key, _encoded_global_id = @job.job_id.split("__")
           idempotency_key

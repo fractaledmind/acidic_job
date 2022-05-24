@@ -124,7 +124,7 @@ module AcidicJob
     private
 
     def was_staged_job?
-      job_id.start_with? "STG_"
+      job_id.start_with? Run::STAGED_JOB_ID_PREFIX
     end
 
     def was_workflow_job?

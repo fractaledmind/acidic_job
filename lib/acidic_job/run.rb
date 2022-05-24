@@ -9,6 +9,8 @@ module AcidicJob
     include GlobalID::Identification
 
     FINISHED_RECOVERY_POINT = "FINISHED"
+    STAGED_JOB_ID_PREFIX = "STG"
+    STAGED_JOB_ID_DELIMITER = "__"
 
     self.table_name = "acidic_job_runs"
 
@@ -113,7 +115,12 @@ module AcidicJob
       global_id = to_global_id.to_s.remove("gid://")
       # base64 encoding for minimal security
       encoded_global_id = Base64.encode64(global_id).strip
-      "STG__#{idempotency_key}__#{encoded_global_id}"
+
+      [
+        STAGED_JOB_ID_PREFIX,
+        idempotency_key,
+        encoded_global_id
+      ].join(STAGED_JOB_ID_DELIMITER)
     end
   end
 end
