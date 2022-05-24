@@ -147,26 +147,6 @@ module AcidicJob
     end
 
     def finish_staged_job
-    end
-
-    def reenqueue_awaited_by_job
-      run = staged_job_run.awaited_by
-      job = run.job
-      # this needs to be explicitly set so that `was_workflow_job?` appropriately returns `true`
-      job.instance_variable_set(:@acidic_job_run, run)
-      # re-hydrate the `step_result` object
-      step_result = staged_job_run.returning_to
-
-      workflow = Workflow.new(run, job, step_result)
-      # TODO: WRITE REGRESSION TESTS FOR PARALLEL JOB FAILING AND RETRYING THE ORIGINAL STEP
-      workflow.progress_to_next_step
-
-      # when a batch of jobs for a step succeeds, we begin processing the `AcidicJob::Run` record again
-      return if run.finished?
-
-      AcidicJob.logger.log_run_event("Re-enqueuing parent job...", job, run)
-      run.enqueue_job
-      AcidicJob.logger.log_run_event("Re-enqueued parent job.", job, run)
       staged_job_run.finish!
     end
   end

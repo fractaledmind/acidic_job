@@ -40,9 +40,9 @@ module AcidicJob
     scope :staged, -> { where(staged: true) }
     scope :unstaged, -> { where(staged: false) }
     scope :finished, -> { where(recovery_point: FINISHED_RECOVERY_POINT) }
-    scope :running, -> { where.not(recovery_point: FINISHED_RECOVERY_POINT) }
     scope :failed, -> { where.not(error_object: nil) }
     scope :succeeded, -> { finished.merge(where(error_object: nil)) }
+    scope :outstanding, -> { where.not(recovery_point: FINISHED_RECOVERY_POINT).or(where(recovery_point: [nil, ""])) }
 
     def self.clear_succeeded
     def finish!
@@ -69,6 +69,29 @@ module AcidicJob
 
       AcidicJob.logger.info("Deleting #{count} successfully completed AcidicJob runs")
       to_purge.delete_all
+    end
+    
+    def proceed
+      return if batched_runs.outstanding.any?
+
+      # this needs to be explicitly set so that `was_workflow_job?` appropriately returns `true`
+      # TODO: replace this with some way to check the type of the job directly
+      # either via class method or explicit module inclusion
+      job.instance_variable_set(:@acidic_job_run, self)
+
+      # re-hydrate the `step_result` object
+      step_result = returning_to
+
+      workflow = Workflow.new(self, job, step_result)
+      # TODO: WRITE REGRESSION TESTS FOR PARALLEL JOB FAILING AND RETRYING THE ORIGINAL STEP
+      workflow.progress_to_next_step
+
+      # when a batch of jobs for a step succeeds, we begin processing the `AcidicJob::Run` record again
+      return if finished?
+      
+      AcidicJob.logger.log_run_event("Re-enqueuing parent job...", job, self)
+      enqueue_job
+      AcidicJob.logger.log_run_event("Re-enqueued parent job.", job, self)
     end
 
     def job
