@@ -1209,8 +1209,14 @@ class TestCases < ActiveSupport::TestCase
 
       class SecondAwaitedJob < AcidicJob::Base
         def perform
-          Performance.performed!
+          with_acidic_workflow do |workflow|
+            workflow.step :step_one
+            workflow.step :step_two
+          end
         end
+
+        def step_one; Performance.performed!; end
+        def step_two; Performance.performed!; end
       end
 
       def perform
@@ -1225,7 +1231,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     assert_equal 3, AcidicJob::Run.count
-    assert_equal 2, Performance.performances
+    assert_equal 3, Performance.performances
 
     parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobAwaitingTwoJobs")
     assert_equal "FINISHED", parent_run.recovery_point
@@ -1235,7 +1241,7 @@ class TestCases < ActiveSupport::TestCase
 
     first_child_run = AcidicJob::Run.find_by(job_class: "TestCases::JobAwaitingTwoJobs::FirstAwaitedJob")
     assert_equal "FINISHED", first_child_run.recovery_point
-    assert_equal true, first_child_run.workflow?
+    assert_equal false, first_child_run.workflow?
     assert_equal true, first_child_run.staged?
     assert_equal true, first_child_run.awaited?
 
