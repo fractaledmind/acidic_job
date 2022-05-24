@@ -45,6 +45,18 @@ module AcidicJob
     scope :succeeded, -> { finished.merge(where(error_object: nil)) }
 
     def self.clear_succeeded
+    def finish!
+      self.recovery_point = FINISHED_RECOVERY_POINT
+      unlock.save!
+
+      awaited_by&.proceed
+    end
+    
+    def unlock
+      self.locked_at = nil
+      self
+    end
+
       # over-write any pre-existing relation queries on `recovery_point` and/or `error_object`
       to_purge = where(
         recovery_point: FINISHED_RECOVERY_POINT,

@@ -147,8 +147,6 @@ module AcidicJob
     end
 
     def finish_staged_job
-      delete_staged_job_record
-      mark_staged_run_as_finished
     end
 
     def reenqueue_awaited_by_job
@@ -169,6 +167,7 @@ module AcidicJob
       AcidicJob.logger.log_run_event("Re-enqueuing parent job...", job, run)
       run.enqueue_job
       AcidicJob.logger.log_run_event("Re-enqueued parent job.", job, run)
+      staged_job_run.finish!
     end
   end
 end
