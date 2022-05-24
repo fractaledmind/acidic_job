@@ -14,9 +14,7 @@ module AcidicJob
       other.define_singleton_method(:acidic_identifier) { defined? @acidic_identifier }
 
       # other.set_callback :perform, :after, :finish_staged_job, if: -> { was_staged_job? && !was_workflow_job? }
-      other.set_callback :perform, :after, :reenqueue_awaited_by_job, if: -> { was_awaited_job? && !was_workflow_job? }
       other.define_callbacks :finish
-      other.set_callback :finish, :after, :reenqueue_awaited_by_job, if: -> { was_awaited_job? && was_workflow_job? }
     end
 
     class_methods do
