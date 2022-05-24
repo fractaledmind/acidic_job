@@ -61,11 +61,11 @@ module AcidicJob
           AcidicJob::Run.create!(
             staged: true,
             awaited_by: @run,
-            returning_to: step_result,
             job_class: worker_class,
             serialized_job: job.serialize,
             idempotency_key: IdempotencyKey.new(job).value(acidic_by: worker_class.try(:acidic_identifier))
           )
+          @run.update(returning_to: step_result)
         end
       end
       AcidicJob.logger.log_run_event("Enqueued #{awaited_jobs.count} awaited jobs.", @job, @run)
