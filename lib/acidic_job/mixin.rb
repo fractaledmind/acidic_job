@@ -13,7 +13,7 @@ module AcidicJob
       other.define_singleton_method(:acidic_by) { |&block| @acidic_identifier = block }
       other.define_singleton_method(:acidic_identifier) { defined? @acidic_identifier }
 
-      # other.set_callback :perform, :after, :finish_staged_job, if: -> { was_staged_job? && !was_workflow_job? }
+      other.set_callback :perform, :after, :finish_staged_job, if: -> { was_staged_job? && !was_workflow_job? }
       other.define_callbacks :finish
     end
 
