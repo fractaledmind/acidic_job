@@ -1196,5 +1196,54 @@ class TestCases < ActiveSupport::TestCase
     assert_equal true, child_run.staged?
     assert_equal true, child_run.awaited?
   end
+
+  # -----------------------------------------------------------------------------------------------
+
+  test "basic one step workflow awaiting 2 jobs runs successfully" do
+    class JobAwaitingTwoJobs < AcidicJob::Base
+      class FirstAwaitedJob < AcidicJob::Base
+        def perform
+          Performance.performed!
+        end
+      end
+
+      class SecondAwaitedJob < AcidicJob::Base
+        def perform
+          Performance.performed!
+        end
+      end
+
+      def perform
+        with_acidic_workflow do |workflow|
+          workflow.step :no_op, awaits: [FirstAwaitedJob, SecondAwaitedJob]
+        end
+      end
+    end
+
+    perform_enqueued_jobs do
+      JobAwaitingTwoJobs.perform_now
+    end
+
+    assert_equal 3, AcidicJob::Run.count
+    assert_equal 2, Performance.performances
+
+    parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobAwaitingTwoJobs")
+    assert_equal "FINISHED", parent_run.recovery_point
+    assert_equal true, parent_run.workflow?
+    assert_equal false, parent_run.staged?
+    assert_equal false, parent_run.awaited?
+
+    first_child_run = AcidicJob::Run.find_by(job_class: "TestCases::JobAwaitingTwoJobs::FirstAwaitedJob")
+    assert_equal "FINISHED", first_child_run.recovery_point
+    assert_equal true, first_child_run.workflow?
+    assert_equal true, first_child_run.staged?
+    assert_equal true, first_child_run.awaited?
+
+    second_child_run = AcidicJob::Run.find_by(job_class: "TestCases::JobAwaitingTwoJobs::SecondAwaitedJob")
+    assert_equal "FINISHED", second_child_run.recovery_point
+    assert_equal true, second_child_run.workflow?
+    assert_equal true, second_child_run.staged?
+    assert_equal true, second_child_run.awaited?
+  end
 end
 # rubocop:enable Lint/ConstantDefinitionInBlock
