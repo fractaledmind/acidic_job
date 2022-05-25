@@ -79,7 +79,7 @@ module AcidicJob
     def next_step_finishes?
       next_step_name.to_s == Run::FINISHED_RECOVERY_POINT
     end
-    
+
     def current_step_finished?
       current_step_name.to_s == Run::FINISHED_RECOVERY_POINT
     end

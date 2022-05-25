@@ -49,7 +49,7 @@ module AcidicJob
 
       awaited_by&.proceed
     end
-    
+
     def unlock
       self.locked_at = nil
       self
@@ -66,7 +66,7 @@ module AcidicJob
       AcidicJob.logger.info("Deleting #{count} finished AcidicJob runs")
       to_purge.delete_all
     end
-    
+
     def proceed
       return if batched_runs.outstanding.any?
 
@@ -84,7 +84,7 @@ module AcidicJob
 
       # when a batch of jobs for a step succeeds, we begin processing the `AcidicJob::Run` record again
       return if finished?
-      
+
       AcidicJob.logger.log_run_event("Re-enqueuing parent job...", job, self)
       enqueue_job
       AcidicJob.logger.log_run_event("Re-enqueued parent job.", job, self)

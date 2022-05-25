@@ -17,6 +17,7 @@ module AcidicJob
 
       @steps
     end
+    alias_method "✅", :step
 
     def self.define_workflow(steps)
       # [ { does: "step 1", awaits: [] }, { does: "step 2", awaits: [] }, ... ]

@@ -1215,8 +1215,13 @@ class TestCases < ActiveSupport::TestCase
           end
         end
 
-        def step_one; Performance.performed!; end
-        def step_two; Performance.performed!; end
+        def step_one
+          Performance.performed!
+        end
+
+        def step_two
+          Performance.performed!
+        end
       end
 
       def perform
