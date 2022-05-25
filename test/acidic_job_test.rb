@@ -607,7 +607,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal 0, Performance.performances
   end
 
-  test "workflow job with successful `awaits` job that itself `awaits` another successful job" do
+  test "workflow job with successful awaits job that itself awaits another successful job" do
     class NestedSuccessfulAwaitSteps < AcidicJob::Base
       class SuccessfulAwaitedAndAwaits < AcidicJob::Base
         class NestedSuccessfulAwaited < AcidicJob::Base
@@ -656,7 +656,7 @@ class TestCases < ActiveSupport::TestCase
     grandchild_run = AcidicJob::Run.find_by(
       job_class: "TestCases::NestedSuccessfulAwaitSteps::SuccessfulAwaitedAndAwaits::NestedSuccessfulAwaited"
     )
-    assert_nil grandchild_run.recovery_point
+    assert_equal "FINISHED", grandchild_run.recovery_point
     assert_nil grandchild_run.error_object
     assert_equal true, grandchild_run.staged?
 

@@ -18,6 +18,7 @@ module AcidicJob
     has_many :batched_runs, class_name: "AcidicJob::Run", foreign_key: "awaited_by_id"
 
     after_create_commit :enqueue_job, if: :staged?
+    after_update_commit :proceed_with_parent, if: :finished?
 
     serialize :serialized_job
     serialize :workflow
@@ -46,8 +47,6 @@ module AcidicJob
     def finish!
       self.recovery_point = FINISHED_RECOVERY_POINT
       unlock.save!
-
-      awaited_by&.proceed
     end
 
     def unlock
@@ -67,9 +66,16 @@ module AcidicJob
       to_purge.delete_all
     end
 
-    def proceed
-      return if batched_runs.outstanding.any?
+    def proceed_with_parent
+      return unless finished?
+      return unless awaited_by.present?
+      return if awaited_by.batched_runs.outstanding.any?
 
+      awaited_by.proceed
+    end
+
+    def proceed
+      AcidicJob.logger.log_run_event("Proceeding with parent job...", job, self)
       # this needs to be explicitly set so that `was_workflow_job?` appropriately returns `true`
       # TODO: replace this with some way to check the type of the job directly
       # either via class method or explicit module inclusion
@@ -82,6 +88,7 @@ module AcidicJob
       # TODO: WRITE REGRESSION TESTS FOR PARALLEL JOB FAILING AND RETRYING THE ORIGINAL STEP
       workflow.progress_to_next_step
 
+      AcidicJob.logger.log_run_event("Proceeded with parent job.", job, self)
       # when a batch of jobs for a step succeeds, we begin processing the `AcidicJob::Run` record again
       return if finished?
 
