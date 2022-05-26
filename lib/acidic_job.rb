@@ -221,9 +221,7 @@ module AcidicJob
       if run.present?
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
-        # NOTE: WOULD THE ENQUEUED_AT OR CREATED_AT FIELD BE NECESSARILY DIFFERENT?
-        if run.serialized_job.except("jid", "job_id",
-                                     "enqueued_at") != serialized_job.except("jid", "job_id", "enqueued_at")
+        if run.serialized_job.slice("args", "arguments") != serialized_job.slice("args", "arguments")
           raise MismatchedIdempotencyKeyAndJobArguments
         end
 
