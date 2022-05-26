@@ -7,6 +7,8 @@ module AcidicJob
   module Staging
     extend ActiveSupport::Concern
 
+    private
+
     def delete_staged_job_record
       return unless was_staged_job?
 
