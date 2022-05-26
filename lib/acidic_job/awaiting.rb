@@ -32,11 +32,10 @@ module AcidicJob
 
       return if run.finished?
 
-      # job = job_class.constantize.deserialize(serialized_staged_job)
-      # job.enqueue
-
       # when a batch of jobs for a step succeeds, we begin processing the `AcidicJob::Run` record again
-      process_run(run)
+      # process_run(run)
+      run.update_column(:locked_at, nil)
+      job.enqueue
     end
 
     def enqueue_step_parallel_jobs(jobs_or_jobs_getter, run, step_result)

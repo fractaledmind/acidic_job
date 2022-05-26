@@ -58,7 +58,7 @@ module AcidicJob
           ::Sidekiq::Client.push(
             "class" => self.class,
             "args" => @args,
-            "jid" => @jid
+            "jid" => @acidic_job_run&.staged_job_id || @jid
           )
         end
       end

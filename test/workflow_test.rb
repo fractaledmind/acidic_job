@@ -345,4 +345,36 @@ class TestWorkflows < TestCase
     assert_equal 1, retry_set.size
     assert_equal ["ErroringDynamicAwaitFromStringWorker"], retry_set.map { _1.item["class"] }
   end
+
+  def test_step_with_awaits_followed_by_another_step_is_run_properly
+    dynamic_class = Class.new(ApplicationWorker) do
+      dynamic_step_job = Class.new(ApplicationWorker) do
+        def perform; end
+      end
+      Object.const_set("SimpleAwaitedWorker", dynamic_step_job)
+
+      def perform
+        with_acidity providing: {} do
+          step :await_step, awaits: [SimpleAwaitedWorker]
+          step :do_something
+        end
+      end
+
+      def do_something; end
+    end
+    Object.const_set("WorkerWithAwaitStepFollowedByAnotherStep", dynamic_class)
+
+    WorkerWithAwaitStepFollowedByAnotherStep.new.perform
+    Sidekiq::Worker.drain_all
+
+    assert_equal 2, AcidicJob::Run.count
+
+    parent_run = AcidicJob::Run.find_by(job_class: "WorkerWithAwaitStepFollowedByAnotherStep")
+    assert_equal "FINISHED", parent_run.recovery_point
+
+    child_run = AcidicJob::Run.find_by(job_class: "SimpleAwaitedWorker")
+    assert_nil child_run.recovery_point
+
+    assert_equal 0, Sidekiq::RetrySet.new.size
+  end
 end
