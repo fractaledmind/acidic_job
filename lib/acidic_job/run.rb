@@ -142,7 +142,7 @@ module AcidicJob
         serialize :error_object
         store :attr_accessors
 
-        with_options if: :workflow? do
+        with_options unless: :staged? do
           validates :last_run_at, presence: true
           validates :recovery_point, presence: true
           validates :workflow, presence: true
