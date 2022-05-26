@@ -12,11 +12,15 @@ module AcidicJob
 
     self.table_name = "acidic_job_runs"
 
+    belongs_to :awaited_by, class_name: "AcidicJob::Run", optional: true
+    has_many :batched_runs, class_name: "AcidicJob::Run", foreign_key: "awaited_by_id"
+
     after_create_commit :enqueue_staged_job, if: :staged?
 
     serialize :error_object
     serialize :serialized_job
     serialize :workflow
+    serialize :returning_to
     store :attr_accessors
 
     validates :staged, inclusion: { in: [true, false] } # uses database default
