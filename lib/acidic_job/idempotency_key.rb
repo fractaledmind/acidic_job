@@ -20,7 +20,15 @@ module AcidicJob
                 end
               end
 
-      value || value_from_job_args(hash_or_job, *args, **kwargs)
+      result = value || value_from_job_args(hash_or_job, *args, **kwargs)
+
+      if result.start_with?("STG__")
+        # "STG__#{idempotency_key}__#{encoded_global_id}"
+        _prefix, idempotency_key, _encoded_global_id = result.split("__")
+        idempotency_key
+      else
+        result
+      end
     end
 
     private

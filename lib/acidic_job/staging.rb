@@ -7,6 +7,8 @@ module AcidicJob
   module Staging
     extend ActiveSupport::Concern
 
+    private
+
     def delete_staged_job_record
       return unless was_staged_job?
 
@@ -17,7 +19,7 @@ module AcidicJob
     end
 
     def was_staged_job?
-      identifier.start_with? "STG_"
+      identifier.start_with? "STG__"
     end
 
     def staged_job_run
@@ -26,6 +28,8 @@ module AcidicJob
       staged_job_gid = "gid://#{Base64.decode64(encoded_global_id)}"
 
       GlobalID::Locator.locate(staged_job_gid)
+    rescue ActiveRecord::RecordNotFound
+      nil
     end
 
     def identifier
@@ -33,7 +37,9 @@ module AcidicJob
       return job_id if defined?(job_id) && !job_id.nil?
 
       # might be defined already in `with_acidity` method
-      @__acidic_job_idempotency_key ||= IdempotencyKey.value_for(self, @__acidic_job_args, @__acidic_job_kwargs)
+      acidic_identifier = self.class.acidic_identifier
+      @__acidic_job_idempotency_key ||= IdempotencyKey.new(acidic_identifier)
+                                                      .value_for(self, *@__acidic_job_args, **@__acidic_job_kwargs)
 
       @__acidic_job_idempotency_key
     end

@@ -48,8 +48,15 @@ module AcidicJob
     end
 
     # TODO: write test for a staged job that uses awaits
-    klass.set_callback :perform, :after, :delete_staged_job_record, if: :was_staged_job?
+    klass.set_callback :perform, :after, :reenqueue_awaited_by_job,
+                       if: -> { was_awaited_job? && !was_workflow_job? }
+    klass.set_callback :perform, :after, :delete_staged_job_record,
+                       if: -> { was_staged_job? && !was_awaited_job? }
     klass.define_callbacks :finish
+    klass.set_callback :finish, :after, :reenqueue_awaited_by_job,
+                       if: -> { was_workflow_job? && was_awaited_job? }
+    klass.set_callback :finish, :after, :delete_staged_job_record,
+                       if: -> { was_workflow_job? && was_staged_job? && !was_awaited_job? }
 
     klass.instance_variable_set(:@acidic_identifier, :job_id)
     klass.define_singleton_method(:acidic_by_job_id) { @acidic_identifier = :job_id }
@@ -133,9 +140,13 @@ module AcidicJob
 
   private
 
+  def was_workflow_job?
+    defined?(@acidic_job_run) && @acidic_job_run.present?
+  end
+
   def process_run(run)
     # if the run record is already marked as finished, immediately return its result
-    return finish_run(run) if run.finished?
+    return run.succeeded? if run.finished?
 
     # otherwise, we will enter a loop to process each step of the workflow
     loop do
@@ -174,13 +185,7 @@ module AcidicJob
     end
 
     # the loop will break once the job is finished, so simply report the status
-    finish_run(run)
-  end
-
-  def finish_run(run)
-    run_callbacks :finish do
-      run.succeeded?
-    end
+    run.succeeded?
   end
 
   def step(method_name, awaits: [], for_each: nil)
@@ -223,9 +228,7 @@ module AcidicJob
       if run.present?
         # Programs enqueuing multiple jobs with different parameters but the
         # same idempotency key is a bug.
-        # NOTE: WOULD THE ENQUEUED_AT OR CREATED_AT FIELD BE NECESSARILY DIFFERENT?
-        if run.serialized_job.except("jid", "job_id",
-                                     "enqueued_at") != serialized_job.except("jid", "job_id", "enqueued_at")
+        if run.serialized_job.slice("args", "arguments") != serialized_job.slice("args", "arguments")
           raise MismatchedIdempotencyKeyAndJobArguments
         end
 
@@ -234,7 +237,14 @@ module AcidicJob
         raise LockedIdempotencyKey if run.locked_at && run.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
 
         # Lock the run and update latest run unless the job is already finished.
-        run.update!(last_run_at: Time.current, locked_at: Time.current, workflow: workflow) unless run.finished?
+        unless run.finished?
+          run.update!(
+            last_run_at: Time.current,
+            locked_at: Time.current,
+            workflow: workflow,
+            recovery_point: run.recovery_point || workflow.first.first
+          )
+        end
       else
         run = Run.create!(
           staged: false,

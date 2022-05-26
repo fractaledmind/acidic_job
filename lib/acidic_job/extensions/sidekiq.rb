@@ -13,7 +13,11 @@ module AcidicJob
         class_methods do
           # called only from `AcidicJob::Run#enqueue_staged_job`
           def deserialize(serialized_job_hash)
-            klass = serialized_job_hash["class"].constantize
+            klass = if serialized_job_hash["class"].is_a?(Class)
+                      serialized_job_hash["class"]
+                    else
+                      serialized_job_hash["class"].constantize
+                    end
             worker = klass.new
             worker.jid = serialized_job_hash["jid"]
             worker.instance_variable_set(:@args, serialized_job_hash["args"])

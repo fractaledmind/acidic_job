@@ -12,11 +12,15 @@ module AcidicJob
 
     self.table_name = "acidic_job_runs"
 
+    belongs_to :awaited_by, class_name: "AcidicJob::Run", optional: true
+    has_many :batched_runs, class_name: "AcidicJob::Run", foreign_key: "awaited_by_id"
+
     after_create_commit :enqueue_staged_job, if: :staged?
 
     serialize :error_object
     serialize :serialized_job
     serialize :workflow
+    serialize :returning_to
     store :attr_accessors
 
     validates :staged, inclusion: { in: [true, false] } # uses database default
@@ -69,7 +73,7 @@ module AcidicJob
       # base64 encoding for minimal security
       global_id = to_global_id.to_s.remove("gid://")
       encoded_global_id = Base64.encode64(global_id).strip
-      staged_job_id = "STG_#{idempotency_key}__#{encoded_global_id}"
+      staged_job_id = "STG__#{idempotency_key}__#{encoded_global_id}"
 
       serialized_staged_job = if serialized_job.key?("jid")
                                 serialized_job.merge("jid" => staged_job_id)

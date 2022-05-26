@@ -22,19 +22,19 @@ DatabaseCleaner.clean_with(:truncation)
 
 ActiveRecord::Schema.define do
   create_table :acidic_job_runs, force: true do |t|
-    t.boolean :staged, null: false,	default: false
-    t.string :idempotency_key, null: false
-    t.text :serialized_job,	null: false
-    t.string :job_class,	null: false
-    t.datetime :last_run_at,	null: true,	default: -> { "CURRENT_TIMESTAMP" }
-    t.datetime :locked_at,	null: true
-    t.string :recovery_point,	null: true
-    t.text :error_object,	null: true
-    t.text :attr_accessors,	null: true
-    t.text :workflow,	null: true
+    t.boolean     :staged,          null: false,  default: false
+    t.string      :idempotency_key, null: false,  index: { unique: true }
+    t.text        :serialized_job,  null: false
+    t.string      :job_class,       null: false
+    t.datetime    :last_run_at,     null: true, default: -> { "CURRENT_TIMESTAMP" }
+    t.datetime    :locked_at,       null: true
+    t.string      :recovery_point,  null: true
+    t.text        :error_object,    null: true
+    t.text        :attr_accessors,  null: true
+    t.text        :workflow,        null: true
+    t.references  :awaited_by,      null: true, index: true
+    t.text        :returning_to,    null: true
     t.timestamps
-
-    t.index :idempotency_key, unique: true
   end
 
   # -----------------------------------------------------------------------
