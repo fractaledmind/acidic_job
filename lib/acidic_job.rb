@@ -230,7 +230,14 @@ module AcidicJob
         raise LockedIdempotencyKey if run.locked_at && run.locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT
 
         # Lock the run and update latest run unless the job is already finished.
-        run.update!(last_run_at: Time.current, locked_at: Time.current, workflow: workflow) unless run.finished?
+        unless run.finished?
+          run.update!(
+            last_run_at: Time.current,
+            locked_at: Time.current,
+            workflow: workflow,
+            recovery_point: run.recovery_point || workflow.first.first
+          )
+        end
       else
         run = Run.create!(
           staged: false,
