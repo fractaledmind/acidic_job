@@ -135,7 +135,7 @@ module AcidicJob
 
   def process_run(run)
     # if the run record is already marked as finished, immediately return its result
-    return finish_run(run) if run.finished?
+    return run.succeeded? if run.finished?
 
     # otherwise, we will enter a loop to process each step of the workflow
     loop do
@@ -174,13 +174,7 @@ module AcidicJob
     end
 
     # the loop will break once the job is finished, so simply report the status
-    finish_run(run)
-  end
-
-  def finish_run(run)
-    run_callbacks :finish do
-      run.succeeded?
-    end
+    run.succeeded?
   end
 
   def step(method_name, awaits: [], for_each: nil)
