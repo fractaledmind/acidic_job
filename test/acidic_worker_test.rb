@@ -75,7 +75,7 @@ class TestAcidicWorkers < TestCase
       assert_equal 1, AcidicJob::Run.unstaged.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
-      assert_equal 0, AcidicJob::Run.staged.count
+      assert_equal 1, AcidicJob::Run.staged.count
     end
 
     def test_returns_a_stored_result
@@ -107,7 +107,7 @@ class TestAcidicWorkers < TestCase
       assert_equal 1, AcidicJob::Run.unstaged.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
-      assert_equal 0, AcidicJob::Run.staged.count
+      assert_equal 1, AcidicJob::Run.staged.count
     end
 
     def test_passes_for_keys_with_a_stale_locked_at
@@ -124,7 +124,7 @@ class TestAcidicWorkers < TestCase
       assert_equal 1, AcidicJob::Run.unstaged.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
-      assert_equal 0, AcidicJob::Run.staged.count
+      assert_equal 1, AcidicJob::Run.staged.count
     end
 
     def test_stores_results_for_a_permanent_failure
@@ -160,7 +160,7 @@ class TestAcidicWorkers < TestCase
       assert_equal 1, AcidicJob::Run.unstaged.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
-      assert_equal 0, AcidicJob::Run.staged.count
+      assert_equal 1, AcidicJob::Run.staged.count
     end
 
     def test_continues_from_recovery_point_create_stripe_charge
@@ -180,7 +180,7 @@ class TestAcidicWorkers < TestCase
       assert_equal 1, AcidicJob::Run.unstaged.count
       assert_equal 1, Ride.count
       assert_equal 0, Audit.count
-      assert_equal 0, AcidicJob::Run.staged.count
+      assert_equal 1, AcidicJob::Run.staged.count
     end
 
     def test_continues_from_recovery_point_send_receipt
@@ -197,7 +197,7 @@ class TestAcidicWorkers < TestCase
       assert_equal 1, AcidicJob::Run.unstaged.count
       assert_equal 0, Ride.count
       assert_equal 0, Audit.count
-      assert_equal 0, AcidicJob::Run.staged.count
+      assert_equal 1, AcidicJob::Run.staged.count
     end
   end
 

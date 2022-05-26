@@ -9,15 +9,6 @@ module AcidicJob
 
     private
 
-    def delete_staged_job_record
-      return unless was_staged_job?
-
-      staged_job_run.delete
-      true
-    rescue ActiveRecord::RecordNotFound
-      true
-    end
-
     def was_staged_job?
       identifier.start_with? "STG__"
     end
