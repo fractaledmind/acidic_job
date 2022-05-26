@@ -133,6 +133,10 @@ module AcidicJob
 
   private
 
+  def was_workflow_job?
+    defined?(@acidic_job_run) && @acidic_job_run.present?
+  end
+
   def process_run(run)
     # if the run record is already marked as finished, immediately return its result
     return run.succeeded? if run.finished?

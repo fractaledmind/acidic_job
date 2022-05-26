@@ -8,6 +8,11 @@ module AcidicJob
 
     private
 
+    def was_awaited_job?
+      (acidic_job_run.present? && acidic_job_run.awaited_by.present?) ||
+        (staged_job_run.present? && staged_job_run.awaited_by.present?)
+    end
+
     def enqueue_step_parallel_jobs(jobs_or_jobs_getter, run, step_result)
       # `batch` is available from Sidekiq::Pro
       raise SidekiqBatchRequired unless defined?(Sidekiq::Batch)
