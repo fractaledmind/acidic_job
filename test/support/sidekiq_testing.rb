@@ -15,7 +15,10 @@ module Sidekiq
       # ignore, will be pushed back onto queue during hard_shutdown
       raise e
     rescue StandardError => e
-      p e
+      if ENV["LOG_ERRORS"]
+        p e
+        puts e.backtrace
+      end
 
       # ignore, will be pushed back onto queue during hard_shutdown
       raise Sidekiq::Shutdown if exception_caused_by_shutdown?(e)
