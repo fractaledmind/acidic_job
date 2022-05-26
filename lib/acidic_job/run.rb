@@ -63,17 +63,20 @@ module AcidicJob
     def failed?
       error_object.present?
     end
+    
+    def staged_job_id
+      # encode the identifier for this record in the job ID
+      # base64 encoding for minimal security
+      global_id = to_global_id.to_s.remove("gid://")
+      encoded_global_id = Base64.encode64(global_id).strip
+
+      "STG__#{idempotency_key}__#{encoded_global_id}"
+    end
 
     private
 
     def enqueue_staged_job
       return unless staged?
-
-      # encode the identifier for this record in the job ID
-      # base64 encoding for minimal security
-      global_id = to_global_id.to_s.remove("gid://")
-      encoded_global_id = Base64.encode64(global_id).strip
-      staged_job_id = "STG__#{idempotency_key}__#{encoded_global_id}"
 
       serialized_staged_job = if serialized_job.key?("jid")
                                 serialized_job.merge("jid" => staged_job_id)
