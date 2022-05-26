@@ -42,7 +42,13 @@ module AcidicJob
     # The progression phase advances the job run state machine onto the next step
     def progress
       @run.with_lock do
-        @step_result.call(run: @run)
+        if @step_result.is_a?(FinishedPoint)
+          @job.run_callbacks :finish do
+            @step_result.call(run: @run)
+          end
+        else
+          @step_result.call(run: @run)
+        end
       end
     end
 
