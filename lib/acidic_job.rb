@@ -48,11 +48,15 @@ module AcidicJob
     end
 
     # TODO: write test for a staged job that uses awaits
-    klass.set_callback :perform, :after, :reenqueue_awaited_by_job, if: -> { was_awaited_job? && !was_workflow_job? }
-    klass.set_callback :perform, :after, :delete_staged_job_record, if: -> { was_staged_job? && !was_awaited_job? }
+    klass.set_callback :perform, :after, :reenqueue_awaited_by_job,
+                       if: -> { was_awaited_job? && !was_workflow_job? }
+    klass.set_callback :perform, :after, :delete_staged_job_record,
+                       if: -> { was_staged_job? && !was_awaited_job? }
     klass.define_callbacks :finish
-    klass.set_callback :finish, :after, :reenqueue_awaited_by_job, if: -> { was_awaited_job? && was_workflow_job? }
-    klass.set_callback :finish, :after, :delete_staged_job_record, if: -> { was_staged_job? && !was_awaited_job? && was_workflow_job?}
+    klass.set_callback :finish, :after, :reenqueue_awaited_by_job,
+                       if: -> { was_workflow_job? && was_awaited_job? }
+    klass.set_callback :finish, :after, :delete_staged_job_record,
+                       if: -> { was_workflow_job? && was_staged_job? && !was_awaited_job? }
 
     klass.instance_variable_set(:@acidic_identifier, :job_id)
     klass.define_singleton_method(:acidic_by_job_id) { @acidic_identifier = :job_id }
