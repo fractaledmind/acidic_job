@@ -17,7 +17,7 @@ module AcidicJob
     end
 
     def was_staged_job?
-      identifier.start_with? "STG_"
+      identifier.start_with? "STG__"
     end
 
     def staged_job_run
