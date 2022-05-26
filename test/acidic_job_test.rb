@@ -451,7 +451,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal AcidicJob::Run.count, 1
     run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithErrorInStepMethod")
     assert_equal run.error_object.class, CustomErrorForTesting
-    assert_equal run.attr_accessors, { "accessor" => nil }
+    assert_equal({ "accessor" => nil }, run.attr_accessors)
   end
 
   test "logic inside `with_acidic_workflow` block is executed appropriately" do

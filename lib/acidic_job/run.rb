@@ -252,7 +252,7 @@ module AcidicJob
       end
 
       def store_error!(error)
-        unlock and store_error(error) and save!
+        reload and unlock and store_error(error) and save!
       end
 
       def store_error(error)
