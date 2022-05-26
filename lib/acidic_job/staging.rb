@@ -28,6 +28,8 @@ module AcidicJob
       staged_job_gid = "gid://#{Base64.decode64(encoded_global_id)}"
 
       GlobalID::Locator.locate(staged_job_gid)
+    rescue ActiveRecord::RecordNotFound
+      nil
     end
 
     def identifier
