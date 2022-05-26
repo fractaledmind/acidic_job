@@ -63,7 +63,7 @@ module AcidicJob
     def failed?
       error_object.present?
     end
-    
+
     def staged_job_id
       # encode the identifier for this record in the job ID
       # base64 encoding for minimal security

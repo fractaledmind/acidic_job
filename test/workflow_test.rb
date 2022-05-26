@@ -345,14 +345,14 @@ class TestWorkflows < TestCase
     assert_equal 1, retry_set.size
     assert_equal ["ErroringDynamicAwaitFromStringWorker"], retry_set.map { _1.item["class"] }
   end
-  
+
   def test_step_with_awaits_followed_by_another_step_is_run_properly
     dynamic_class = Class.new(ApplicationWorker) do
       dynamic_step_job = Class.new(ApplicationWorker) do
         def perform; end
       end
       Object.const_set("SimpleAwaitedWorker", dynamic_step_job)
-  
+
       def perform
         with_acidity providing: {} do
           step :await_step, awaits: [SimpleAwaitedWorker]
@@ -363,7 +363,7 @@ class TestWorkflows < TestCase
       def do_something; end
     end
     Object.const_set("WorkerWithAwaitStepFollowedByAnotherStep", dynamic_class)
-  
+
     WorkerWithAwaitStepFollowedByAnotherStep.new.perform
     Sidekiq::Worker.drain_all
 
