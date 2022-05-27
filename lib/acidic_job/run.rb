@@ -49,7 +49,7 @@ module AcidicJob
       end
 
       class_methods do
-        def await!(job, by:)
+        def await!(job, by:, return_to:)
           create!(
             staged: true,
             awaited_by: by,
@@ -57,6 +57,7 @@ module AcidicJob
             serialized_job: job.serialize,
             idempotency_key: job.idempotency_key
           )
+          by.update(returning_to: return_to)
         end
       end
 

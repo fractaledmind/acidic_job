@@ -51,15 +51,14 @@ module AcidicJob
       awaited_jobs = jobs_from(jobs_or_jobs_getter)
 
       AcidicJob.logger.log_run_event("Enqueuing #{awaited_jobs.count} awaited jobs...", @job, @run)
-      # All jobs created in the block are actually pushed atomically at the end of the block.
+      # All jobs created in the block are pushed atomically at the end of the block.
       AcidicJob::Run.transaction do
         awaited_jobs.each do |awaited_job|
           worker_class, args, kwargs = job_args_and_kwargs(awaited_job)
 
           job = worker_class.new(*args, **kwargs)
 
-          AcidicJob::Run.await!(job, by: @run)
-          @run.update(returning_to: step_result)
+          AcidicJob::Run.await!(job, by: @run, return_to: step_result)
         end
       end
       AcidicJob.logger.log_run_event("Enqueued #{awaited_jobs.count} awaited jobs.", @job, @run)

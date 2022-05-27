@@ -57,6 +57,7 @@ module AcidicJob
 
     def run_step_result
       next_step = @run.next_step_name
+
       AcidicJob.logger.log_run_event("Progressing to #{next_step}...", @job, @run)
       @run.with_lock do
         @step_result.call(run: @run)
