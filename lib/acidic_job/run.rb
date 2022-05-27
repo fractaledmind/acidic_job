@@ -31,7 +31,9 @@ module AcidicJob
     scope :staged, -> { where(staged: true) }
     scope :unstaged, -> { where(staged: false) }
     scope :finished, -> { where(recovery_point: FINISHED_RECOVERY_POINT) }
-    scope :running, -> { where.not(recovery_point: FINISHED_RECOVERY_POINT) }
+    scope :outstanding, lambda {
+      where.not(recovery_point: FINISHED_RECOVERY_POINT).or(where(recovery_point: [nil, ""]))
+    }
 
     with_options unless: :staged? do
       validates :last_run_at, presence: true
