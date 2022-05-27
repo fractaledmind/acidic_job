@@ -17,6 +17,7 @@ module AcidicJob
       run = staged_job_run&.awaited_by || acidic_job_run&.awaited_by
 
       return unless run
+      return if run.batched_runs.outstanding.any?
 
       current_step = run.workflow[run.recovery_point.to_s]
       step_result = run.returning_to

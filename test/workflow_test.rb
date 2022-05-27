@@ -40,7 +40,7 @@ class TestWorkflows < TestCase
     assert_equal "FINISHED", parent_run.recovery_point
 
     child_run = AcidicJob::Run.find_by(job_class: "SuccessfulAsyncWorker")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
 
     assert_equal 0, Sidekiq::RetrySet.new.size
   end
@@ -120,7 +120,7 @@ class TestWorkflows < TestCase
     assert_equal "FINISHED", child_run.recovery_point
 
     grandchild_run = AcidicJob::Run.find_by(job_class: "NestedSuccessfulWorker")
-    assert_nil grandchild_run.recovery_point
+    assert_equal "FINISHED", grandchild_run.recovery_point
 
     assert_equal 0, Sidekiq::RetrySet.new.size
   end
@@ -197,7 +197,7 @@ class TestWorkflows < TestCase
     assert_equal "FINISHED", parent_run.recovery_point
 
     child_run = AcidicJob::Run.find_by(job_class: "SuccessfulArgWorker")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
 
     assert_equal 0, Sidekiq::RetrySet.new.size
   end
@@ -230,7 +230,7 @@ class TestWorkflows < TestCase
     assert_equal "FINISHED", parent_run.recovery_point
 
     child_run = AcidicJob::Run.find_by(job_class: "SuccessfulDynamicAwaitFromSymbolWorker")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
 
     assert_equal 0, Sidekiq::RetrySet.new.size
   end
@@ -302,7 +302,7 @@ class TestWorkflows < TestCase
     assert_equal "FINISHED", parent_run.recovery_point
 
     child_run = AcidicJob::Run.find_by(job_class: "SuccessfulDynamicAwaitFromStringWorker")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
 
     assert_equal 0, Sidekiq::RetrySet.new.size
   end
@@ -373,7 +373,7 @@ class TestWorkflows < TestCase
     assert_equal "FINISHED", parent_run.recovery_point
 
     child_run = AcidicJob::Run.find_by(job_class: "SimpleAwaitedWorker")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
 
     assert_equal 0, Sidekiq::RetrySet.new.size
   end

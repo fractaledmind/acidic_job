@@ -50,6 +50,7 @@ module AcidicJob
     # TODO: write test for a staged job that uses awaits
     klass.set_callback :perform, :after, :reenqueue_awaited_by_job,
                        if: -> { was_awaited_job? && !was_workflow_job? }
+    klass.set_callback :perform, :after, :finish_staged_job, if: -> { was_staged_job? && !was_workflow_job? }
     klass.define_callbacks :finish
     klass.set_callback :finish, :after, :reenqueue_awaited_by_job,
                        if: -> { was_workflow_job? && was_awaited_job? }
@@ -135,6 +136,10 @@ module AcidicJob
   # rubocop:enable Naming/MemoizedInstanceVariableName
 
   private
+
+  def finish_staged_job
+    FinishedPoint.new.call(run: staged_job_run)
+  end
 
   def was_workflow_job?
     defined?(@acidic_job_run) && @acidic_job_run.present?
