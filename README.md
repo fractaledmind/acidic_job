@@ -64,14 +64,22 @@ It provides a suite of functionality that empowers you to create complex, robust
 
 #### Key Features
 
-* Transactional Steps — break your job into a series of steps, each of which will be run within an acidic database transaction, allowing retries to jump back to the last "recovery point".
-* Steps that Await Jobs — have workflow steps await other jobs, which will be enqueued and processed independently, and only when they all have finished will the parent job be re-enqueued to continue the workflow
-* Iterable Steps — define steps that iterate over some collection fully until moving on to the next step
-* Persisted Attributes — when retrying jobs at later steps, we need to ensure that data created in previous steps is still available to later steps on retry.
-* Transactionally Staged Jobs — enqueue additional jobs within the acidic transaction safely
-* Custom Idempotency Keys — use something other than the job ID for the idempotency key of the job run
-* Sidekiq Callbacks — bring ActiveJob-like callbacks into your pure Sidekiq Workers
-* Run Finished Callbacks — set callbacks for when a job run finishes fully
+* **Transactional Steps**  
+    break your job into a series of steps, each of which will be run within an acidic database transaction, allowing retries to jump back to the last "recovery point".
+* **Steps that Await Jobs**  
+    have workflow steps await other jobs, which will be enqueued and processed independently, and only when they all have finished will the parent job be re-enqueued to continue the workflow
+* **Iterable Steps**  
+    define steps that iterate over some collection fully until moving on to the next step
+* **Persisted Attributes**  
+    when retrying jobs at later steps, we need to ensure that data created in previous steps is still available to later steps on retry.
+* **Transactionally Staged Jobs**  
+    enqueue additional jobs within the acidic transaction safely
+* **Custom Idempotency Keys**  
+    use something other than the job ID for the idempotency key of the job run
+* **Sidekiq Callbacks**  
+    bring ActiveJob-like callbacks into your pure Sidekiq Workers
+* **Run Finished Callbacks**  
+    set callbacks for when a job run finishes fully
 
 
 ### Transactional Steps
