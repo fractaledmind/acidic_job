@@ -65,13 +65,14 @@ It provides a suite of functionality that empowers you to create complex, robust
 #### Key Features
 
 * Transactional Steps — break your job into a series of steps, each of which will be run within an acidic database transaction, allowing retries to jump back to the last "recovery point".
+* Steps that Await Jobs — have workflow steps await other jobs, which will be enqueued and processed independently, and only when they all have finished will the parent job be re-enqueued to continue the workflow
+* Iterable Steps — define steps that iterate over some collection fully until moving on to the next step
 * Persisted Attributes — when retrying jobs at later steps, we need to ensure that data created in previous steps is still available to later steps on retry.
 * Transactionally Staged Jobs — enqueue additional jobs within the acidic transaction safely
 * Custom Idempotency Keys — use something other than the job ID for the idempotency key of the job run
-* Iterable Steps — define steps that iterate over some collection fully until moving on to the next step
 * Sidekiq Callbacks — bring ActiveJob-like callbacks into your pure Sidekiq Workers
-* Sidekiq Batches — leverage the power of Sidekiq Pro's `batch` functionality without the hassle
 * Run Finished Callbacks — set callbacks for when a job run finishes fully
+
 
 ### Transactional Steps
 
@@ -110,15 +111,114 @@ end
 
 Now, each execution of this job will find or create an `AcidicJob::Run` record, which we leverage to wrap every step in a database transaction. Moreover, this database record allows `acidic_job` to ensure that if your job fails on step 3, when it retries, it will simply jump right back to trying to execute the method defined for the 3rd step, and won't even execute the first two step methods. This means your step methods only need to be idempotent on failure, not on success, since they will never be run again if they succeed.
 
-### Persisted Attributes
 
-Any objects passed to the `providing` option on the `with_acidity` method are not just made available to each of your step methods, they are made available across retries. This means that you can set an attribute in step 1, access it in step 2, have step 2 fail, have the job retry, jump directly back to step 2 on retry, and have that object still accessible. This is done by serializing all objects to a field on the `AcidicJob::Run` and manually providing getters and setters that sync with the database record.
+### Steps that Await Jobs
+
+By simply adding the `awaits` option to your step declarations, you can attach any number of additional, asynchronous jobs to your step. This is profoundly powerful, as it means that you can define a workflow where step 2 is started _if and only if_ step 1 succeeds, but step 1 can have 3 different jobs enqueued on 3 different queues, each running in parallel. Once all 3 jobs succeed, `acidic_job` will re-enqueue the parent job and it will move on to step 2. That's right, you can have workers that are _executed in parallel_, **on separate queues**, and _asynchronously_, but are still **blocking**—as a group—the next step in your workflow! This unlocks incredible power and flexibility for defining and structuring complex workflows and operations.
 
 ```ruby
 class RideCreateJob < ActiveJob::Base
   include AcidicJob
 
-  def perform(ride_params)
+  def perform(user_id, ride_params)
+    @user = User.find(user_id)
+    @params = ride_params
+
+    with_acidity providing: { ride: nil } do
+      step :create_ride_and_audit_record, awaits: [SomeJob, AnotherJob]
+      step :create_stripe_charge
+      step :send_receipt
+    end
+  end
+end
+```
+
+If you need to await a job that takes arguments, you can prepare that job along with its arguments using the `with` class method that `acidic_job` will add to your jobs:
+
+```ruby
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+
+  def perform(user_id, ride_params)
+    @user = User.find(user_id)
+    @params = ride_params
+
+    with_acidity providing: { ride: nil } do
+      step :create_ride_and_audit_record, awaits: awaits: [SomeJob.with('argument_1', keyword: 'value'), AnotherJob.with(1, 2, 3, some: 'thing')]
+      step :create_stripe_charge
+      step :send_receipt
+    end
+  end
+end
+```
+
+If your step awaits multiple jobs (e.g. `awaits: [SomeJob, AnotherJob.with('argument_1', keyword: 'value')]`), your top level workflow job will only continue to the next step once **all** of the jobs in your `awaits` array have finished.
+
+In some cases, you may need to _dynamically_ determine the collection of jobs that the step should wait for; in these cases, you can pass the name of a method to the `awaits` option:
+
+```ruby
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+  set_callback :finish, :after, :delete_run_record
+
+  def perform(user_id, ride_params)
+    @user = User.find(user_id)
+    @params = ride_params
+
+    with_acidity providing: { ride: nil } do
+      step :create_ride_and_audit_record, awaits: :dynamic_awaits
+      step :create_stripe_charge
+      step :send_receipt
+    end
+  end
+  
+  def dynamic_awaits
+    if @params["key"].present?
+      [SomeJob.with('argument_1', keyword: 'value')]
+    else
+      [AnotherJob.with(1, 2, 3, some: 'thing')]
+    end
+  end
+end
+```
+
+
+### Iterable Steps
+
+Sometimes our workflows have steps that need to iterate over a collection and perform an action for each item in the collection before moving on to the next step in the workflow. In these cases, we can use the `for_each` option when defining our step to specific the collection, and `acidic_job` will pass each item into your step method for processing, keeping the same transactional guarantees as for any step. This means that if your step encounters an error in processing any item in the collection, when your job is retried, the job will jump right back to that step and right back to that item in the collection to try again.
+
+```ruby
+class ExampleJob < ActiveJob::Base
+  include AcidicJob
+
+  def perform(record:)
+    with_acidity providing: { collection: [1, 2, 3, 4, 5] } do
+      step :process_item, for_each: :collection
+      step :next_step
+    end
+  end
+  
+  def process_item(item)
+    # do whatever work needs to be done with this individual item
+  end
+end
+```
+
+**Note:** This feature relies on the "Persisted Attributes" feature detailed below. This means that you can only iterate over collections that ActiveRecord can serialize.
+
+
+### Persisted Attributes
+
+Any objects passed to the `providing` option on the `with_acidity` method are made available across retries. This means that you can set an attribute in step 1, access it in step 2, have step 2 fail, have the job retry, jump directly back to step 2 on retry, and have that object still accessible. This is done by serializing all objects to a field on the `AcidicJob::Run` and manually providing getters and setters that sync with the database record.
+
+```ruby
+class RideCreateJob < ActiveJob::Base
+  include AcidicJob
+
+  def perform(user_id, ride_params)
+    @user = User.find(user_id)
+    @params = ride_params
+
     with_acidity providing: { ride: nil } do
       step :create_ride_and_audit_record
       step :create_stripe_charge
@@ -143,6 +243,7 @@ end
 **Note:** You will note the use of `self.ride = ...` in the code sample above. In order to call the attribute setter method that will sync with the database record, you _must_ use this style. `@ride = ...` and/or `ride = ...` will both fail to sync the value with the database record.
 
 The default pattern you should follow when defining your `perform` method is to make any values that your `step` methods need access to, but are present at the start of the `perform` method simply instance variables. You only need to `provide` attributes that will be set _during a step_. This means, the initial value will almost always be `nil`.
+
 
 ### Transactionally Staged Jobs
 
@@ -172,6 +273,7 @@ class RideCreateJob < ActiveJob::Base
   end
 end
 ```
+
 
 ### Custom Idempotency Keys
 
@@ -217,106 +319,12 @@ end
 
 > **Note:** The signature of the `acidic_by` proc _needs to match the signature_ of the job's `perform` method.
 
-### Iterable Steps
-
-Sometimes our workflows have steps that need to iterate over a collection and perform an action for each item in the collection before moving on to the next step in the workflow. In these cases, we can use the `for_each` option when defining our step to specific the collection, and `acidic_job` will pass each item into your step method for processing, keeping the same transactional guarantees as for any step. This means that if your step encounters an error in processing any item in the collection, when your job is retried, the job will jump right back to that step and right back to that item in the collection to try again.
-
-```ruby
-class ExampleJob < ActiveJob::Base
-  include AcidicJob
-
-  def perform(record:)
-    with_acidity providing: { collection: [1, 2, 3, 4, 5] } do
-      step :process_item, for_each: :collection
-      step :next_step
-    end
-  end
-  
-  def process_item(item)
-    # do whatever work needs to be done with this individual item
-  end
-end
-```
-
-**Note:** The same restrictions apply here as for any persisted attribute — you can only use objects that can be serialized by ActiveRecord.
 
 ### Sidekiq Callbacks
 
 In order to ensure that `AcidicJob::Staged` records are only destroyed once the related job has been successfully performed, whether it is an ActiveJob or a Sidekiq Worker, `acidic_job` also extends Sidekiq to support the [ActiveJob callback interface](https://edgeguides.rubyonrails.org/active_job_basics.html#callbacks).
 
 This allows `acidic_job` to use an `after_perform` callback to delete the `AcidicJob::Staged` record, whether you are using the gem with ActiveJob or pure Sidekiq Workers. Of course, this means that you can add your own callbacks to any jobs or workers that include the `AcidicJob` module as well.
-
-### Sidekiq Batches
-
-One final feature for those of you using Sidekiq Pro: an integrated DSL for Sidekiq Batches. By simply adding the `awaits` option to your step declarations, you can attach any number of additional, asynchronous workers to your step. This is profoundly powerful, as it means that you can define a workflow where step 2 is started _if and only if_ step 1 succeeds, but step 1 can have 3 different workers enqueued on 3 different queues, each running in parallel. Once all 3 workers succeed, `acidic_job` will move on to step 2. That's right, by leveraging the power of Sidekiq Batches, you can have workers that are _executed in parallel_, **on separate queues**, and _asynchronously_, but are still **blocking**—as a group—the next step in your workflow! This unlocks incredible power and flexibility for defining and structuring complex workflows and operations, and in my mind is the number one selling point for Sidekiq Pro.
-
-In my opinion, any commercial software using Sidekiq should get Sidekiq Pro; it is _absolutely_ worth the money. If, however, you are using `acidic_job` in a non-commercial application, you could use the open-source dropin replacement for this functionality: https://github.com/breamware/sidekiq-batch
-
-```ruby
-class RideCreateJob < ActiveJob::Base
-  include AcidicJob
-
-  def perform(user_id, ride_params)
-    @user = User.find(user_id)
-    @params = ride_params
-
-    with_acidity providing: { ride: nil } do
-      step :create_ride_and_audit_record, awaits: [SomeJob]
-      step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
-      step :send_receipt
-    end
-  end
-end
-```
-
-If you need to await a job that takes arguments, you can prepare that job along with its arguments using the `with` class method that `acidic_job` will add to your jobs:
-
-```ruby
-class RideCreateJob < ActiveJob::Base
-  include AcidicJob
-
-  def perform(user_id, ride_params)
-    @user = User.find(user_id)
-    @params = ride_params
-
-    with_acidity providing: { ride: nil } do
-      step :create_ride_and_audit_record, awaits: awaits: [SomeJob.with('argument_1', keyword: 'value')]
-      step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
-      step :send_receipt
-    end
-  end
-end
-```
-
-You can also await a batch of jobs by simply passing multiple jobs to the `awaits` array (e.g. `awaits: [SomeJob, AnotherJob.with('argument_1', keyword: 'value')]`). Your top level workflow job will only continue to the next step once all of the jobs in your `awaits` array have successfully finished.
-
-In some cases, you may need to _dynamically_ determine the collection of jobs that the step should wait for; in these cases, you can pass the name of a method to the `awaits` option:
-
-```ruby
-class RideCreateJob < ActiveJob::Base
-  include AcidicJob
-  set_callback :finish, :after, :delete_run_record
-
-  def perform(user_id, ride_params)
-    @user = User.find(user_id)
-    @params = ride_params
-
-    with_acidity providing: { ride: nil } do
-      step :create_ride_and_audit_record, awaits: :dynamic_awaits
-      step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
-      step :send_receipt
-    end
-  end
-  
-  def dynamic_awaits
-    if @params["key"].present?
-      [SomeJob.with('argument_1', keyword: 'value')]
-    else
-      [AnotherJob]
-    end
-  end
-end
-```
 
 
 ### Run Finished Callbacks
@@ -348,6 +356,7 @@ class RideCreateJob < ActiveJob::Base
   end
 end
 ```
+
 
 ## Testing
 
