@@ -9,8 +9,7 @@ module AcidicJob
     end
 
     def call(run:)
-      # Skip AR callbacks and validations
-      run.update_column(:recovery_point, @name)
+      run.recover_to!(@name)
     end
   end
 end

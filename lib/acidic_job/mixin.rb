@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "active_support/concern"
+
 module AcidicJob
   module Mixin
     extend ActiveSupport::Concern
@@ -13,10 +15,8 @@ module AcidicJob
       other.define_singleton_method(:acidic_by) { |&block| @acidic_identifier = block }
       other.define_singleton_method(:acidic_identifier) { defined? @acidic_identifier }
 
-      # other.set_callback :perform, :after, :finish_staged_job, if: -> { was_staged_job? && !was_workflow_job? }
-      other.set_callback :perform, :after, :reenqueue_awaited_by_job, if: -> { was_awaited_job? && !was_workflow_job? }
+      other.set_callback :perform, :after, :finish_staged_job, if: -> { was_staged_job? && !was_workflow_job? }
       other.define_callbacks :finish
-      other.set_callback :finish, :after, :reenqueue_awaited_by_job, if: -> { was_awaited_job? && was_workflow_job? }
     end
 
     class_methods do
@@ -128,7 +128,9 @@ module AcidicJob
     end
 
     def was_workflow_job?
-      defined?(@acidic_job_run) && @acidic_job_run.present?
+      return false unless defined? @acidic_job_run
+
+      @acidic_job_run.present?
     end
 
     def was_awaited_job?
@@ -147,28 +149,7 @@ module AcidicJob
     end
 
     def finish_staged_job
-      delete_staged_job_record
-      mark_staged_run_as_finished
-    end
-
-    def reenqueue_awaited_by_job
-      run = staged_job_run.awaited_by
-      job = run.job
-      # this needs to be explicitly set so that `was_workflow_job?` appropriately returns `true`
-      job.instance_variable_set(:@acidic_job_run, run)
-      # re-hydrate the `step_result` object
-      step_result = staged_job_run.returning_to
-
-      workflow = Workflow.new(run, job, step_result)
-      # TODO: WRITE REGRESSION TESTS FOR PARALLEL JOB FAILING AND RETRYING THE ORIGINAL STEP
-      workflow.progress_to_next_step
-
-      # when a batch of jobs for a step succeeds, we begin processing the `AcidicJob::Run` record again
-      return if run.finished?
-
-      AcidicJob.logger.log_run_event("Re-enqueuing parent job...", job, run)
-      run.enqueue_job
-      AcidicJob.logger.log_run_event("Re-enqueued parent job.", job, run)
+      staged_job_run.finish!
     end
   end
 end

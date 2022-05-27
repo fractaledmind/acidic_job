@@ -12,14 +12,14 @@ module AcidicJob
       # if the run record is already marked as finished, immediately return its result
       return @run.succeeded? if @run.finished?
 
-      AcidicJob.logger.log_run_event("Processing #{@workflow.current_step_name}...", @job, @run)
+      AcidicJob.logger.log_run_event("Processing #{@run.current_step_name}...", @job, @run)
       loop do
         break if @run.finished?
 
         if !@run.known_recovery_point?
           raise UnknownRecoveryPoint,
-                "Defined workflow does not reference this step: #{@workflow.current_step_name.inspect}"
-        elsif !(awaited_jobs = @workflow.current_step_hash.fetch("awaits", []) || []).empty?
+                "Defined workflow does not reference this step: #{@run.current_step_name.inspect}"
+        elsif !(awaited_jobs = @run.current_step_hash.fetch("awaits", []) || []).empty?
           # We only execute the current step, without progressing to the next step.
           # This ensures that any failures in parallel jobs will have this step retried in the main workflow
           step_result = @workflow.execute_current_step
@@ -40,7 +40,7 @@ module AcidicJob
           @workflow.progress_to_next_step
         end
       end
-      AcidicJob.logger.log_run_event("Processed #{@workflow.current_step_name}.", @job, @run)
+      AcidicJob.logger.log_run_event("Processed #{@run.current_step_name}.", @job, @run)
 
       @run.succeeded?
     end
@@ -58,14 +58,8 @@ module AcidicJob
 
           job = worker_class.new(*args, **kwargs)
 
-          AcidicJob::Run.create!(
-            staged: true,
-            awaited_by: @run,
-            returning_to: step_result,
-            job_class: worker_class,
-            serialized_job: job.serialize,
-            idempotency_key: IdempotencyKey.new(job).value(acidic_by: worker_class.try(:acidic_identifier))
-          )
+          AcidicJob::Run.await!(job, by: @run)
+          @run.update(returning_to: step_result)
         end
       end
       AcidicJob.logger.log_run_event("Enqueued #{awaited_jobs.count} awaited jobs.", @job, @run)

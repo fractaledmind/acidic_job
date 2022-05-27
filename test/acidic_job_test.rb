@@ -451,7 +451,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal AcidicJob::Run.count, 1
     run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithErrorInStepMethod")
     assert_equal run.error_object.class, CustomErrorForTesting
-    assert_equal run.attr_accessors, { "accessor" => nil }
+    assert_equal({ "accessor" => nil }, run.attr_accessors)
   end
 
   test "logic inside `with_acidic_workflow` block is executed appropriately" do
@@ -560,7 +560,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal false, parent_run.staged?
 
     child_run = AcidicJob::Run.find_by(job_class: "TestCases::SimpleWorkflowJob::SuccessfulAsyncJob")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_equal true, child_run.staged?
 
     assert_equal 2, Performance.performances
@@ -607,7 +607,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal 0, Performance.performances
   end
 
-  test "workflow job with successful `awaits` job that itself `awaits` another successful job" do
+  test "workflow job with successful awaits job that itself awaits another successful job" do
     class NestedSuccessfulAwaitSteps < AcidicJob::Base
       class SuccessfulAwaitedAndAwaits < AcidicJob::Base
         class NestedSuccessfulAwaited < AcidicJob::Base
@@ -656,7 +656,7 @@ class TestCases < ActiveSupport::TestCase
     grandchild_run = AcidicJob::Run.find_by(
       job_class: "TestCases::NestedSuccessfulAwaitSteps::SuccessfulAwaitedAndAwaits::NestedSuccessfulAwaited"
     )
-    assert_nil grandchild_run.recovery_point
+    assert_equal "FINISHED", grandchild_run.recovery_point
     assert_nil grandchild_run.error_object
     assert_equal true, grandchild_run.staged?
 
@@ -748,7 +748,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal false, parent_run.staged?
 
     child_run = AcidicJob::Run.find_by(job_class: "TestCases::JobWithSuccessfulArgAwaitStep::SuccessfulArgJob")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_nil child_run.error_object
     assert_equal true, child_run.staged?
 
@@ -786,7 +786,7 @@ class TestCases < ActiveSupport::TestCase
     child_run = AcidicJob::Run.find_by(
       job_class: "TestCases::JobWithSuccessfulDynamicAwaitsAsSymbol::SuccessfulDynamicAwaitFromSymbolJob"
     )
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_nil child_run.error_object
     assert_equal true, child_run.staged?
 
@@ -864,7 +864,7 @@ class TestCases < ActiveSupport::TestCase
     child_run = AcidicJob::Run.find_by(
       job_class: "TestCases::JobWithSuccessfulDynamicAwaitsAsString::SuccessfulDynamicAwaitFromStringJob"
     )
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_nil child_run.error_object
     assert_equal true, child_run.staged?
 
@@ -1006,7 +1006,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal 1, Performance.performances
 
     run = AcidicJob::Run.find_by(job_class: "TestCases::NowJobNonWorkflowStagedUnawaited")
-    assert_nil run.recovery_point
+    assert_equal "FINISHED", run.recovery_point
     assert_nil run.error_object
     assert_equal false, run.workflow?
     assert_equal true, run.staged?
@@ -1042,7 +1042,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal false, parent_run.awaited?
 
     child_run = AcidicJob::Run.find_by(job_class: "TestCases::JobNonWorkflowStagedAwaited")
-    assert_nil child_run.recovery_point
+    assert_equal "FINISHED", child_run.recovery_point
     assert_equal false, child_run.workflow?
     assert_equal true, child_run.staged?
     assert_equal true, child_run.awaited?
@@ -1209,6 +1209,17 @@ class TestCases < ActiveSupport::TestCase
 
       class SecondAwaitedJob < AcidicJob::Base
         def perform
+          with_acidic_workflow do |workflow|
+            workflow.step :step_one
+            workflow.step :step_two
+          end
+        end
+
+        def step_one
+          Performance.performed!
+        end
+
+        def step_two
           Performance.performed!
         end
       end
@@ -1225,7 +1236,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     assert_equal 3, AcidicJob::Run.count
-    assert_equal 2, Performance.performances
+    assert_equal 3, Performance.performances
 
     parent_run = AcidicJob::Run.find_by(job_class: "TestCases::JobAwaitingTwoJobs")
     assert_equal "FINISHED", parent_run.recovery_point
@@ -1235,7 +1246,7 @@ class TestCases < ActiveSupport::TestCase
 
     first_child_run = AcidicJob::Run.find_by(job_class: "TestCases::JobAwaitingTwoJobs::FirstAwaitedJob")
     assert_equal "FINISHED", first_child_run.recovery_point
-    assert_equal true, first_child_run.workflow?
+    assert_equal false, first_child_run.workflow?
     assert_equal true, first_child_run.staged?
     assert_equal true, first_child_run.awaited?
 
