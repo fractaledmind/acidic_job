@@ -50,7 +50,7 @@ module Sidekiq
       end
 
       def dispatch(job_hash, queue, jobstr)
-        @retrier ||= Sidekiq::JobRetry.new
+        @retrier ||= Sidekiq::JobRetry.new(Sidekiq)
         @retrier.global(jobstr, queue) do
           klass = constantize(job_hash["class"])
           inst = klass.new
