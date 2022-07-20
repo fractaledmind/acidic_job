@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ActiveRecord::Schema.define do
   create_table :acidic_job_runs, force: true do |t|
     t.boolean     :staged,          null: false,  default: false

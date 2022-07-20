@@ -408,7 +408,7 @@ class TestEdgeCases < TestCase
     dynamic_class = Class.new do
       include Sidekiq::Worker
       include AcidicJob
-  
+
       def perform
         with_acidity do
           step :do_something, awaits: [nil]
@@ -416,9 +416,9 @@ class TestEdgeCases < TestCase
       end
     end
     Object.const_set("WorkerAwaitingNil", dynamic_class)
-  
+
     WorkerAwaitingNil.new.perform
-  
+
     assert_equal 1, AcidicJob::Run.count
     parent_run = AcidicJob::Run.find_by(job_class: "WorkerAwaitingNil")
     assert_equal "FINISHED", parent_run.recovery_point
