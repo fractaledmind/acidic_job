@@ -48,7 +48,7 @@ module AcidicJob
                      end
 
       AcidicJob::Run.transaction do
-        awaited_jobs.each do |awaited_job|
+        awaited_jobs.compact.each do |awaited_job|
           worker_class, args, kwargs = job_args_and_kwargs(awaited_job)
 
           job = worker_class.new(*args, **kwargs)
