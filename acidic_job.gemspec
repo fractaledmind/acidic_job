@@ -35,6 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "net-smtp"
   spec.add_development_dependency "noticed"
+  spec.add_development_dependency "psych", "> 4.0"
   spec.add_development_dependency "railties"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rubocop"
