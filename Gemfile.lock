@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    acidic_job (1.0.0.pre26)
+    acidic_job (1.0.0.pre27)
       activerecord
       activesupport
       database_cleaner
