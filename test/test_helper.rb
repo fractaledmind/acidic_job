@@ -21,8 +21,5 @@ require "minitest/autorun"
 
 require "combustion"
 Combustion.path = "test/combustion"
-Combustion.initialize! :active_record do
-  # https://discuss.rubyonrails.org/t/cve-2022-32224-possible-rce-escalation-bug-with-serialized-columns-in-active-record/81017
-  config.active_record.use_yaml_unsafe_load = true
-end
+Combustion.initialize! :active_record
 require_relative "support/setup"

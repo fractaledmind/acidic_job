@@ -3,6 +3,7 @@
 require "active_record"
 require "global_id"
 require "active_support/core_ext/object/with_options"
+require_relative "./serializer"
 
 module AcidicJob
   class Run < ActiveRecord::Base
@@ -17,11 +18,11 @@ module AcidicJob
 
     after_create_commit :enqueue_staged_job, if: :staged?
 
-    serialize :error_object
-    serialize :serialized_job
-    serialize :workflow
-    serialize :returning_to
-    store :attr_accessors
+    serialize :serialized_job, JSON
+    serialize :error_object, Serializer
+    serialize :workflow, Serializer
+    serialize :returning_to, Serializer
+    store :attr_accessors, coder: Serializer
 
     validates :staged, inclusion: { in: [true, false] } # uses database default
     validates :serialized_job, presence: true
