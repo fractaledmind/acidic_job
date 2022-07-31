@@ -47,7 +47,7 @@ module AcidicJob
           arguments = args || @args
           arguments += [kwargs] unless kwargs.empty?
           normalized_args = ::Sidekiq.load_json(::Sidekiq.dump_json(arguments))
-          item = { "class" => self.class, "args" => normalized_args, "jid" => jid }
+          item = { "class" => self.class.name, "args" => normalized_args, "jid" => jid }
           sidekiq_options = sidekiq_options_hash || {}
 
           sidekiq_options.merge(item)

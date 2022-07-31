@@ -8,7 +8,7 @@ class WorkerSerializer < ActiveJob::Serializers::ObjectSerializer
   def serialize(worker)
     # {"_aj_serialized"=>"WorkerSerializer", "class"=>"SuccessfulArgWorker", "args"=>[123], "kwargs"=>{}}]
     super(
-      "class" => worker.class,
+      "class" => worker.class.name,
       "args" => worker.instance_variable_get(:@__acidic_job_args),
       "kwargs" => worker.instance_variable_get(:@__acidic_job_kwargs)
     )
@@ -27,7 +27,7 @@ end
 class ExceptionSerializer < ActiveJob::Serializers::ObjectSerializer
   def serialize(exception)
     hash = {
-      "class" => exception.class,
+      "class" => exception.class.name,
       "message" => exception.message,
       "cause" => exception.cause,
       "backtrace" => {}
@@ -61,7 +61,7 @@ end
 class FinishedPointSerializer < ActiveJob::Serializers::ObjectSerializer
   def serialize(finished_point)
     super(
-      "class" => finished_point.class
+      "class" => finished_point.class.name
     )
   end
 
@@ -78,7 +78,7 @@ end
 class RecoveryPointSerializer < ActiveJob::Serializers::ObjectSerializer
   def serialize(recovery_point)
     super(
-      "class" => recovery_point.class,
+      "class" => recovery_point.class.name,
       "name" => recovery_point.name
     )
   end
