@@ -47,9 +47,9 @@ class ExceptionSerializer < ActiveJob::Serializers::ObjectSerializer
   def deserialize(hash)
     exception_class = hash["class"].constantize
     exception = exception_class.new(hash["message"])
-    exception.set_backtrace hash["backtrace"].map do |path, location|
+    exception.set_backtrace(hash["backtrace"].map do |path, location|
       [path, location].join("/")
-    end
+    end)
     exception
   end
 
@@ -100,8 +100,7 @@ ActiveJob::Serializers.add_serializers WorkerSerializer, ExceptionSerializer, Fi
 module AcidicJob
   module Arguments
     include ActiveJob::Arguments
-
-    module_function
+    extend self # rubocop:disable Style/ModuleFunction
 
     # `ActiveJob` will throw an error if it tries to deserialize a GlobalID record.
     # However, this isn't the behavior that we want for our custom `ActiveRecord` serializer.
