@@ -32,25 +32,27 @@ class ExceptionSerializer < ActiveJob::Serializers::ObjectSerializer
       "cause" => exception.cause,
       "backtrace" => {}
     }
-    
+
     exception.backtrace.map do |trace|
-      path, _, location = trace.rpartition('/')
-      
-      next if hash['backtrace'].key?(path)
-    
-      hash['backtrace'][path] = location
+      path, _, location = trace.rpartition("/")
+
+      next if hash["backtrace"].key?(path)
+
+      hash["backtrace"][path] = location
     end
-    
+
     super(hash)
   end
-  
+
   def deserialize(hash)
     exception_class = hash["class"].constantize
     exception = exception_class.new(hash["message"])
-    exception.set_backtrace hash['backtrace'].map { [_1, _2].join('/') }
+    exception.set_backtrace hash["backtrace"].map do |path, location|
+      [path, location].join("/")
+    end
     exception
   end
-  
+
   def serialize?(argument)
     defined?(Exception) && argument.is_a?(Exception)
   end
@@ -65,7 +67,7 @@ class FinishedPointSerializer < ActiveJob::Serializers::ObjectSerializer
 
   def deserialize(hash)
     finished_point_class = hash["class"].constantize
-    finished_point_class.new()
+    finished_point_class.new
   end
 
   def serialize?(argument)
@@ -80,24 +82,26 @@ class RecoveryPointSerializer < ActiveJob::Serializers::ObjectSerializer
       "name" => recovery_point.name
     )
   end
-  
+
   def deserialize(hash)
     recovery_point_class = hash["class"].constantize
     recovery_point_class.new(hash["name"])
   end
-  
+
   def serialize?(argument)
     defined?(::AcidicJob::RecoveryPoint) && argument.is_a?(::AcidicJob::RecoveryPoint)
   end
 end
 
-ActiveJob::Serializers.add_serializers WorkerSerializer, ExceptionSerializer, FinishedPointSerializer, RecoveryPointSerializer
+ActiveJob::Serializers.add_serializers WorkerSerializer, ExceptionSerializer, FinishedPointSerializer,
+                                       RecoveryPointSerializer
 
 # ...
 module AcidicJob
   module Arguments
     include ActiveJob::Arguments
-    extend self
+
+    module_function
 
     # `ActiveJob` will throw an error if it tries to deserialize a GlobalID record.
     # However, this isn't the behavior that we want for our custom `ActiveRecord` serializer.
@@ -119,27 +123,13 @@ module AcidicJob
         return if json.nil? || json.empty?
 
         data = JSON.parse(json)
-        out = Arguments.deserialize(data).first
-        out
-      rescue ActiveJob::DeserializationError => error
-        binding.irb
+        Arguments.deserialize(data).first
       end
 
       def dump(obj)
         data = Arguments.serialize [obj]
-        out = data.to_json
-        out
+        data.to_json
       end
     end
   end
 end
-
-# msgpack_extended_types = Paquito::Types::TYPES.keys.map(&:constantize)
-# msgpack_extended_coder = Paquito::CodecFactory.build(msgpack_extended_types)
-# AcidicJob::Packer = Paquito::SerializedColumn.new(
-#   Paquito::CommentPrefixVersion.new(
-#     1,
-#     0 => JSON,
-#     1 => msgpack_extended_coder,
-#   ),
-# )
