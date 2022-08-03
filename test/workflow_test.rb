@@ -58,7 +58,7 @@ class TestWorkflows < TestCase
         def perform; end
       end
       Object.const_set("SuccessfulAsyncJob", dynamic_step_job)
-  
+
       def perform
         with_acidity providing: {} do
           step :await_step, awaits: [SuccessfulAsyncJob]
@@ -66,19 +66,19 @@ class TestWorkflows < TestCase
       end
     end
     Object.const_set("JobWithSuccessfulAwaitStep", dynamic_class)
-  
+
     perform_enqueued_jobs do
       JobWithSuccessfulAwaitStep.perform_now
     end
-  
+
     assert_equal 2, AcidicJob::Run.count
-  
+
     parent_run = AcidicJob::Run.find_by(job_class: "JobWithSuccessfulAwaitStep")
     assert_equal "FINISHED", parent_run.recovery_point
-  
+
     child_run = AcidicJob::Run.find_by(job_class: "SuccessfulAsyncJob")
     assert_equal "FINISHED", child_run.recovery_point
-  
+
     assert_equal 0, Sidekiq::RetrySet.new.size
   end
 
@@ -238,14 +238,14 @@ class TestWorkflows < TestCase
 
     assert_equal 0, Sidekiq::RetrySet.new.size
   end
-  
+
   def test_step_with_awaits_that_takes_args_is_run_properly_active_job
     dynamic_class = Class.new(ApplicationJob) do
       dynamic_step_job = Class.new(ApplicationJob) do
         def perform(arg); end
       end
       Object.const_set("SuccessfulArgJob", dynamic_step_job)
-  
+
       def perform
         with_acidity providing: {} do
           step :await_step, awaits: [SuccessfulArgJob.with(123)]
@@ -259,13 +259,13 @@ class TestWorkflows < TestCase
     end
 
     assert_equal 2, AcidicJob::Run.count
-  
+
     parent_run = AcidicJob::Run.find_by(job_class: "JobWithSuccessfulArgAwaitStep")
     assert_equal "FINISHED", parent_run.recovery_point
-  
+
     child_run = AcidicJob::Run.find_by(job_class: "SuccessfulArgJob")
     assert_equal "FINISHED", child_run.recovery_point
-  
+
     assert_equal 0, Sidekiq::RetrySet.new.size
   end
 
