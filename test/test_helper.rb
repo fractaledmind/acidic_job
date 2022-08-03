@@ -19,6 +19,8 @@ Warning.ignore(%i[not_reached unused_var])
 require "acidic_job"
 require "minitest/autorun"
 
+class CustomErrorForTesting < StandardError; end
+
 require "combustion"
 Combustion.path = "test/combustion"
 Combustion.initialize! :active_record
