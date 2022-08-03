@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    acidic_job (1.0.0.pre27)
+    acidic_job (1.0.0.pre28)
       activerecord
       activesupport
       database_cleaner
@@ -143,6 +143,8 @@ GEM
     nio4r (2.5.8)
     nokogiri (1.13.7)
       mini_portile2 (~> 2.8.0)
+      racc (~> 1.4)
+    nokogiri (1.13.7-x86_64-darwin)
       racc (~> 1.4)
     noticed (1.5.9)
       http (>= 4.0.0)
