@@ -6,7 +6,6 @@ require "json"
 
 class WorkerSerializer < ActiveJob::Serializers::ObjectSerializer
   def serialize(worker)
-    # {"_aj_serialized"=>"WorkerSerializer", "class"=>"SuccessfulArgWorker", "args"=>[123], "kwargs"=>{}}]
     super(
       "class" => worker.class.name,
       "args" => worker.instance_variable_get(:@__acidic_job_args),
@@ -20,7 +19,25 @@ class WorkerSerializer < ActiveJob::Serializers::ObjectSerializer
   end
 
   def serialize?(argument)
-    defined?(Sidekiq) && argument.class.include?(Sidekiq::Worker)
+    defined?(::Sidekiq) && argument.class.include?(::Sidekiq::Worker)
+  end
+end
+
+class JobSerializer < ActiveJob::Serializers::ObjectSerializer
+  def serialize(job)
+    super(job.serialize)
+  end
+
+  def deserialize(hash)
+    job = ActiveJob::Base.deserialize(hash)
+    job.send(:deserialize_arguments_if_needed)
+    job.instance_variable_set(:@__acidic_job_args, job.arguments)
+    # job.instance_variable_set(:@__acidic_job_kwargs, kwargs)
+    job
+  end
+
+  def serialize?(argument)
+    defined?(::ActiveJob::Base) && argument.class < ::ActiveJob::Base
   end
 end
 
@@ -93,8 +110,13 @@ class RecoveryPointSerializer < ActiveJob::Serializers::ObjectSerializer
   end
 end
 
-ActiveJob::Serializers.add_serializers WorkerSerializer, ExceptionSerializer, FinishedPointSerializer,
-                                       RecoveryPointSerializer
+ActiveJob::Serializers.add_serializers(
+  WorkerSerializer,
+  JobSerializer,
+  ExceptionSerializer,
+  FinishedPointSerializer,
+  RecoveryPointSerializer
+)
 
 # ...
 module AcidicJob
