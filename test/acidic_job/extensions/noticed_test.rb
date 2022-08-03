@@ -42,8 +42,8 @@ class TestNoticedExtension < TestCase
     dynamic_class = Class.new(ActiveJob::Base) do
       include AcidicJob
     end
-    Object.const_set("ApplicationJob", dynamic_class)
-    Noticed.parent_class = "ApplicationJob"
+    Object.const_set("AppJob", dynamic_class)
+    Noticed.parent_class = "AppJob"
 
     delivered_to = OnlyDatabaseNotification.with({}).deliver(@user)
 

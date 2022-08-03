@@ -27,7 +27,8 @@ module AcidicJob
       # which is what the `after_finish :reenqueue_awaited_by_job` check needs
       job.instance_variable_set(:@acidic_job_run, run)
 
-      # can't reproduce yet, but saw a bug in production where nested awaits workflows had an unsaved `workflow` attribute
+      # can't reproduce yet, but saw a bug in production where
+      # nested awaits workflows had an unsaved `workflow` attribute
       run.save! if run.has_changes_to_save?
 
       step = Step.new(current_step, run, job, step_result)

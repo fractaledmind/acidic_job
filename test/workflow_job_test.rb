@@ -11,8 +11,7 @@ end
 class TestJobWorkflows < TestCase
   include ActiveJob::TestHelper
 
-  def setup
-  end
+  def setup; end
 
   def test_step_with_awaits_is_run_properly
     dynamic_class = Class.new(ApplicationJob) do
@@ -50,7 +49,7 @@ class TestJobWorkflows < TestCase
         end
       end
       Object.const_set("ErroringAsyncJob", dynamic_step_job)
-  
+
       def perform
         with_acidity providing: {} do
           step :await_step, awaits: [ErroringAsyncJob]
@@ -58,18 +57,18 @@ class TestJobWorkflows < TestCase
       end
     end
     Object.const_set("JobWithErroringAwaitStep", dynamic_class)
-  
+
     perform_enqueued_jobs do
       assert_raises CustomErrorForTesting do
         JobWithErroringAwaitStep.perform_now
       end
     end
-  
+
     assert_equal 2, AcidicJob::Run.count
-  
+
     parent_run = AcidicJob::Run.find_by(job_class: "JobWithErroringAwaitStep")
     assert_equal "await_step", parent_run.recovery_point
-  
+
     child_run = AcidicJob::Run.find_by(job_class: "ErroringAsyncJob")
     assert_nil child_run.recovery_point
     assert_nil child_run.error_object
@@ -361,50 +360,50 @@ class TestJobWorkflows < TestCase
       dynamic_step_job = Class.new(ApplicationJob) do
         def perform(arg); end
       end
-      Object.const_set("SimpleAwaitedJob", dynamic_step_job)
-  
+      Object.const_set("SimpleAwaitedArgJob", dynamic_step_job)
+
       def perform
         with_acidity providing: {} do
-          step :await_step, awaits: [SimpleAwaitedJob.with("hello")]
+          step :await_step, awaits: [SimpleAwaitedArgJob.with("hello")]
           step :do_something
         end
       end
-  
+
       def do_something; end
     end
-    Object.const_set("JobWithAwaitStepFollowedByAnotherStep", dynamic_class)
-  
+    Object.const_set("ArgJobWithAwaitStepFollowedByAnotherStep", dynamic_class)
+
     perform_enqueued_jobs do
-      JobWithAwaitStepFollowedByAnotherStep.perform_now
+      ArgJobWithAwaitStepFollowedByAnotherStep.perform_now
     end
-  
+
     assert_equal 2, AcidicJob::Run.count
-  
-    parent_run = AcidicJob::Run.find_by(job_class: "JobWithAwaitStepFollowedByAnotherStep")
+
+    parent_run = AcidicJob::Run.find_by(job_class: "ArgJobWithAwaitStepFollowedByAnotherStep")
     assert_equal "FINISHED", parent_run.recovery_point
-  
-    child_run = AcidicJob::Run.find_by(job_class: "SimpleAwaitedJob")
+
+    child_run = AcidicJob::Run.find_by(job_class: "SimpleAwaitedArgJob")
     assert_equal "FINISHED", child_run.recovery_point
   end
 
   def test_step_with_nested_awaits_that_takes_args_jobs_is_run_properly
     dynamic_class = Class.new(ApplicationJob) do
       successful_async_worker = Class.new(ApplicationJob) do
-        def perform(arg)
+        def perform(_arg)
           true
         end
       end
       Object.const_set("NestedSuccessfulArgJob", successful_async_worker)
-  
+
       nested_awaits_job = Class.new(ApplicationJob) do
-        def perform(arg)
+        def perform(_arg)
           with_acidity providing: {} do
             step :await_nested_step, awaits: [NestedSuccessfulArgJob.with("arg")]
           end
         end
       end
       Object.const_set("NestedSuccessfulAwaitsArgJob", nested_awaits_job)
-  
+
       def perform
         with_acidity providing: {} do
           step :await_step, awaits: [NestedSuccessfulAwaitsArgJob.with("arg")]
@@ -412,19 +411,19 @@ class TestJobWorkflows < TestCase
       end
     end
     Object.const_set("JobWithSuccessfulNestedAwaitArgSteps", dynamic_class)
-  
+
     perform_enqueued_jobs do
       JobWithSuccessfulNestedAwaitArgSteps.perform_now
     end
-  
+
     assert_equal 3, AcidicJob::Run.count
-  
+
     parent_run = AcidicJob::Run.find_by(job_class: "JobWithSuccessfulNestedAwaitArgSteps")
     assert_equal "FINISHED", parent_run.recovery_point
-  
+
     child_run = AcidicJob::Run.find_by(job_class: "NestedSuccessfulAwaitsArgJob")
     assert_equal "FINISHED", child_run.recovery_point
-  
+
     grandchild_run = AcidicJob::Run.find_by(job_class: "NestedSuccessfulArgJob")
     assert_equal "FINISHED", grandchild_run.recovery_point
   end
