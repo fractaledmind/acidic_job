@@ -14,6 +14,7 @@ module AcidicJob
     FINISHED_RECOVERY_POINT = "FINISHED"
     STAGED_JOB_ID_PREFIX = "STG"
     STAGED_JOB_ID_DELIMITER = "__"
+    IDEMPOTENCY_KEY_LOCK_TIMEOUT_SECONDS = 2
 
     self.table_name = "acidic_job_runs"
 
@@ -74,6 +75,7 @@ module AcidicJob
         return if awaited_by.batched_runs.outstanding.any?
 
         AcidicJob.logger.log_run_event("Proceeding with parent job...", job, self)
+        awaited_by.unlock!
         awaited_by.proceed
         AcidicJob.logger.log_run_event("Proceeded with parent job.", job, self)
       end
@@ -168,7 +170,7 @@ module AcidicJob
       end
 
       def next_step_name
-        current_step_hash&.fetch("then")
+        current_step_hash.fetch("then")
       end
 
       def next_step_finishes?
@@ -242,8 +244,12 @@ module AcidicJob
         self
       end
 
-      def unlocked?
-        locked_at.nil?
+      def locked?
+        locked_at.present?
+      end
+
+      def lock_active?
+        locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT_SECONDS
       end
     end
 

@@ -13,4 +13,5 @@ module AcidicJob
   class UnknownAwaitedJob < Error; end
   class TooManyParametersForStepMethod < Error; end
   class UnserializableValue < Error; end
+  class LockedIdempotencyKey < Error; end
 end

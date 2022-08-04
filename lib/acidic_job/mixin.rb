@@ -69,6 +69,10 @@ module AcidicJob
         run = Run.find_by(idempotency_key: idempotency_key)
 
         if run.present?
+          # Only acquire a lock if the key is unlocked or its lock has expired
+          # because the original job was long enough ago.
+          raise LockedIdempotencyKey if run.locked? && run.lock_active?
+
           run.update!(
             last_run_at: Time.current,
             locked_at: Time.current,
