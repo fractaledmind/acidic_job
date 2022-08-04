@@ -61,7 +61,7 @@ module AcidicJob
       raise NoDefinedSteps if @workflow_builder.steps.empty?
 
       # convert the array of steps into a hash of recovery_points and next steps
-      workflow = WorkflowBuilder.define_workflow(@workflow_builder.steps)
+      workflow = @workflow_builder.define_workflow
 
       AcidicJob.logger.log_run_event("Initializing run...", self, nil)
       @acidic_job_run = ActiveRecord::Base.transaction(isolation: :read_uncommitted) do
