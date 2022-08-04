@@ -16,7 +16,7 @@ class TestCases < ActiveSupport::TestCase
   test "`AcidicJob::Base` only adds a few methods to job" do
     class BareJob < AcidicJob::Base; end
 
-    assert_equal %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key].sort,
+    assert_equal %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key safely_finish_acidic_job].sort,
                  (BareJob.instance_methods - ActiveJob::Base.instance_methods).sort
   end
 
@@ -24,7 +24,7 @@ class TestCases < ActiveSupport::TestCase
     class ParentJob < AcidicJob::Base; end
     class ChildJob < ParentJob; end
 
-    assert_equal %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key].sort,
+    assert_equal %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key safely_finish_acidic_job].sort,
                  (ChildJob.instance_methods - ActiveJob::Base.instance_methods).sort
   end
 
@@ -97,6 +97,24 @@ class TestCases < ActiveSupport::TestCase
 
     assert_raises TypeError do
       UnpersistableValue.perform_now
+    end
+  end
+  
+  test "step method that takes an argument throws `TooManyParametersForStepMethod` error" do
+    class A < AcidicJob::Base
+      def perform
+        with_acidic_workflow do |workflow|
+          workflow.step :do_something
+        end
+      end
+  
+      def do_something(_arg)
+        
+      end
+    end
+  
+    assert_raises AcidicJob::TooManyParametersForStepMethod do
+      A.perform_now
     end
   end
 
@@ -234,6 +252,30 @@ class TestCases < ActiveSupport::TestCase
     result = SucTwoSteps.perform_now
     assert_equal true, result
     assert_equal 2, Performance.performances
+  end
+
+  test "basic two step workflow can short-circuit execution via `safely_finish_acidic_job`" do
+    class ShortCircuitTwoSteps < AcidicJob::Base
+      def perform
+        with_acidic_workflow do |workflow|
+          workflow.step :step_one
+          workflow.step :step_two
+        end
+      end
+  
+      def step_one
+        Performance.performed!
+        safely_finish_acidic_job
+      end
+  
+      def step_two
+        Performance.performed!
+      end
+    end
+  
+    result = ShortCircuitTwoSteps.perform_now
+    assert_equal true, result
+    assert_equal 1, Performance.performances
   end
 
   test "basic two step workflow can be started from second step if pre-existing run record present" do

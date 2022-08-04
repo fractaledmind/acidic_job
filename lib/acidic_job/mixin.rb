@@ -51,6 +51,12 @@ module AcidicJob
       end
     end
 
+    def safely_finish_acidic_job
+      # Short circuits execution by sending execution right to 'finished'.
+      # So, ends the job "successfully"
+      FinishedPoint.new
+    end
+
     # Requires a block as well
     def with_acidic_workflow(persisting: {})
       raise RedefiningWorkflow if defined? @workflow_builder
