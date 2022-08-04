@@ -19,7 +19,7 @@ module AcidicJob
         if !@run.known_recovery_point?
           raise UnknownRecoveryPoint,
                 "Defined workflow does not reference this step: #{@run.current_step_name.inspect}"
-        elsif !Array(awaited_jobs = @run.current_step_hash.fetch("awaits", []) || []).empty?
+        elsif !Array(awaited_jobs = @run.current_step_hash.fetch("awaits", [])).compact.empty?
           # We only execute the current step, without progressing to the next step.
           # This ensures that any failures in parallel jobs will have this step retried in the main workflow
           step_result = @workflow.execute_current_step
@@ -34,7 +34,7 @@ module AcidicJob
           # so we want to keep the primary worker queue free to process new work
           # this CANNOT ever be `break` as that wouldn't exit the parent job,
           # only this step in the workflow, blocking as it awaits the next step
-          break
+          return true
         else
           @workflow.execute_current_step
           @workflow.progress_to_next_step
