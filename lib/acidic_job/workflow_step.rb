@@ -86,9 +86,7 @@ module AcidicJob
       # The collection of values already iterated over
       iterateds = @run.attr_accessors.fetch(iterated_key, [])
 
-      return Array(iterateds) if iterateds.is_a?(Enumerable)
-
-      raise UniterableForEachCollection
+      Array(iterateds)
     end
 
     def next_item
