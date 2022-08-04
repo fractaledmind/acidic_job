@@ -45,7 +45,7 @@ module AcidicJob
     private
 
     def run_current_step
-      wrapped_method = wrapped_current_step_method
+      wrapped_method = WorkflowStep.new(run: @run, job: @job).wrapped
       current_step = @run.current_step_name
 
       AcidicJob.logger.log_run_event("Executing #{current_step}...", @job, @run)
@@ -63,69 +63,6 @@ module AcidicJob
         @step_result.call(run: @run)
       end
       AcidicJob.logger.log_run_event("Progressed to #{next_step}.", @job, @run)
-    end
-
-    def wrapped_current_step_method
-      # return a callable Proc with a consistent interface for the execution phase
-      proc do |_run|
-        callable = current_step_method
-
-        # STEP ITERATION
-        current_step_name = @run.current_step_name
-        # the `iterable_key` represents the name of the collection accessor
-        # that must be present in `@run.attr_accessors`; that is,
-        # it must have been passed to `providing` when calling `with_acidity`
-        iterable_key = @run.current_step_hash["for_each"]
-        raise UnknownForEachCollection if iterable_key.present? && !@run.attr_accessors.key?(iterable_key)
-
-        # in order to ensure we don't iterate over successfully iterated values in previous runs,
-        # we need to store the collection of already processed values.
-        # we store this collection under a key bound to the current step to ensure multiple steps
-        # can iterate over the same collection.
-        iterated_key = "processed_#{current_step_name}_#{iterable_key}"
-
-        # Get the collection of values to iterate over (`prev_iterables`)
-        # and the collection of values already iterated (`prev_iterateds`)
-        # in order to determine the collection of values to iterate over (`curr_iterables`)
-        prev_iterables = @run.attr_accessors.fetch(iterable_key, []) || []
-        raise UniterableForEachCollection unless prev_iterables.is_a?(Enumerable)
-
-        prev_iterateds = @run.attr_accessors.fetch(iterated_key, []) || []
-        curr_iterables = prev_iterables.reject { |item| prev_iterateds.include? item }
-        next_item = curr_iterables.first
-
-        result = nil
-        if iterable_key.present? && next_item.present? # have an item to iterate over, so pass it to the step method
-          result = callable.call(next_item)
-        elsif iterable_key.present? && next_item.nil? # have iterated over all items
-          result = true
-        elsif callable.arity.zero?
-          result = callable.call
-        else
-          raise TooManyParametersForStepMethod
-        end
-
-        if result.is_a?(FinishedPoint)
-          result
-        elsif next_item.present?
-          prev_iterateds << next_item
-          @run.attr_accessors[iterated_key] = prev_iterateds
-          @run.save!(validate: false)
-          RecoveryPoint.new(current_step_name)
-        elsif @run.next_step_finishes?
-          FinishedPoint.new
-        else
-          RecoveryPoint.new(@run.next_step_name)
-        end
-      end
-    end
-
-    # jobs can have no-op steps, especially so that they can use only the async/await mechanism for that step
-    def current_step_method
-      return @job.method(@run.current_step_name) if @job.respond_to?(@run.current_step_name, _include_private = true)
-      return proc {} if @run.current_step_hash["awaits"].present?
-
-      raise UndefinedStepMethod
     end
   end
 end
