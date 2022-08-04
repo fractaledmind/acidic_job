@@ -236,9 +236,11 @@ class TestCases < ActiveSupport::TestCase
         end
       end
 
+      # :nocov:
       def do_something
         Performance.performed!
       end
+      # :nocov:
     end
 
     assert_raises AcidicJob::UnknownAwaitedJob do
@@ -257,9 +259,11 @@ class TestCases < ActiveSupport::TestCase
         end
       end
 
+      # :nocov:
       def do_something
         Performance.performed!
       end
+      # :nocov:
     end
 
     assert_raises AcidicJob::UnknownAwaitedJob do
@@ -286,6 +290,52 @@ class TestCases < ActiveSupport::TestCase
     ErrAwaitsNil.perform_now
 
     assert_equal 1, Performance.performances
+  end
+
+  test "invalid workflow in run ..." do
+    class InvalidWorkflowRun < AcidicJob::Base
+      def perform
+        with_acidic_workflow do |workflow|
+          workflow.step :do_something
+        end
+      end
+
+      # :nocov:
+      def do_something
+        Performance.performed!
+      end
+      # :nocov:
+    end
+
+    run = AcidicJob::Run.create!(
+      idempotency_key: "12a345bc-67e8-90f1-23g4-5h6i7jk8l901",
+      serialized_job: {
+        "job_class" => "TestCases::InvalidWorkflowRun",
+        "job_id" => "12a345bc-67e8-90f1-23g4-5h6i7jk8l901",
+        "provider_job_id" => nil,
+        "queue_name" => "default",
+        "priority" => nil,
+        "arguments" => [],
+        "executions" => 1,
+        "exception_executions" => {},
+        "locale" => "en",
+        "timezone" => "UTC",
+        "enqueued_at" => ""
+      },
+      job_class: "TestCases::InvalidWorkflowRun",
+      staged: false,
+      last_run_at: Time.current,
+      recovery_point: "OLD_RECOVERY_POINT_FROM_BEFORE_A_NEW_RELEASE",
+      workflow: {
+        "do_something" => { "does" => "do_something", "awaits" => [], "for_each" => nil, "then" => "FINISHED" }
+      }
+    )
+    AcidicJob::Run.stub(:find_by, ->(*) { run }) do
+      assert_raises AcidicJob::UnknownRecoveryPoint do
+        InvalidWorkflowRun.perform_now
+      end
+    end
+    assert_equal 0, Performance.performances
   end
 
   test "basic one step workflow runs successfully" do
@@ -364,9 +414,11 @@ class TestCases < ActiveSupport::TestCase
         safely_finish_acidic_job
       end
 
+      # :nocov:
       def step_two
         Performance.performed!
       end
+      # :nocov:
     end
 
     result = ShortCircuitTwoSteps.perform_now
@@ -383,9 +435,11 @@ class TestCases < ActiveSupport::TestCase
         end
       end
 
+      # :nocov:
       def step_one
         Performance.performed!
       end
+      # :nocov:
 
       def step_two
         Performance.performed!
@@ -547,9 +601,11 @@ class TestCases < ActiveSupport::TestCase
         raise CustomErrorForTesting
       end
 
+      # :nocov:
       def delete_run_record
         @acidic_job_run.destroy!
       end
+      # :nocov:
     end
 
     assert_raises CustomErrorForTesting do
@@ -634,17 +690,14 @@ class TestCases < ActiveSupport::TestCase
       def perform
         with_acidic_workflow do |workflow|
           workflow.step :step_one
-          workflow.step :step_two
         end
       end
 
+      # :nocov:
       def step_one
         Performance.performed!
       end
-
-      def step_two
-        Performance.performed!
-      end
+      # :nocov:
     end
 
     run = AcidicJob::Run.create!(
@@ -683,17 +736,14 @@ class TestCases < ActiveSupport::TestCase
       def perform
         with_acidic_workflow do |workflow|
           workflow.step :step_one
-          workflow.step :step_two
         end
       end
 
+      # :nocov:
       def step_one
         Performance.performed!
       end
-
-      def step_two
-        Performance.performed!
-      end
+      # :nocov:
     end
 
     run = AcidicJob::Run.create!(
@@ -821,9 +871,11 @@ class TestCases < ActiveSupport::TestCase
         end
       end
 
+      # :nocov:
       def do_something
         Performance.performed!
       end
+      # :nocov:
     end
 
     perform_enqueued_jobs do
@@ -926,9 +978,11 @@ class TestCases < ActiveSupport::TestCase
         end
       end
 
+      # :nocov:
       def do_something
         Performance.performed!
       end
+      # :nocov:
     end
 
     perform_enqueued_jobs do
@@ -1341,9 +1395,11 @@ class TestCases < ActiveSupport::TestCase
     class AwaitingJob < AcidicJob::Base; end
 
     class JobNonWorkflowUnstagedAwaited < AcidicJob::Base
+      # :nocov:
       def perform
         Performance.performed!
       end
+      # :nocov:
     end
 
     assert_raises ActiveRecord::RecordInvalid do
@@ -1484,9 +1540,11 @@ class TestCases < ActiveSupport::TestCase
     class JobAwaitingWorkflowUnstagedAwaited < AcidicJob::Base; end
 
     class JobWorkflowUnstagedAwaited < AcidicJob::Base
+      # :nocov:
       def perform
         Performance.performed!
       end
+      # :nocov:
     end
 
     assert_raises ActiveRecord::RecordInvalid do

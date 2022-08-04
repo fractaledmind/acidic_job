@@ -139,10 +139,6 @@ module AcidicJob
       @acidic_job_run.present?
     end
 
-    def was_awaited_job?
-      was_staged_job? && staged_job_run.present? && staged_job_run.awaited_by.present?
-    end
-
     def staged_job_run
       return unless was_staged_job?
       return @staged_job_run if defined? @staged_job_run
