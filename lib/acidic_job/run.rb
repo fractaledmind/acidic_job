@@ -45,7 +45,7 @@ module AcidicJob
 
         after_update_commit :proceed_with_parent, if: :finished?
 
-        serialize :returning_to
+        serialize :returning_to, AcidicJob::Serializer
       end
 
       class_methods do
@@ -139,9 +139,9 @@ module AcidicJob
 
     concerning :Workflowable do
       included do
-        serialize :workflow
-        serialize :error_object
-        store :attr_accessors
+        serialize :workflow, AcidicJob::Serializer
+        serialize :error_object, AcidicJob::Serializer
+        store :attr_accessors, coder: AcidicJob::Serializer
 
         with_options unless: :staged? do
           validates :last_run_at, presence: true
@@ -181,7 +181,7 @@ module AcidicJob
 
     concerning :Jobbable do
       included do
-        serialize :serialized_job
+        serialize :serialized_job, JSON
 
         validates :serialized_job, presence: true
         validates :job_class, presence: true

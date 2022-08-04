@@ -3,6 +3,7 @@
 require_relative "acidic_job/version"
 require_relative "acidic_job/errors"
 require_relative "acidic_job/logger"
+require_relative "acidic_job/serializer"
 require_relative "acidic_job/workflow_builder"
 require_relative "acidic_job/idempotency_key"
 require_relative "acidic_job/recovery_point"

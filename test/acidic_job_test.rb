@@ -84,7 +84,7 @@ class TestCases < ActiveSupport::TestCase
     end
   end
 
-  test "calling `with_acidic_workflow` with `persisting` unserializable value throws `TypeError` error" do
+  test "calling `with_acidic_workflow` with `persisting` unserializable value throws `UnserializableValue` error" do
     class UnpersistableValue < AcidicJob::Base
       def perform
         with_acidic_workflow persisting: { key: -> { :some_proc } } do |workflow|
@@ -95,7 +95,7 @@ class TestCases < ActiveSupport::TestCase
       def do_something; end
     end
 
-    assert_raises TypeError do
+    assert_raises AcidicJob::UnserializableValue do
       UnpersistableValue.perform_now
     end
   end

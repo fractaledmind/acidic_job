@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'active_support'
+require "active_job"
 require "active_job/serializers"
 require "active_job/arguments"
 require "json"
@@ -157,6 +159,8 @@ module AcidicJob
       def dump(obj)
         data = Arguments.serialize [obj]
         data.to_json
+      rescue ActiveJob::SerializationError
+        raise UnserializableValue
       end
     end
   end

@@ -4,6 +4,8 @@
 # return from an #atomic_phase block.
 module AcidicJob
   class RecoveryPoint
+    attr_reader :name
+
     def initialize(name)
       @name = name
     end
