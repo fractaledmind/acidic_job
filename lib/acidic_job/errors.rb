@@ -11,4 +11,5 @@ module AcidicJob
   class UniterableForEachCollection < Error; end
   class UnknownJobAdapter < Error; end
   class UnknownAwaitedJob < Error; end
+  class TooManyParametersForStepMethod < Error; end
 end
