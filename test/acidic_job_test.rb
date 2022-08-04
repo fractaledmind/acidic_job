@@ -16,7 +16,9 @@ class TestCases < ActiveSupport::TestCase
   test "`AcidicJob::Base` only adds a few methods to job" do
     class BareJob < AcidicJob::Base; end
 
-    assert_equal %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key safely_finish_acidic_job].sort,
+    expected_methods = %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key
+                          safely_finish_acidic_job].sort
+    assert_equal expected_methods,
                  (BareJob.instance_methods - ActiveJob::Base.instance_methods).sort
   end
 
@@ -24,7 +26,9 @@ class TestCases < ActiveSupport::TestCase
     class ParentJob < AcidicJob::Base; end
     class ChildJob < ParentJob; end
 
-    assert_equal %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key safely_finish_acidic_job].sort,
+    expected_methods = %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key
+                          safely_finish_acidic_job].sort
+    assert_equal expected_methods,
                  (ChildJob.instance_methods - ActiveJob::Base.instance_methods).sort
   end
 
@@ -99,7 +103,7 @@ class TestCases < ActiveSupport::TestCase
       UnpersistableValue.perform_now
     end
   end
-  
+
   test "step method that takes an argument throws `TooManyParametersForStepMethod` error" do
     class A < AcidicJob::Base
       def perform
@@ -107,12 +111,10 @@ class TestCases < ActiveSupport::TestCase
           workflow.step :do_something
         end
       end
-  
-      def do_something(_arg)
-        
-      end
+
+      def do_something(_arg); end
     end
-  
+
     assert_raises AcidicJob::TooManyParametersForStepMethod do
       A.perform_now
     end
@@ -262,17 +264,17 @@ class TestCases < ActiveSupport::TestCase
           workflow.step :step_two
         end
       end
-  
+
       def step_one
         Performance.performed!
         safely_finish_acidic_job
       end
-  
+
       def step_two
         Performance.performed!
       end
     end
-  
+
     result = ShortCircuitTwoSteps.perform_now
     assert_equal true, result
     assert_equal 1, Performance.performances

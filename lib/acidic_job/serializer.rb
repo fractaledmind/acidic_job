@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'active_support'
+require "active_support"
 require "active_job"
 require "active_job/serializers"
 require "active_job/arguments"
