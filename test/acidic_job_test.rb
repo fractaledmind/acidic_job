@@ -194,6 +194,75 @@ class TestCases < ActiveSupport::TestCase
     assert_equal "6d4d8c572ea735cc0ae6fbf3041253f3dc16d9ee", job.idempotency_key
   end
 
+  test "invalid worker throws `UnknownJobAdapter` error" do
+    assert_raises AcidicJob::UnknownJobAdapter do
+      Class.new do
+        include AcidicJob::Mixin
+      end
+    end
+  end
+
+  test "unknown `awaits` method throws `UnknownAwaitedJob` error" do
+    class ErrAwaitsUnknown < AcidicJob::Base
+      def perform
+        with_acidic_workflow do |workflow|
+          workflow.step :await_step, awaits: :undefined_method
+          workflow.step :do_something
+        end
+      end
+  
+      def do_something
+        Performance.performed!
+      end
+    end
+  
+    assert_raises AcidicJob::UnknownAwaitedJob do
+      ErrAwaitsUnknown.perform_now
+    end
+  
+    assert_equal 0, Performance.performances
+  end
+  
+  test "invalid `awaits` value throws `UnknownAwaitedJob` error" do
+    class ErrAwaitsInvalid < AcidicJob::Base
+      def perform
+        with_acidic_workflow do |workflow|
+          workflow.step :await_step, awaits: 123
+          workflow.step :do_something
+        end
+      end
+  
+      def do_something
+        Performance.performed!
+      end
+    end
+  
+    assert_raises AcidicJob::UnknownAwaitedJob do
+      ErrAwaitsInvalid.perform_now
+    end
+  
+    assert_equal 0, Performance.performances
+  end
+
+  test "nil `awaits` value is ignored and workflow continues" do
+    class ErrAwaitsNil < AcidicJob::Base
+      def perform
+        with_acidic_workflow do |workflow|
+          workflow.step :await_step, awaits: [nil]
+          workflow.step :do_something
+        end
+      end
+  
+      def do_something
+        Performance.performed!
+      end
+    end
+  
+    ErrAwaitsNil.perform_now
+  
+    assert_equal 1, Performance.performances
+  end
+
   test "basic one step workflow runs successfully" do
     class SucOneStep < AcidicJob::Base
       def perform
@@ -533,56 +602,6 @@ class TestCases < ActiveSupport::TestCase
     end
 
     assert_equal 1, AcidicJob::Run.count
-  end
-
-  test "invalid worker throws `UnknownJobAdapter` error" do
-    assert_raises AcidicJob::UnknownJobAdapter do
-      Class.new do
-        include AcidicJob::Mixin
-      end
-    end
-  end
-
-  test "unknown `awaits` method throws `UnknownAwaitedJob` error" do
-    class ErrAwaitsUnknown < AcidicJob::Base
-      def perform
-        with_acidic_workflow do |workflow|
-          workflow.step :await_step, awaits: :undefined_method
-          workflow.step :do_something
-        end
-      end
-
-      def do_something
-        Performance.performed!
-      end
-    end
-
-    assert_raises AcidicJob::UnknownAwaitedJob do
-      ErrAwaitsUnknown.perform_now
-    end
-
-    assert_equal 0, Performance.performances
-  end
-
-  test "invalid `awaits` value throws `UnknownAwaitedJob` error" do
-    class ErrAwaitsInvalid < AcidicJob::Base
-      def perform
-        with_acidic_workflow do |workflow|
-          workflow.step :await_step, awaits: 123
-          workflow.step :do_something
-        end
-      end
-
-      def do_something
-        Performance.performed!
-      end
-    end
-
-    assert_raises AcidicJob::UnknownAwaitedJob do
-      ErrAwaitsInvalid.perform_now
-    end
-
-    assert_equal 0, Performance.performances
   end
 
   test "run with unknown `recovery_point` value throws `UnknownRecoveryPoint` error when processed" do
