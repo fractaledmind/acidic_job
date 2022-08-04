@@ -10,6 +10,7 @@ class TestCases < ActiveSupport::TestCase
   def before_setup
     super()
     AcidicJob::Run.delete_all
+    User.delete_all
     Performance.reset!
   end
 
@@ -102,6 +103,30 @@ class TestCases < ActiveSupport::TestCase
     assert_raises AcidicJob::UnserializableValue do
       UnpersistableValue.perform_now
     end
+  end
+
+  test "calling `with_acidic_workflow` with `persisting` an attribute with a pre-defined reader is handled smoothly" do
+    class PersistingAttrReader < AcidicJob::Base
+      attr_reader :attr
+
+      def perform
+        with_acidic_workflow persisting: { attr: nil } do |workflow|
+          workflow.step :do_something
+        end
+      end
+
+      def do_something
+        Performance.performed!
+      end
+    end
+
+    PersistingAttrReader.perform_now
+
+    run = AcidicJob::Run.find_by(job_class: "TestCases::PersistingAttrReader")
+    assert_equal "FINISHED", run.recovery_point
+    assert_nil run.error_object
+
+    assert_equal 1, Performance.performances
   end
 
   test "step method that takes an argument throws `TooManyParametersForStepMethod` error" do
@@ -210,19 +235,19 @@ class TestCases < ActiveSupport::TestCase
           workflow.step :do_something
         end
       end
-  
+
       def do_something
         Performance.performed!
       end
     end
-  
+
     assert_raises AcidicJob::UnknownAwaitedJob do
       ErrAwaitsUnknown.perform_now
     end
-  
+
     assert_equal 0, Performance.performances
   end
-  
+
   test "invalid `awaits` value throws `UnknownAwaitedJob` error" do
     class ErrAwaitsInvalid < AcidicJob::Base
       def perform
@@ -231,16 +256,16 @@ class TestCases < ActiveSupport::TestCase
           workflow.step :do_something
         end
       end
-  
+
       def do_something
         Performance.performed!
       end
     end
-  
+
     assert_raises AcidicJob::UnknownAwaitedJob do
       ErrAwaitsInvalid.perform_now
     end
-  
+
     assert_equal 0, Performance.performances
   end
 
@@ -252,14 +277,14 @@ class TestCases < ActiveSupport::TestCase
           workflow.step :do_something
         end
       end
-  
+
       def do_something
         Performance.performed!
       end
     end
-  
+
     ErrAwaitsNil.perform_now
-  
+
     assert_equal 1, Performance.performances
   end
 
@@ -1340,8 +1365,10 @@ class TestCases < ActiveSupport::TestCase
         job_class: "TestCases::JobNonWorkflowUnstagedAwaited",
         staged: false,
         last_run_at: Time.current,
-        recovery_point: nil,
-        workflow: nil,
+        recovery_point: "do_something",
+        workflow: {
+          "do_something" => { "does" => "do_something", "awaits" => [], "for_each" => nil, "then" => "FINISHED" }
+        },
         awaited_by: AcidicJob::Run.create!(
           idempotency_key: "67b823ea-34f0-40a0-88d9-7e3b7ff9e769",
           serialized_job: {
@@ -1358,7 +1385,12 @@ class TestCases < ActiveSupport::TestCase
             "enqueued_at" => ""
           },
           job_class: "TestCases::AwaitingJob",
-          staged: false
+          staged: false,
+          last_run_at: Time.current,
+          recovery_point: "do_something",
+          workflow: {
+            "do_something" => { "does" => "do_something", "awaits" => [], "for_each" => nil, "then" => "FINISHED" }
+          }
         )
       )
     end
@@ -1476,8 +1508,10 @@ class TestCases < ActiveSupport::TestCase
         job_class: "TestCases::JobWorkflowUnstagedAwaited",
         staged: false,
         last_run_at: Time.current,
-        recovery_point: nil,
-        workflow: nil,
+        recovery_point: "do_something",
+        workflow: {
+          "do_something" => { "does" => "do_something", "awaits" => [], "for_each" => nil, "then" => "FINISHED" }
+        },
         awaited_by: AcidicJob::Run.create!(
           idempotency_key: "67b823ea-34f0-40a0-88d9-7e3b7ff9e769",
           serialized_job: {
@@ -1494,7 +1528,12 @@ class TestCases < ActiveSupport::TestCase
             "enqueued_at" => ""
           },
           job_class: "TestCases::JobAwaitingWorkflowUnstagedAwaited",
-          staged: false
+          staged: false,
+          last_run_at: Time.current,
+          recovery_point: "do_something",
+          workflow: {
+            "do_something" => { "does" => "do_something", "awaits" => [], "for_each" => nil, "then" => "FINISHED" }
+          }
         )
       )
     end
@@ -1630,7 +1669,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal true, second_child_run.awaited?
   end
 
-  test "basic nested workflow with all awaited job classes runs successfully" do
+  test "nested workflow with all awaited job classes runs successfully" do
     class WithSucGrandChildAwaitCls < AcidicJob::Base
       class WithSucChildAwaitCls < AcidicJob::Base
         class SucJob < AcidicJob::Base
@@ -1679,7 +1718,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal true, child_run.awaited?
   end
 
-  test "basic nested workflow with all awaited job instances runs successfully" do
+  test "nested workflow with all awaited job instances runs successfully" do
     class WithSucGrandChildAwaitInst < AcidicJob::Base
       class WithSucChildAwaitInst < AcidicJob::Base
         class SucJob < AcidicJob::Base
@@ -1730,7 +1769,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal true, child_run.awaited?
   end
 
-  test "basic nested workflow with all awaited job classes with error in innermost job" do
+  test "nested workflow with all awaited job classes with error in innermost job" do
     class WithErrGrandChildAwaitCls < AcidicJob::Base
       class WithErrChildAwaitCls < AcidicJob::Base
         class ErrJob < AcidicJob::Base
@@ -1781,7 +1820,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal true, child_run.awaited?
   end
 
-  test "basic nested workflow with all awaited job instances with error in innermost job" do
+  test "nested workflow with all awaited job instances with error in innermost job" do
     class WithErrGrandChildAwaitInst < AcidicJob::Base
       class WithErrChildAwaitInst < AcidicJob::Base
         class ErrJob < AcidicJob::Base
@@ -1832,6 +1871,111 @@ class TestCases < ActiveSupport::TestCase
     assert_equal false, child_run.workflow?
     assert_equal true, child_run.staged?
     assert_equal true, child_run.awaited?
+  end
+
+  test "can persist ActiveRecord model instance in attributes" do
+    class RecordPersisting < AcidicJob::Base
+      def perform
+        with_acidic_workflow persisting: { user: nil } do |workflow|
+          workflow.step :do_something
+        end
+      end
+
+      def do_something
+        self.user = User.create!(email: "user@example.com", stripe_customer_id: "tok_visa")
+        Performance.performed!
+      end
+    end
+
+    perform_enqueued_jobs do
+      RecordPersisting.perform_now
+    end
+
+    assert_equal 1, AcidicJob::Run.count
+    assert_equal 1, Performance.performances
+
+    run = AcidicJob::Run.find_by(job_class: "TestCases::RecordPersisting")
+    assert_equal "FINISHED", run.recovery_point
+    assert_equal 1, User.count
+  end
+
+  test "persisting ActiveRecord model instance in step method, then rollback" do
+    class RecordPersistingThenRollback < AcidicJob::Base
+      def perform
+        with_acidic_workflow persisting: { user: nil } do |workflow|
+          workflow.step :do_something
+        end
+      end
+
+      def do_something
+        self.user = User.create!(email: "user@example.com", stripe_customer_id: "tok_visa")
+        raise CustomErrorForTesting
+      end
+    end
+
+    perform_enqueued_jobs do
+      assert_raises CustomErrorForTesting do
+        RecordPersistingThenRollback.perform_now
+      end
+    end
+
+    assert_equal 1, AcidicJob::Run.count
+
+    run = AcidicJob::Run.find_by(job_class: "TestCases::RecordPersistingThenRollback")
+    assert_equal "do_something", run.recovery_point
+    assert_equal 0, User.count
+  end
+
+  test "if error while trying to persist error in step method, swallow but log error" do
+    class ErrorUnlockingAfterError < AcidicJob::Base
+      def perform
+        with_acidic_workflow do |workflow|
+          workflow.step :do_something
+        end
+      end
+
+      def do_something
+        raise CustomErrorForTesting
+      end
+    end
+
+    run = AcidicJob::Run.create!(
+      idempotency_key: "67b823ea-34f0-40a0-88d9-7e3b7ff9e769",
+      serialized_job: {
+        "job_class" => "TestCases::ErrorUnlockingAfterError",
+        "job_id" => "67b823ea-34f0-40a0-88d9-7e3b7ff9e769",
+        "provider_job_id" => nil,
+        "queue_name" => "default",
+        "priority" => nil,
+        "arguments" => [],
+        "executions" => 1,
+        "exception_executions" => {},
+        "locale" => "en",
+        "timezone" => "UTC",
+        "enqueued_at" => ""
+      },
+      job_class: "TestCases::ErrorUnlockingAfterError",
+      last_run_at: Time.current,
+      recovery_point: "do_something",
+      workflow: {
+        "do_something" => { "does" => "do_something", "awaits" => [], "for_each" => nil, "then" => "FINISHED" }
+      }
+    )
+    # force an error occuring when AcidicJob is trying to unlock the run after a step method errors
+    class RareErrorForTesting < StandardError; end
+
+    def run.store_error!(_error)
+      raise RareErrorForTesting
+    end
+    AcidicJob::Run.stub(:find_by, ->(*) { run }) do
+      assert_raises CustomErrorForTesting do
+        ErrorUnlockingAfterError.perform_now
+      end
+    end
+
+    run.reload
+    assert !run.locked_at.nil?
+    assert_equal false, run.succeeded?
   end
 end
 # rubocop:enable Lint/ConstantDefinitionInBlock
