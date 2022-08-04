@@ -29,7 +29,9 @@ module AcidicJob
         end
       end
 
-      # be sure to return the `step_result` from running the (wrapped) current step method
+      # be sure to return the `step_result`
+      # which is set by `run_current_step`
+      # which runs the (wrapped) current step method
       @step_result
     end
 
