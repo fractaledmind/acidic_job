@@ -4,6 +4,7 @@ require "active_record"
 require "global_id"
 require "base64"
 require "active_support/core_ext/object/with_options"
+require "active_support/core_ext/module/concerning"
 require "active_support/concern"
 
 module AcidicJob
