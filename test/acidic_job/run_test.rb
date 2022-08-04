@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../support/test_case"
 
 class MyJob
   def self.deserialize(_serialized_job)
@@ -11,7 +10,13 @@ class MyJob
   def enqueue; end
 end
 
-class TestAcidicJobRun < TestCase
+class TestAcidicJobRun < ActiveSupport::TestCase
+  def before_setup
+    super()
+    AcidicJob::Run.delete_all
+    Performance.reset!
+  end
+
   def test_that_it_validates_serialized_job_present
     run = AcidicJob::Run.new
     run.valid?
