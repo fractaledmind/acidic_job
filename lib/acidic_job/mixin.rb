@@ -23,12 +23,7 @@ module AcidicJob
       def perform_acidicly(*args, **kwargs)
         job = new(*args, **kwargs)
 
-        AcidicJob::Run.create!(
-          staged: true,
-          job_class: name,
-          serialized_job: job.serialize,
-          idempotency_key: job.idempotency_key
-        )
+        AcidicJob::Run.stage!(job)
       end
 
       # If you do not need compatibility with Ruby 2.6 or prior and you don’t alter any arguments,
