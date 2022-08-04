@@ -54,7 +54,7 @@ module AcidicJob
           create!(
             staged: true,
             awaited_by: by,
-            job_class: job.class,
+            job_class: job.class.name,
             serialized_job: job.serialize,
             idempotency_key: job.idempotency_key
           )
@@ -113,7 +113,7 @@ module AcidicJob
         def stage!(job)
           create!(
             staged: true,
-            job_class: job.class,
+            job_class: job.class.name,
             serialized_job: job.serialize,
             idempotency_key: job.idempotency_key
           )
