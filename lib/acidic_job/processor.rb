@@ -69,7 +69,12 @@ module AcidicJob
       when Array
         jobs_or_jobs_getter
       when Symbol, String
-        @job.method(jobs_or_jobs_getter).call
+        if @job.respond_to?(jobs_or_jobs_getter)
+          @job.method(jobs_or_jobs_getter).call
+        else
+          raise UnknownAwaitedJob,
+                "Invalid `awaits`; unknown method `#{jobs_or_jobs_getter}` for this job"
+        end
       else
         raise UnknownAwaitedJob,
               "Invalid `awaits`; must be either an jobs Array or method name, was: #{jobs_or_jobs_getter.class.name}"
