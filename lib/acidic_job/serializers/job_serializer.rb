@@ -12,12 +12,15 @@ module AcidicJob
       def deserialize(hash)
         job = ActiveJob::Base.deserialize(hash)
         job.send(:deserialize_arguments_if_needed)
+        # this is a shim to ensure we can work with Ruby 2.7 as well as 3.0+
+        # :nocov:
         if job.arguments.last.is_a?(Hash)
           *args, kwargs = job.arguments
         else
           args = job.arguments
           kwargs = {}
         end
+        # :nocov:
         job.instance_variable_set(:@__acidic_job_args, args)
         job.instance_variable_set(:@__acidic_job_kwargs, kwargs)
 

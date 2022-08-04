@@ -2,6 +2,7 @@
 
 require "active_job/serializers/object_serializer"
 
+# :nocov:
 module AcidicJob
   module Serializers
     class WorkerSerializer < ::ActiveJob::Serializers::ObjectSerializer
@@ -24,3 +25,4 @@ module AcidicJob
     end
   end
 end
+# :nocov:
