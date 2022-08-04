@@ -16,8 +16,9 @@ end
 require "acidic_job"
 require "minitest/autorun"
 
-require "combustion"
-Combustion.path = "test"
-Combustion.initialize!
+class CustomErrorForTesting < StandardError; end
 
+require "combustion"
+Combustion.path = "test/combustion"
+Combustion.initialize! :active_record
 require_relative "support/setup"

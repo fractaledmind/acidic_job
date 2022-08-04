@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-class TestCase < Minitest::Test
+require "active_support/test_case"
+
+class TestCase < ActiveSupport::TestCase
   def before_setup
     super
     clear_models
