@@ -51,7 +51,7 @@ module AcidicJob
       end
     end
 
-    # &block
+    # Requires a block as well
     def with_acidic_workflow(persisting: {})
       raise RedefiningWorkflow if defined? @workflow_builder
 
@@ -112,6 +112,7 @@ module AcidicJob
           end
         end
 
+        # ensure that we return the `run` record so that the result of this block is the record
         run
       end
       AcidicJob.logger.log_run_event("Initialized run.", self, @acidic_job_run)
