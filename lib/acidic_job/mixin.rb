@@ -46,6 +46,8 @@ module AcidicJob
       end
     end
 
+    protected
+
     def safely_finish_acidic_job
       # Short circuits execution by sending execution right to 'finished'.
       # So, ends the job "successfully"
