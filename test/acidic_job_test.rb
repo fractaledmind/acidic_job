@@ -144,7 +144,7 @@ class TestCases < ActiveSupport::TestCase
   end
 
   test "step method that takes an argument throws `TooManyParametersForStepMethod` error" do
-    class A < AcidicJob::Base
+    class StepMethodTakesArg < AcidicJob::Base
       def perform
         with_acidic_workflow do |workflow|
           workflow.step :do_something
@@ -155,7 +155,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     assert_raises AcidicJob::TooManyParametersForStepMethod do
-      A.perform_now
+      StepMethodTakesArg.perform_now
     end
   end
 
