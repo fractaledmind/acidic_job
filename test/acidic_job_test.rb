@@ -2033,9 +2033,7 @@ class TestCases < ActiveSupport::TestCase
         "do_something" => { "does" => "do_something", "awaits" => [], "for_each" => nil, "then" => "FINISHED" }
       }
     )
-    # force an error occuring when AcidicJob is trying to unlock the run after a step method errors
-    class RareErrorForTesting < StandardError; end
-
+    # force an error occurring when AcidicJob is trying to unlock the run after a step method errors
     def run.store_error!(_error)
       raise RareErrorForTesting
     end

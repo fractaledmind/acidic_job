@@ -19,6 +19,7 @@ require "minitest/autorun"
 GlobalID.app = :test
 
 class CustomErrorForTesting < StandardError; end
+class RareErrorForTesting < StandardError; end
 
 class Performance
   def self.reset!
