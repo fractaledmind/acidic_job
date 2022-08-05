@@ -71,7 +71,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
         user_id: @user_id
       )
 
-      raise SimulatedTestingFailure if defined?(error_in_create_ride) && error_in_create_ride
+      raise SimulatedTestingFailure if self.class.instance_variable_get(:@error_in_create_ride)
 
       # in the same transaction insert an audit record for what happened
       Audit.create!(
@@ -83,7 +83,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
     end
 
     def create_stripe_charge
-      raise SimulatedTestingFailure if defined?(error_in_create_stripe_charge) && error_in_create_stripe_charge
+      raise SimulatedTestingFailure if self.class.instance_variable_get(:@error_in_create_stripe_charge)
 
       begin
         user = User.find_by(id: @user_id)
@@ -134,6 +134,8 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
     @invalid_user = User.find_or_create_by(email: "user-bad-source@example.com",
                                            stripe_customer_id: "tok_chargeCustomerFail")
     @staged_job_params = { amount: 20_00, currency: "usd", user: @valid_user }
+    RideCreateJob.instance_variable_set(:@error_in_create_ride, false)
+    RideCreateJob.instance_variable_set(:@error_in_create_stripe_charge, false)
 
     super()
 
@@ -145,14 +147,6 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
   end
 
   def create_run(params = {})
-    # :nocov:
-    # rubocop:disable Style/MultilineTernaryOperator
-    job_args = RUBY_VERSION < "3.0" ?
-                 [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => []), { "_aj_ruby2_keywords" => [] }]
-               :
-                 [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => [])]
-    # :nocov:
-    # rubocop:enable Style/MultilineTernaryOperator
     AcidicJob::Run.create!({
       idempotency_key: "XXXX_IDEMPOTENCY_KEY",
       staged: false,
@@ -166,7 +160,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
         "provider_job_id" => nil,
         "queue_name" => "default",
         "priority" => nil,
-        "arguments" => job_args,
+        "arguments" => [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => [])],
         "executions" => 1,
         "exception_executions" => {},
         "locale" => "en",
@@ -261,7 +255,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
     end
 
     test "stores results for a permanent failure" do
-      RideCreateJob.define_method(:error_in_create_stripe_charge, -> { true })
+      RideCreateJob.instance_variable_set(:@error_in_create_stripe_charge, true)
       run = create_run
 
       AcidicJob::Run.stub(:find_by, ->(*) { run }) do
@@ -269,7 +263,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
           RideCreateJob.perform_now(@valid_user.id, @valid_params)
         end
       end
-      RideCreateJob.undef_method(:error_in_create_stripe_charge)
+      RideCreateJob.instance_variable_set(:@error_in_create_stripe_charge, false)
 
       assert_equal "TestRocketRidesAcidicJobs::RideCreateJob::SimulatedTestingFailure", run.error_object.class.name
       assert_equal 1, AcidicJob::Run.unstaged.count
@@ -496,14 +490,14 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
     end
 
     test "throws and stores error when step method throws exception" do
-      RideCreateJob.define_method(:error_in_create_stripe_charge, -> { true })
+      RideCreateJob.instance_variable_set(:@error_in_create_stripe_charge, true)
       run = create_run
       AcidicJob::Run.stub(:find_by, ->(*) { run }) do
         assert_raises RideCreateJob::SimulatedTestingFailure do
           RideCreateJob.perform_now(@valid_user.id, @valid_params)
         end
       end
-      RideCreateJob.undef_method(:error_in_create_stripe_charge)
+      RideCreateJob.instance_variable_set(:@error_in_create_stripe_charge, false)
 
       assert_equal "TestRocketRidesAcidicJobs::RideCreateJob::SimulatedTestingFailure", run.error_object.class.name
     end
