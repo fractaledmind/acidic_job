@@ -2068,7 +2068,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal 1, AcidicJob::Run.count
     assert_equal 1, Performance.performances
   end
-  
+
   test "deprecated `with_acidity` syntax still works" do
     class WithAcidity < AcidicJob::Base
       def perform
@@ -2076,14 +2076,14 @@ class TestCases < ActiveSupport::TestCase
           step :do_something
         end
       end
-  
+
       def do_something
         Performance.performed!
       end
     end
-  
+
     WithAcidity.perform_now
-  
+
     assert_equal 1, AcidicJob::Run.count
     assert_equal 1, Performance.performances
   end
