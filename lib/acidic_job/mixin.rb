@@ -106,7 +106,7 @@ module AcidicJob
 
     def ensure_run_record_and_process(workflow, persisting)
       AcidicJob.logger.log_run_event("Initializing run...", self, nil)
-      @acidic_job_run = ActiveRecord::Base.transaction(isolation: :read_uncommitted) do
+      @acidic_job_run = ActiveRecord::Base.transaction(isolation: acidic_isolation_level) do
         run = Run.find_by(idempotency_key: idempotency_key)
         serialized_job = serialize
 
@@ -196,6 +196,15 @@ module AcidicJob
 
     def finish_staged_job
       staged_job_run.finish!
+    end
+    
+    def acidic_isolation_level
+      case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
+      when :sqlite
+        :read_uncommitted
+      else
+        :serializable
+      end
     end
   end
 end
