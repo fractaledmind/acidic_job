@@ -52,11 +52,11 @@ module AcidicJob
       FinishedPoint.new
     end
 
-    # Requires a block as well
     def with_acidic_workflow(persisting: {})
       raise RedefiningWorkflow if defined? @workflow_builder
 
       @workflow_builder = WorkflowBuilder.new
+
       yield @workflow_builder
 
       raise NoDefinedSteps if @workflow_builder.steps.empty?
@@ -64,6 +64,47 @@ module AcidicJob
       # convert the array of steps into a hash of recovery_points and next steps
       workflow = @workflow_builder.define_workflow
 
+      ensure_run_record_and_process(workflow, persisting)
+    rescue LocalJumpError
+      raise MissingWorkflowBlock, "A block must be passed to `with_acidic_workflow`"
+    end
+
+    # DEPRECATED
+    def with_acidity(providing: {}, &block)
+      ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:with_acidity)
+
+      @workflow_builder = WorkflowBuilder.new
+      @workflow_builder.instance_exec(&block)
+
+      raise NoDefinedSteps if @workflow_builder.steps.empty?
+
+      # convert the array of steps into a hash of recovery_points and next steps
+      workflow = @workflow_builder.define_workflow
+
+      ensure_run_record_and_process(workflow, providing)
+    rescue LocalJumpError
+      raise MissingWorkflowBlock, "A block must be passed to `with_acidity`"
+    end
+
+    def idempotently(with: {}, &block)
+      ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:idempotently)
+
+      @workflow_builder = WorkflowBuilder.new
+      @workflow_builder.instance_exec(&block)
+
+      raise NoDefinedSteps if @workflow_builder.steps.empty?
+
+      # convert the array of steps into a hash of recovery_points and next steps
+      workflow = @workflow_builder.define_workflow
+
+      ensure_run_record_and_process(workflow, with)
+    rescue LocalJumpError
+      raise MissingWorkflowBlock, "A block must be passed to `idempotently`"
+    end
+
+    private
+
+    def ensure_run_record_and_process(workflow, persisting)
       AcidicJob.logger.log_run_event("Initializing run...", self, nil)
       @acidic_job_run = ActiveRecord::Base.transaction(isolation: :read_uncommitted) do
         run = Run.find_by(idempotency_key: idempotency_key)
@@ -123,11 +164,7 @@ module AcidicJob
       AcidicJob.logger.log_run_event("Initialized run.", self, @acidic_job_run)
 
       Processor.new(@acidic_job_run, self).process_run
-    rescue LocalJumpError
-      raise MissingWorkflowBlock, "A block must be passed to `with_acidic_workflow`"
     end
-
-    private
 
     def was_staged_job?
       job_id.start_with? Run::STAGED_JOB_ID_PREFIX

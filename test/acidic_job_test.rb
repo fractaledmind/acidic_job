@@ -17,8 +17,15 @@ class TestCases < ActiveSupport::TestCase
   test "`AcidicJob::Base` only adds a few methods to job" do
     class BareJob < AcidicJob::Base; end
 
-    expected_methods = %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key
-                          safely_finish_acidic_job].sort
+    expected_methods = %i[
+      _run_finish_callbacks
+      _finish_callbacks
+      with_acidic_workflow
+      idempotency_key
+      safely_finish_acidic_job
+      idempotently
+      with_acidity
+    ].sort
     assert_equal expected_methods,
                  (BareJob.instance_methods - ActiveJob::Base.instance_methods).sort
   end
@@ -27,8 +34,15 @@ class TestCases < ActiveSupport::TestCase
     class ParentJob < AcidicJob::Base; end
     class ChildJob < ParentJob; end
 
-    expected_methods = %i[_run_finish_callbacks _finish_callbacks with_acidic_workflow idempotency_key
-                          safely_finish_acidic_job].sort
+    expected_methods = %i[
+      _run_finish_callbacks
+      _finish_callbacks
+      with_acidic_workflow
+      idempotency_key
+      safely_finish_acidic_job
+      idempotently
+      with_acidity
+    ].sort
     assert_equal expected_methods,
                  (ChildJob.instance_methods - ActiveJob::Base.instance_methods).sort
   end
@@ -292,7 +306,7 @@ class TestCases < ActiveSupport::TestCase
     assert_equal 1, Performance.performances
   end
 
-  test "invalid workflow in run ..." do
+  test "invalid workflow in run record raises `UnknownRecoveryPoint`" do
     class InvalidWorkflowRun < AcidicJob::Base
       def perform
         with_acidic_workflow do |workflow|
@@ -2034,6 +2048,44 @@ class TestCases < ActiveSupport::TestCase
     run.reload
     assert !run.locked_at.nil?
     assert_equal false, run.succeeded?
+  end
+
+  test "deprecated `idempotently` syntax still works" do
+    class Idempotently < AcidicJob::Base
+      def perform
+        idempotently do
+          step :do_something
+        end
+      end
+
+      def do_something
+        Performance.performed!
+      end
+    end
+
+    Idempotently.perform_now
+
+    assert_equal 1, AcidicJob::Run.count
+    assert_equal 1, Performance.performances
+  end
+  
+  test "deprecated `with_acidity` syntax still works" do
+    class WithAcidity < AcidicJob::Base
+      def perform
+        with_acidity do
+          step :do_something
+        end
+      end
+  
+      def do_something
+        Performance.performed!
+      end
+    end
+  
+    WithAcidity.perform_now
+  
+    assert_equal 1, AcidicJob::Run.count
+    assert_equal 1, Performance.performances
   end
 end
 # rubocop:enable Lint/ConstantDefinitionInBlock

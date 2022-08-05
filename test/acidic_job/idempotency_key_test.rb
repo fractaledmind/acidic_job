@@ -3,6 +3,13 @@
 require "test_helper"
 
 class TestIdempotencyKey < ActiveSupport::TestCase
+  # test "a" do
+  #   class WithoutAcidicIdentifier < AcidicJob::Base; end
+  #   job = WithoutAcidicIdentifier.new
+  #   value = AcidicJob::IdempotencyKey.new(job).value
+  #   assert_equal job.job_id, job.idempotency_key
+  # end
+
   # with job_id acidic identifier
   #   def test_return_job_id_from_hash_when_identifier_job_id
   #     value = AcidicJob::IdempotencyKey.new(:job_id).value_for({ "job_id" => "ID" })
