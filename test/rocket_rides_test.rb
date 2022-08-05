@@ -147,11 +147,13 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
 
   def create_run(params = {})
     # :nocov:
+    # rubocop:disable Style/MultilineTernaryOperator
     job_args = RUBY_VERSION < "3.0" ?
                  [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => []), { "_aj_ruby2_keywords" => [] }]
                :
                  [@valid_user.id, @valid_params.merge("_aj_symbol_keys" => [])]
     # :nocov:
+    # rubocop:enable Style/MultilineTernaryOperator
     AcidicJob::Run.create!({
       idempotency_key: "XXXX_IDEMPOTENCY_KEY",
       staged: false,

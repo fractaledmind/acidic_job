@@ -199,7 +199,7 @@ module AcidicJob
     def finish_staged_job
       staged_job_run.finish!
     end
-    
+
     def acidic_isolation_level
       case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
       when :sqlite
