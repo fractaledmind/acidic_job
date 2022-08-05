@@ -108,8 +108,15 @@ module AcidicJob
       AcidicJob.logger.log_run_event("Initializing run...", self, nil)
       @acidic_job_run = ActiveRecord::Base.transaction(isolation: :read_uncommitted) do
         run = Run.find_by(idempotency_key: idempotency_key)
+        serialized_job = serialize
 
         if run.present?
+          # Programs enqueuing multiple jobs with different parameters but the
+          # same idempotency key is a bug.
+          if run.serialized_job["arguments"] != serialized_job["arguments"]
+            raise MismatchedIdempotencyKeyAndJobArguments
+          end
+
           # Only acquire a lock if the key is unlocked or its lock has expired
           # because the original job was long enough ago.
           raise LockedIdempotencyKey if run.locked? && run.lock_active?

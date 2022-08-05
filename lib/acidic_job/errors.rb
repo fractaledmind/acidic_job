@@ -14,4 +14,5 @@ module AcidicJob
   class TooManyParametersForStepMethod < Error; end
   class UnserializableValue < Error; end
   class LockedIdempotencyKey < Error; end
+  class MismatchedIdempotencyKeyAndJobArguments < Error; end
 end
