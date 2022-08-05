@@ -10,6 +10,7 @@ class TestCases < ActiveSupport::TestCase
   def before_setup
     super()
     AcidicJob::Run.delete_all
+    Notification.delete_all
     Performance.reset!
   end
 
