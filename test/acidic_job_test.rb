@@ -10,7 +10,6 @@ class TestCases < ActiveSupport::TestCase
   def before_setup
     super()
     AcidicJob::Run.delete_all
-    User.delete_all
     Performance.reset!
   end
 
@@ -1948,13 +1947,13 @@ class TestCases < ActiveSupport::TestCase
   test "can persist ActiveRecord model instance in attributes" do
     class RecordPersisting < AcidicJob::Base
       def perform
-        with_acidic_workflow persisting: { user: nil } do |workflow|
+        with_acidic_workflow persisting: { notice: nil } do |workflow|
           workflow.step :do_something
         end
       end
 
       def do_something
-        self.user = User.create!(email: "user@example.com", stripe_customer_id: "tok_visa")
+        self.notice = Notification.create!(recipient_id: 1, recipient_type: "User")
         Performance.performed!
       end
     end
@@ -1968,19 +1967,19 @@ class TestCases < ActiveSupport::TestCase
 
     run = AcidicJob::Run.find_by(job_class: "TestCases::RecordPersisting")
     assert_equal "FINISHED", run.recovery_point
-    assert_equal 1, User.count
+    assert_equal 1, Notification.count
   end
 
   test "persisting ActiveRecord model instance in step method, then rollback" do
     class RecordPersistingThenRollback < AcidicJob::Base
       def perform
-        with_acidic_workflow persisting: { user: nil } do |workflow|
+        with_acidic_workflow persisting: { notice: nil } do |workflow|
           workflow.step :do_something
         end
       end
 
       def do_something
-        self.user = User.create!(email: "user@example.com", stripe_customer_id: "tok_visa")
+        self.notice = Notification.create!(recipient_id: 1, recipient_type: "User")
         raise CustomErrorForTesting
       end
     end
@@ -1995,7 +1994,7 @@ class TestCases < ActiveSupport::TestCase
 
     run = AcidicJob::Run.find_by(job_class: "TestCases::RecordPersistingThenRollback")
     assert_equal "do_something", run.recovery_point
-    assert_equal 0, User.count
+    assert_equal 0, Notification.count
   end
 
   test "if error while trying to persist error in step method, swallow but log error" do

@@ -141,7 +141,6 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
     Audit.delete_all
     Ride.delete_all
     Notification.delete_all
-    # User.delete_all
     Performance.reset!
   end
 
