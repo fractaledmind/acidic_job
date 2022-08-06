@@ -168,18 +168,21 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
       },
       workflow: {
         "create_ride_and_audit_record" => {
-          "does" => :create_ride_and_audit_record,
+          "does" => "create_ride_and_audit_record",
           "awaits" => [],
-          "then" => :create_stripe_charge
+          "for_each" => nil,
+          "then" => "create_stripe_charge"
         },
         "create_stripe_charge" => {
-          "does" => :create_stripe_charge,
+          "does" => "create_stripe_charge",
           "awaits" => [],
-          "then" => :send_receipt
+          "for_each" => nil,
+          "then" => "send_receipt"
         },
         "send_receipt" => {
-          "does" => :send_receipt,
+          "does" => "send_receipt",
           "awaits" => [],
+          "for_each" => nil,
           "then" => "FINISHED"
         }
       }
