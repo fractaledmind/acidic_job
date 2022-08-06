@@ -854,7 +854,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     perform_enqueued_jobs do
-      SimpleWorkflowJob.perform_later
+      SimpleWorkflowJob.perform_now
     end
 
     assert_equal 2, AcidicJob::Run.count
@@ -894,7 +894,7 @@ class TestCases < ActiveSupport::TestCase
 
     perform_enqueued_jobs do
       assert_raises CustomErrorForTesting do
-        WorkflowWithErrAwaitsJob.perform_later
+        WorkflowWithErrAwaitsJob.perform_now
       end
     end
 
@@ -942,7 +942,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     perform_enqueued_jobs do
-      NestedSucAwaitSteps.perform_later
+      NestedSucAwaitSteps.perform_now
     end
 
     assert_equal 3, AcidicJob::Run.count
@@ -1001,7 +1001,7 @@ class TestCases < ActiveSupport::TestCase
 
     perform_enqueued_jobs do
       assert_raises CustomErrorForTesting do
-        NestedErrAwaitSteps.perform_later
+        NestedErrAwaitSteps.perform_now
       end
     end
 
@@ -1045,7 +1045,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     perform_enqueued_jobs do
-      SucArgAwaitStep.perform_later
+      SucArgAwaitStep.perform_now
     end
 
     assert_equal 2, AcidicJob::Run.count
@@ -1083,7 +1083,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     perform_enqueued_jobs do
-      SucDynamicAwaitClsAsSym.perform_later
+      SucDynamicAwaitClsAsSym.perform_now
     end
 
     parent_run = AcidicJob::Run.find_by(job_class: "TestCases::SucDynamicAwaitClsAsSym")
@@ -1121,7 +1121,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     perform_enqueued_jobs do
-      SucDynamicAwaitInstAsSym.perform_later
+      SucDynamicAwaitInstAsSym.perform_now
     end
 
     parent_run = AcidicJob::Run.find_by(job_class: "TestCases::SucDynamicAwaitInstAsSym")
@@ -1160,7 +1160,7 @@ class TestCases < ActiveSupport::TestCase
 
     perform_enqueued_jobs do
       assert_raises CustomErrorForTesting do
-        ErrDynamicAwaitClsAsSym.perform_later
+        ErrDynamicAwaitClsAsSym.perform_now
       end
     end
 
@@ -1200,7 +1200,7 @@ class TestCases < ActiveSupport::TestCase
 
     perform_enqueued_jobs do
       assert_raises CustomErrorForTesting do
-        ErrDynamicAwaitInstAsSym.perform_later
+        ErrDynamicAwaitInstAsSym.perform_now
       end
     end
 
@@ -1239,7 +1239,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     perform_enqueued_jobs do
-      SucDynamicAwaitClsAsString.perform_later
+      SucDynamicAwaitClsAsString.perform_now
     end
 
     parent_run = AcidicJob::Run.find_by(job_class: "TestCases::SucDynamicAwaitClsAsString")
@@ -1277,7 +1277,7 @@ class TestCases < ActiveSupport::TestCase
     end
 
     perform_enqueued_jobs do
-      SucDynamicAwaitInstAsString.perform_later
+      SucDynamicAwaitInstAsString.perform_now
     end
 
     parent_run = AcidicJob::Run.find_by(job_class: "TestCases::SucDynamicAwaitInstAsString")
@@ -1316,7 +1316,7 @@ class TestCases < ActiveSupport::TestCase
 
     perform_enqueued_jobs do
       assert_raises CustomErrorForTesting do
-        ErrDynamicAwaitClsAsString.perform_later
+        ErrDynamicAwaitClsAsString.perform_now
       end
     end
 
@@ -1358,7 +1358,7 @@ class TestCases < ActiveSupport::TestCase
 
     perform_enqueued_jobs do
       assert_raises CustomErrorForTesting do
-        ErrDynamicAwaitInstAsString.perform_later
+        ErrDynamicAwaitInstAsString.perform_now
       end
     end
 
