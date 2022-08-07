@@ -6,20 +6,42 @@ module AcidicJob
   module Mixin
     extend ActiveSupport::Concern
 
-    def self.included(other)
-      raise UnknownJobAdapter unless defined?(ActiveJob) && other < ActiveJob::Base
+    def self.wire_up(other)
+      raise UnknownJobAdapter unless (defined?(::ActiveJob::Base) && other < ::ActiveJob::Base) ||
+                                     (defined?(::Sidekiq::Worker) && other.include?(::Sidekiq::Worker))
 
+      # Ensure our `perform` method always runs first to gather parameters
+      # and run perform callbacks for Sidekiq workers
+      other.prepend PerformWrapper
+
+      # By default, we unique job runs by the `job_id`
       other.instance_variable_set(:@acidic_identifier, :job_id)
-      other.define_singleton_method(:acidic_by_job_identifier) { @acidic_identifier = :job_identifier }
+      # However, you can customize this behavior on a per job class level
+      other.define_singleton_method(:acidic_by_job_identifier) { @acidic_identifier = :job_id }
+      # You could unique job runs by the arguments passed to the job (e.g. memoization)
       other.define_singleton_method(:acidic_by_job_arguments) { @acidic_identifier = :job_arguments }
+      # Or, you could unique jobs run by any logic you'd like using a block
       other.define_singleton_method(:acidic_by) { |&block| @acidic_identifier = block }
-      other.define_singleton_method(:acidic_identifier) { defined? @acidic_identifier }
 
+      # We add a callback to ensure that staged, non-workflow jobs are "finished" after they are "performed".
+      # This allows us to ensure that we can always inspect whether a run is finished and get correct data
       other.set_callback :perform, :after, :finish_staged_job, if: -> { was_staged_job? && !was_workflow_job? }
+      # We also allow you to write any of your own callbacks keyed to the "finish" event.
+      # The "finish" event is notably different from the "perform" event for acidic jobs,
+      # as any acidic job can have one or more "perform" event (retries or a resume after awaiting jobs),
+      # but will only ever have one "finish" event (when the run successfully completes)
       other.define_callbacks :finish
     end
 
+    included do
+      Mixin.wire_up(self)
+    end
+
     class_methods do
+      def inherited(subclass)
+        Mixin.wire_up(subclass)
+        super
+      end
       def perform_acidicly(*args, **kwargs)
         job = new(*args, **kwargs)
 
