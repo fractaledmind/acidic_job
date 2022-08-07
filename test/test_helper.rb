@@ -40,8 +40,9 @@ require "sqlite3"
 Combustion.path = "test/combustion"
 Combustion.initialize! :active_record
 
-ActiveJob::Base.logger = ActiveRecord::Base.logger = if ENV["LOG"].present?
-                                                       Logger.new($stdout)
-                                                     else
-                                                       Logger.new(IO::NULL) && AcidicJob.silence_logger!
-                                                     end
+if ENV["LOG"].present?
+  ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new($stdout)
+else
+  ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(IO::NULL)
+  AcidicJob.silence_logger!
+end
