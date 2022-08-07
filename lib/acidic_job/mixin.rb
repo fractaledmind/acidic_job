@@ -42,16 +42,20 @@ module AcidicJob
         Mixin.wire_up(subclass)
         super
       end
+
+      # `perform_now` runs a job synchronously and immediately
+      # `perform_later` runs a job asynchronously and queues it immediately
+      # `perform_acidicly` run a job asynchronously and queues it after a successful database commit
       def perform_acidicly(*args, **kwargs)
         job = new(*args, **kwargs)
 
         Run.stage!(job)
       end
 
-      # If you do not need compatibility with Ruby 2.6 or prior and you don’t alter any arguments,
-      # you can use the new delegation syntax (...) that is introduced in Ruby 2.7.
-      # https://www.ruby-lang.org/en/news/2019/12/12/separation-of-positional-and-keyword-arguments-in-ruby-3-0/
+      # Instantiate an instance of a job ready for serialization
       def with(...)
+        # New delegation syntax (...) was introduced in Ruby 2.7.
+        # https://www.ruby-lang.org/en/news/2019/12/12/separation-of-positional-and-keyword-arguments-in-ruby-3-0/
         job = new(...)
         # force the job to resolve the `queue_name`, so that we don't try to serialize a Proc into ActiveRecord
         job.queue_name
@@ -60,28 +64,29 @@ module AcidicJob
     end
 
     def idempotency_key
-      if self.class.instance_variable_defined?(:@acidic_identifier)
-        acidic_identifier = self.class.instance_variable_get(:@acidic_identifier)
-        IdempotencyKey.new(self).value(acidic_by: acidic_identifier)
-      else
-        IdempotencyKey.new(self).value
-      end
+      IdempotencyKey.new(self).value(acidic_by: acidic_identifier)
     end
 
     protected
 
+    # Short circuits execution by sending execution right to 'finished'.
+    # So, ends the job "successfully"
     def safely_finish_acidic_job
-      # Short circuits execution by sending execution right to 'finished'.
-      # So, ends the job "successfully"
       FinishedPoint.new
     end
 
-    def with_acidic_workflow(persisting: {})
+    def with_acidic_workflow(persisting: {}, &block)
       raise RedefiningWorkflow if defined? @workflow_builder
 
       @workflow_builder = WorkflowBuilder.new
 
-      yield @workflow_builder
+      raise MissingWorkflowBlock, "A block must be passed to `with_acidic_workflow`" unless block_given?
+
+      if block.arity.zero?
+        @workflow_builder.instance_exec(&block)
+      else
+        yield @workflow_builder
+      end
 
       raise NoDefinedSteps if @workflow_builder.steps.empty?
 
@@ -94,6 +99,8 @@ module AcidicJob
     end
 
     # DEPRECATED
+    # second attempt at the DSL, but `providing` suggested you needed to serialize
+    # any data that would be used in step methods, but simply instance variables work.
     def with_acidity(providing: {}, &block)
       ::ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:with_acidity)
 
@@ -110,6 +117,8 @@ module AcidicJob
       raise MissingWorkflowBlock, "A block must be passed to `with_acidity`"
     end
 
+    # DEPRECATED
+    # first attempt at the DSL, but `idempotently` and `with` are too distant from the gem name.
     def idempotently(with: {}, &block)
       ::ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:idempotently)
 
@@ -128,6 +137,11 @@ module AcidicJob
 
     private
 
+    # You can always retrieve the unique identifier from within the job instance itself
+    def acidic_identifier
+      self.class.instance_variable_get(:@acidic_identifier)
+    end
+
     def ensure_run_record_and_process(workflow, persisting)
       ::AcidicJob.logger.log_run_event("Initializing run...", self, nil)
       @acidic_job_run = ::ActiveRecord::Base.transaction(isolation: acidic_isolation_level) do
@@ -143,11 +157,13 @@ module AcidicJob
 
           # Only acquire a lock if the key is unlocked or its lock has expired
           # because the original job was long enough ago.
-          raise LockedIdempotencyKey if run.locked? && run.lock_active?
+          raise LockedIdempotencyKey if run.lock_active?
 
           run.update!(
             last_run_at: Time.current,
             locked_at: Time.current,
+            # staged workflow jobs won't have the `workflow` or `recovery_point` stored when staged,
+            # so we need to persist both here.
             workflow: workflow,
             recovery_point: run.recovery_point || workflow.keys.first
           )
@@ -209,6 +225,7 @@ module AcidicJob
 
     def staged_job_run
       return unless was_staged_job?
+      # memoize so we don't have to make unnecessary database calls
       return @staged_job_run if defined? @staged_job_run
 
       # "STG__#{idempotency_key}__#{encoded_global_id}"
@@ -224,6 +241,8 @@ module AcidicJob
 
     def acidic_isolation_level
       case ::ActiveRecord::Base.connection.adapter_name.downcase.to_sym
+      # SQLite doesn't support `serializable` transactions,
+      # so we use the strictest isolation_level is does support
       when :sqlite
         :read_uncommitted
       else
