@@ -27,10 +27,9 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "activejob"
   spec.add_dependency "activerecord"
   spec.add_dependency "activesupport"
-  spec.add_dependency "database_cleaner"
-  spec.add_development_dependency "activejob"
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "net-smtp"

@@ -12,5 +12,6 @@ slides.md
 /test/dummy
 /test/log
 /database.sqlite
-/test/combustion/log/test.log
 /test/combustion/database.sqlite
+/test/combustion/log/test.log
+/gemfiles/rails_6.1.gemfile.lock

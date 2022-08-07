@@ -1,10 +1,10 @@
 PATH
   remote: .
   specs:
-    acidic_job (1.0.0.pre29)
+    acidic_job (1.0.0.pre23)
+      activejob
       activerecord
       activesupport
-      database_cleaner
 
 GEM
   remote: https://rubygems.org/
@@ -85,12 +85,6 @@ GEM
     concurrent-ruby (1.1.10)
     connection_pool (2.2.5)
     crass (1.0.6)
-    database_cleaner (2.0.1)
-      database_cleaner-active_record (~> 2.0.0)
-    database_cleaner-active_record (2.0.1)
-      activerecord (>= 5.a)
-      database_cleaner-core (~> 2.0.0)
-    database_cleaner-core (2.0.1)
     digest (3.1.0)
     docile (1.4.0)
     domain_name (0.5.20190701)
@@ -240,7 +234,6 @@ PLATFORMS
 
 DEPENDENCIES
   acidic_job!
-  activejob
   combustion
   minitest
   net-smtp

@@ -13,15 +13,36 @@ SimpleCov.start do
   primary_coverage :branch
 end
 
-require "warning"
-Warning.ignore(%i[not_reached unused_var])
-
 require "acidic_job"
 require "minitest/autorun"
 
+GlobalID.app = :test
+
 class CustomErrorForTesting < StandardError; end
+class RareErrorForTesting < StandardError; end
+
+class Performance
+  def self.reset!
+    @performances = 0
+  end
+
+  def self.performed!
+    @performances += 1
+  end
+
+  class << self
+    attr_reader :performances
+  end
+end
 
 require "combustion"
+require "sqlite3"
 Combustion.path = "test/combustion"
 Combustion.initialize! :active_record
-require_relative "support/setup"
+
+if ENV["LOG"].present?
+  ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new($stdout)
+else
+  ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(IO::NULL)
+  AcidicJob.silence_logger!
+end

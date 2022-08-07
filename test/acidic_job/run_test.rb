@@ -1,15 +1,22 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../support/test_case"
 
 class MyJob
-  def self.deserialize; end
+  def self.deserialize(_serialized_job)
+    new
+  end
 
   def enqueue; end
 end
 
-class TestAcidicJobRun < TestCase
+class TestAcidicJobRun < ActiveSupport::TestCase
+  def before_setup
+    super()
+    AcidicJob::Run.delete_all
+    Performance.reset!
+  end
+
   def test_that_it_validates_serialized_job_present
     run = AcidicJob::Run.new
     run.valid?
@@ -89,23 +96,11 @@ class TestAcidicJobRun < TestCase
                                           serialized_job: { "job_class" => "MyJob", "job_id" => nil },
                                           last_run_at: Time.now, recovery_point: "a", workflow: { a: "a" })
 
-    # test calling `enqueue_staged_job` directly still won't run for an unstaged job
-    unstaged_job.send(:enqueue_staged_job)
+    # test calling `enqueue_job` directly still won't run for an unstaged job
+    unstaged_job.send(:enqueue_job)
   end
 
-  def test_enqueue_staged_job_raises_when_unknown_job_identifier
-    job_mock = MiniTest::Mock.new
-    job_mock.expect :enqueue, true
-
-    MyJob.stub :deserialize, job_mock do
-      assert_raises AcidicJob::UnknownSerializedJobIdentifier do
-        AcidicJob::Run.create!(staged: true, job_class: MyJob, idempotency_key: 1,
-                               serialized_job: { "job_class" => "MyJob", "some_unknown_job_identifier" => nil })
-      end
-    end
-  end
-
-  def test_purging_successfully_completed_runs_without_relation
+  def test_purging_finished_runs_without_relation
     default_attributes = {
       staged: false,
       job_class: MyJob,
@@ -126,10 +121,10 @@ class TestAcidicJobRun < TestCase
                                                     idempotency_key: rand))
 
     assert_equal 4, AcidicJob::Run.count
-    assert_equal 1, AcidicJob::Run.purge
+    assert_equal 2, AcidicJob::Run.clear_finished
   end
 
-  def test_purging_successfully_completed_runs_with_relation
+  def test_purging_finished_runs_with_relation
     default_attributes = {
       staged: false,
       job_class: MyJob,
@@ -150,6 +145,6 @@ class TestAcidicJobRun < TestCase
                                                     idempotency_key: rand))
 
     assert_equal 4, AcidicJob::Run.count
-    assert_equal 0, AcidicJob::Run.where(recovery_point: :started).purge
+    assert_equal 0, AcidicJob::Run.where(recovery_point: :started).clear_finished
   end
 end
