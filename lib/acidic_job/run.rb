@@ -249,6 +249,8 @@ module AcidicJob
       end
 
       def lock_active?
+        return false if locked_at.nil?
+
         locked_at > Time.current - IDEMPOTENCY_KEY_LOCK_TIMEOUT_SECONDS
       end
     end
