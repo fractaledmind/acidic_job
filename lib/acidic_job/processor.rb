@@ -54,9 +54,9 @@ module AcidicJob
       # All jobs created in the block are pushed atomically at the end of the block.
       AcidicJob::Run.transaction do
         awaited_jobs.each do |awaited_job|
-          worker_class, args, kwargs = job_args_and_kwargs(awaited_job)
+          worker_class, args = job_args_and_kwargs(awaited_job)
 
-          job = worker_class.new(*args, **kwargs)
+          job = worker_class.new(*args)
 
           AcidicJob::Run.await!(job, by: @run, return_to: step_result)
         end
@@ -84,12 +84,11 @@ module AcidicJob
     def job_args_and_kwargs(job)
       case job
       when Class
-        [job, [], {}]
+        [job, []]
       else
         [
           job.class,
-          job.arguments,
-          {}
+          job.arguments
         ]
       end
     end
