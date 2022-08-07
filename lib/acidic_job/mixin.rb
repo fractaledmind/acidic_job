@@ -23,7 +23,7 @@ module AcidicJob
       def perform_acidicly(*args, **kwargs)
         job = new(*args, **kwargs)
 
-        AcidicJob::Run.stage!(job)
+        Run.stage!(job)
       end
 
       # If you do not need compatibility with Ruby 2.6 or prior and you don’t alter any arguments,
@@ -73,7 +73,7 @@ module AcidicJob
 
     # DEPRECATED
     def with_acidity(providing: {}, &block)
-      ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:with_acidity)
+      ::ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:with_acidity)
 
       @workflow_builder = WorkflowBuilder.new
       @workflow_builder.instance_exec(&block)
@@ -89,7 +89,7 @@ module AcidicJob
     end
 
     def idempotently(with: {}, &block)
-      ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:idempotently)
+      ::ActiveSupport::Deprecation.new("1.0", "AcidicJob").deprecation_warning(:idempotently)
 
       @workflow_builder = WorkflowBuilder.new
       @workflow_builder.instance_exec(&block)
@@ -107,8 +107,8 @@ module AcidicJob
     private
 
     def ensure_run_record_and_process(workflow, persisting)
-      AcidicJob.logger.log_run_event("Initializing run...", self, nil)
-      @acidic_job_run = ActiveRecord::Base.transaction(isolation: acidic_isolation_level) do
+      ::AcidicJob.logger.log_run_event("Initializing run...", self, nil)
+      @acidic_job_run = ::ActiveRecord::Base.transaction(isolation: acidic_isolation_level) do
         run = Run.find_by(idempotency_key: idempotency_key)
         serialized_job = serialize
 
@@ -170,7 +170,7 @@ module AcidicJob
         # ensure that we return the `run` record so that the result of this block is the record
         run
       end
-      AcidicJob.logger.log_run_event("Initialized run.", self, @acidic_job_run)
+      ::AcidicJob.logger.log_run_event("Initialized run.", self, @acidic_job_run)
 
       Processor.new(@acidic_job_run, self).process_run
     end
@@ -191,9 +191,9 @@ module AcidicJob
 
       # "STG__#{idempotency_key}__#{encoded_global_id}"
       _prefix, _idempotency_key, encoded_global_id = job_id.split("__")
-      staged_job_gid = "gid://#{Base64.decode64(encoded_global_id)}"
+      staged_job_gid = "gid://#{::Base64.decode64(encoded_global_id)}"
 
-      @staged_job_run = GlobalID::Locator.locate(staged_job_gid)
+      @staged_job_run = ::GlobalID::Locator.locate(staged_job_gid)
     end
 
     def finish_staged_job
@@ -201,7 +201,7 @@ module AcidicJob
     end
 
     def acidic_isolation_level
-      case ActiveRecord::Base.connection.adapter_name.downcase.to_sym
+      case ::ActiveRecord::Base.connection.adapter_name.downcase.to_sym
       when :sqlite
         :read_uncommitted
       else
