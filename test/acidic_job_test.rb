@@ -422,6 +422,70 @@ class ActiveJobTestCases < ActiveSupport::TestCase
       assert !run.locked_at.nil?
       assert_equal false, run.succeeded?
     end
+
+    test "job with keyword arguments can be performed synchronously without acidic anything" do
+      class KwargsJobSyncUnacidic < AcidicJob::Base
+        def perform(argument1:, argument2:) # rubocop:disable Lint/UnusedMethodArgument
+          Performance.performed!
+        end
+      end
+
+      KwargsJobSyncUnacidic.perform_now(argument1: "hello", argument2: "world")
+      assert_equal 1, Performance.performances
+    end
+
+    test "job with keyword arguments can be performed asynchronously without acidic anything" do
+      class KwargsJobAsyncAcidic < AcidicJob::Base
+        def perform(argument1:, argument2:) # rubocop:disable Lint/UnusedMethodArgument
+          Performance.performed!
+        end
+      end
+
+      perform_enqueued_jobs do
+        KwargsJobAsyncAcidic.perform_later(argument1: "hello", argument2: "world")
+      end
+      assert_equal 1, Performance.performances
+    end
+
+    test "job with keyword arguments can be performed synchronously with acidic workflow" do
+      class KwargsJobSyncAcidic < AcidicJob::Base
+        def perform(argument1:, argument2:) # rubocop:disable Lint/UnusedMethodArgument
+          with_acidic_workflow do |workflow|
+            workflow.step :do_something
+          end
+        end
+
+        def do_something
+          Performance.performed!
+        end
+      end
+
+      KwargsJobSyncAcidic.perform_now(argument1: "hello", argument2: "world")
+      run = AcidicJob::Run.find_by(job_class: [self.class.name, "KwargsJobSyncAcidic"].join("::"))
+      assert_equal "FINISHED", run.recovery_point
+      assert_equal 1, Performance.performances
+    end
+
+    test "job with keyword arguments can be performed asynchronously with acidic workflow" do
+      class KwargsJobAsyncAcidic < AcidicJob::Base
+        def perform(argument1:, argument2:) # rubocop:disable Lint/UnusedMethodArgument
+          with_acidic_workflow do |workflow|
+            workflow.step :do_something
+          end
+        end
+
+        def do_something
+          Performance.performed!
+        end
+      end
+
+      perform_enqueued_jobs do
+        KwargsJobAsyncAcidic.perform_later(argument1: "hello", argument2: "world")
+      end
+      run = AcidicJob::Run.find_by(job_class: [self.class.name, "KwargsJobAsyncAcidic"].join("::"))
+      assert_equal "FINISHED", run.recovery_point
+      assert_equal 1, Performance.performances
+    end
   end
 
   class IdempotencyKey < ActiveJobTestCases
