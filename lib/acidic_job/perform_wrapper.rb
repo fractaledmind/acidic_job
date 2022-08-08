@@ -4,15 +4,15 @@ module AcidicJob
   # NOTE: it is essential that this be a bare module and not an ActiveSupport::Concern
   # WHY?
   module PerformWrapper
-    def perform(*args, **kwargs)
+    def perform(*args)
       @arguments = args
 
       # we don't want to run the `perform` callbacks twice, since ActiveJob already handles that for us
       if defined?(ActiveJob) && self.class < ActiveJob::Base
-        super(*args, **kwargs)
+        super(*args)
       elsif defined?(Sidekiq) && self.class.include?(Sidekiq::Worker)
         run_callbacks :perform do
-          super(*args, **kwargs)
+          super(*args)
         end
       else
         raise UnknownJobAdapter
