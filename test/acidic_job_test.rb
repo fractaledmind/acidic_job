@@ -5,7 +5,7 @@ require "active_job/test_helper"
 
 # rubocop:disable Lint/ConstantDefinitionInBlock
 class ActiveJobTestCases < ActiveSupport::TestCase
-  include ActiveJob::TestHelper
+  include ::ActiveJob::TestHelper
 
   def before_setup
     super()
