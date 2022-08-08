@@ -14,6 +14,9 @@ module AcidicJob
       # and run perform callbacks for Sidekiq workers
       other.prepend PerformWrapper
 
+      # Add `deliver_acidicly` to ActionMailer
+      ::ActionMailer::Parameterized::MessageDelivery.include(Extensions::ActionMailer) if defined?(::ActionMailer)
+      ::ActionMailer::MessageDelivery.include(Extensions::ActionMailer) if defined?(::ActionMailer)
       # By default, we unique job runs by the `job_id`
       other.instance_variable_set(:@acidic_identifier, :job_id)
       # However, you can customize this behavior on a per job class level
