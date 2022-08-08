@@ -24,7 +24,7 @@ jobs:
           - 6379:6379
           
     env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/rails_${{ matrix.rails }}_${{ matrix.sidekiq }}.gemfile
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/rails_${{ matrix.rails }}_sidekiq_${{ matrix.sidekiq }}.gemfile
 
     steps:
       - uses: actions/checkout@v2
