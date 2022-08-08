@@ -117,7 +117,7 @@ module AcidicJob
             staged: true,
             job_class: job.class.name,
             serialized_job: job.serialize,
-            idempotency_key: job.idempotency_key
+            idempotency_key: job.try(:idempotency_key) || job.job_id
           )
         end
       end

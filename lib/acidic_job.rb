@@ -17,6 +17,8 @@ require_relative "acidic_job/perform_wrapper"
 require_relative "acidic_job/mixin"
 require_relative "acidic_job/base"
 require_relative "acidic_job/active_kiq"
+require_relative "acidic_job/extensions/action_mailer"
+require_relative "acidic_job/extensions/noticed"
 
 require_relative "acidic_job/serializers/exception_serializer"
 require_relative "acidic_job/serializers/finished_point_serializer"
