@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activesupport"
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "minitest"
+  spec.add_development_dependency "net-smtp"
   spec.add_development_dependency "noticed"
   spec.add_development_dependency "railties"
   spec.add_development_dependency "rake"
