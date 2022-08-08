@@ -454,6 +454,23 @@ module Cases
         assert_equal "FINISHED", run.recovery_point
         assert_equal 1, Performance.performances
       end
+
+      test "job with only `PerformWrapper` and no supported job adapter throws `UnknownJobAdapter`" do
+        class NotQuiteJob
+          prepend AcidicJob::PerformWrapper
+
+          # :nocov:
+          def perform
+            Performance.performed!
+          end
+          # :nocov:
+        end
+
+        assert_raises AcidicJob::UnknownJobAdapter do
+          NotQuiteJob.new.perform
+        end
+        assert_equal 0, Performance.performances
+      end
     end
   end
 end
