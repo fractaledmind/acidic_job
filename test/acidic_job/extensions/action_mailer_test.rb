@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
-# require "mail"
+# Explicitly require this for Rails 6.1
+require "net/smtp"
 require "action_mailer"
 
 class UserMailer < ActionMailer::Base
