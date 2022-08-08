@@ -26,8 +26,8 @@ module AcidicJob
       # +opts+ are any options to configure the job
       def initialize(*arguments)
         @arguments  = arguments
-        @job_id     = SecureRandom.uuid
-        @sidekiq_options = sidekiq_options_hash || Sidekiq.default_job_options
+        @job_id     = ::SecureRandom.uuid
+        @sidekiq_options = sidekiq_options_hash || ::Sidekiq.default_job_options
         @queue_name = @sidekiq_options["queue"]
       end
 
