@@ -32,9 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activesupport"
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "minitest"
-  spec.add_development_dependency "net-smtp"
   spec.add_development_dependency "noticed"
-  spec.add_development_dependency "psych", "> 4.0"
   spec.add_development_dependency "railties"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rubocop"
@@ -43,7 +41,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "sidekiq"
   spec.add_development_dependency "simplecov"
   spec.add_development_dependency "sqlite3"
-  spec.add_development_dependency "warning"
 
   # For more information and examples about making a new gem, checkout our
   # guide at: https://bundler.io/guides/creating_gem.html
