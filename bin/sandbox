@@ -688,7 +688,7 @@ class CustomErrorForTesting < StandardError; end
 
 # rubocop:disable Lint/ConstantDefinitionInBlock
 class TestCases < ActiveSupport::TestCase
-  include ActiveJob::TestHelper
+  include ::ActiveJob::TestHelper
 
   def before_setup
     super()
