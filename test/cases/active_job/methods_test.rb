@@ -14,7 +14,7 @@ module Cases
         AcidicJob::Run.delete_all
         Notification.delete_all
         Performance.reset!
-        
+
         @preexisting_methods = (
           ::Object.methods +
           ::ActiveJob::Base.instance_methods
