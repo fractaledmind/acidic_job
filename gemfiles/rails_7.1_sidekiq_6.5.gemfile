@@ -5,6 +5,6 @@ source "https://rubygems.org"
 gem "activemodel", "~> 7.1.0"
 gem "railties", "~> 7.1.0"
 
-gem "sidekiq", "6.5.3"
+gem "sidekiq", "~> 6.5.0"
 
 gemspec path: "../"

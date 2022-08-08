@@ -10,8 +10,8 @@ jobs:
       fail-fast: false
       matrix:
         ruby: ["2.7", "3.0", "3.1"]
-        rails: [ "6.1", "7.0" ]
-        sidekiq: [ "6.5.0", "6.5.1", "6.5.2", "6.5.3" ]
+        rails: ["6.1", "7.0"]
+        sidekiq: ["6.4", "6.5"]
     services:
       redis:
         image: redis
