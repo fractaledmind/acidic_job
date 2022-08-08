@@ -20,6 +20,10 @@ GlobalID.app = :test
 
 class CustomErrorForTesting < StandardError; end
 class RareErrorForTesting < StandardError; end
+  
+module Cases; end
+module Cases::ActiveJob; end
+module Cases::ActiveKiq; end
 
 class Performance
   def self.reset!

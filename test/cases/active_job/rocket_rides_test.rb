@@ -23,16 +23,18 @@ module Stripe
   class StripeError < StandardError; end
 
   class Charge
+    # :nocov:
     def self.create(params, _args)
       raise CardError, "Your card was declined." if params[:customer] == "tok_chargeCustomerFail"
 
       charge_struct = Struct.new(:id)
       charge_struct.new(123)
     end
+    # :nocov:
   end
 end
 
-class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
+class Cases::ActiveJob::RocketRides < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
   class SendRideReceiptJob < AcidicJob::Base
@@ -189,14 +191,14 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
     }.deep_merge(params))
   end
 
-  class IdempotencyKeysAndRecoveryTest < TestRocketRidesAcidicJobs
+  class IdempotencyKeysAndRecoveryTest < self
     test "passes for a new key" do
       assert_performed_with(job: SendRideReceiptJob) do
         result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
         assert_equal true, result
       end
 
-      run = AcidicJob::Run.find_by(job_class: "TestRocketRidesAcidicJobs::RideCreateJob")
+      run = AcidicJob::Run.find_by(job_class: [self.class.name.split("::")[0..-2], "RideCreateJob"].join("::"))
       assert_equal true, run.succeeded?
       assert_equal 1, AcidicJob::Run.unstaged.count
       assert_equal 1, AcidicJob::Run.staged.count
@@ -268,7 +270,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
       end
       RideCreateJob.instance_variable_set(:@error_in_create_stripe_charge, false)
 
-      assert_equal "TestRocketRidesAcidicJobs::RideCreateJob::SimulatedTestingFailure", run.error_object.class.name
+      assert_equal [self.class.name.split("::")[0..-2], "RideCreateJob::SimulatedTestingFailure"].join("::"), run.error_object.class.name
       assert_equal 1, AcidicJob::Run.unstaged.count
       assert_equal 1, Ride.count
       assert_equal 1, Audit.count
@@ -297,7 +299,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
     end
   end
 
-  class AtomicPhasesAndRecoveryPointsTest < TestRocketRidesAcidicJobs
+  class AtomicPhasesAndRecoveryPointsTest < self
     test "continues from recovery_point `create_ride_and_audit_record`" do
       run = create_run(recovery_point: :create_ride_and_audit_record)
       AcidicJob::Run.stub(:find_by, ->(*) { run }) do
@@ -374,7 +376,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
     end
   end
 
-  class FailuresTest < TestRocketRidesAcidicJobs
+  class FailuresTest < self
     test "denies_requests_where_parameters_dont_match_on_an_existing_run" do
       run = create_run
 
@@ -475,7 +477,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
     end
   end
 
-  class SpecificTest < TestRocketRidesAcidicJobs
+  class SpecificTest < self
     test "successfully performs job synchronously" do
       result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
       assert_equal 1, AcidicJob::Run.unstaged.count
@@ -502,7 +504,7 @@ class TestRocketRidesAcidicJobs < ActiveSupport::TestCase
       end
       RideCreateJob.instance_variable_set(:@error_in_create_stripe_charge, false)
 
-      assert_equal "TestRocketRidesAcidicJobs::RideCreateJob::SimulatedTestingFailure", run.error_object.class.name
+      assert_equal [self.class.name.split("::")[0..-2], "RideCreateJob::SimulatedTestingFailure"].join("::"), run.error_object.class.name
     end
 
     test "successfully handles Stripe card error" do
