@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "active_job/test_helper"
+require "sidekiq"
+require "sidekiq/testing"
+require "acidic_job/active_kiq"
 
 # rubocop:disable Lint/ConstantDefinitionInBlock
 module Cases

@@ -128,10 +128,24 @@ module Cases
       end
 
       test "invalid worker throws `UnknownJobAdapter` error" do
-        assert_raises AcidicJob::UnknownJobAdapter do
-          Class.new do
-            include AcidicJob::Mixin
+        class FakeJob
+          include ::ActiveSupport::Callbacks
+          define_callbacks :perform
+          include ::AcidicJob::Mixin
+
+          def perform
+            with_acidic_workflow do |workflow|
+              workflow.step :do_something
+            end
           end
+
+          def do_something
+            Performance.performed!
+          end
+        end
+
+        assert_raises AcidicJob::UnknownJobAdapter do
+          FakeJob.new.perform
         end
       end
 

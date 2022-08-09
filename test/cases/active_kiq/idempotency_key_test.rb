@@ -3,6 +3,7 @@
 require "test_helper"
 require "sidekiq"
 require "sidekiq/testing"
+require "acidic_job/active_kiq"
 
 # rubocop:disable Lint/ConstantDefinitionInBlock
 module Cases
