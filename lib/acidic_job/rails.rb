@@ -5,12 +5,23 @@ require "rails/railtie"
 module AcidicJob
   class Rails < ::Rails::Railtie
     initializer "acidic_job.action_mailer_extension" do
-      ActiveSupport.on_load(:action_mailer) do
+      ::ActiveSupport.on_load(:action_mailer) do
         # Add `deliver_acidicly` to ActionMailer
-        if defined?(::ActionMailer)
-          ::ActionMailer::Parameterized::MessageDelivery.include(::AcidicJob::Extensions::ActionMailer)
-        end
-        ::ActionMailer::MessageDelivery.include(::AcidicJob::Extensions::ActionMailer) if defined?(::ActionMailer)
+        ::ActionMailer::Parameterized::MessageDelivery.include(Extensions::ActionMailer)
+        ::ActionMailer::MessageDelivery.include(Extensions::ActionMailer)
+      end
+    end
+
+    initializer "acidic_job.active_job_serializers" do
+      ::ActiveSupport.on_load(:active_job) do
+        ::ActiveJob::Serializers.add_serializers(
+          Serializers::ExceptionSerializer,
+          Serializers::FinishedPointSerializer,
+          Serializers::JobSerializer,
+          Serializers::RangeSerializer,
+          Serializers::RecoveryPointSerializer,
+          Serializers::WorkerSerializer
+        )
       end
     end
 
