@@ -69,7 +69,7 @@ module AcidicJob
       when Array
         jobs_or_jobs_getter
       when Symbol, String
-        if @job.respond_to?(jobs_or_jobs_getter)
+        if @job.respond_to?(jobs_or_jobs_getter, _include_private = true)
           @job.method(jobs_or_jobs_getter).call
         else
           raise UnknownAwaitedJob,
