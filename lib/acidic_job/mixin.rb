@@ -7,9 +7,6 @@ module AcidicJob
     extend ActiveSupport::Concern
 
     def self.wire_up(other)
-      raise UnknownJobAdapter unless (defined?(::ActiveJob::Base) && other < ::ActiveJob::Base) ||
-                                     (defined?(::Sidekiq::Worker) && other.include?(::Sidekiq::Worker))
-
       # Ensure our `perform` method always runs first to gather parameters
       # and run perform callbacks for Sidekiq workers
       other.prepend PerformWrapper
@@ -76,6 +73,9 @@ module AcidicJob
     end
 
     def with_acidic_workflow(persisting: {}, &block)
+      raise UnknownJobAdapter unless (defined?(::AcidicJob::Base) && self.class < ::AcidicJob::Base) ||
+                                     (defined?(::AcidicJob::ActiveKiq) && self.class < ::AcidicJob::ActiveKiq)
+
       raise RedefiningWorkflow if defined? @workflow_builder
 
       @workflow_builder = WorkflowBuilder.new
