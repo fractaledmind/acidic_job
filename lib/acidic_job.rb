@@ -14,11 +14,11 @@ require_relative "acidic_job/workflow_step"
 require_relative "acidic_job/workflow"
 require_relative "acidic_job/processor"
 require_relative "acidic_job/perform_wrapper"
+require_relative "acidic_job/extensions/action_mailer"
+require_relative "acidic_job/extensions/noticed"
 require_relative "acidic_job/mixin"
 require_relative "acidic_job/base"
 require_relative "acidic_job/active_kiq"
-require_relative "acidic_job/extensions/action_mailer"
-require_relative "acidic_job/extensions/noticed"
 
 require_relative "acidic_job/serializers/exception_serializer"
 require_relative "acidic_job/serializers/finished_point_serializer"
@@ -27,6 +27,8 @@ require_relative "acidic_job/serializers/range_serializer"
 require_relative "acidic_job/serializers/recovery_point_serializer"
 require_relative "acidic_job/serializers/worker_serializer"
 require "active_job/serializers"
+
+require_relative "acidic_job/rails"
 
 module AcidicJob
   ::ActiveJob::Serializers.add_serializers(
