@@ -38,7 +38,9 @@ end
 require "combustion"
 require "sqlite3"
 Combustion.path = "test/combustion"
-Combustion.initialize! :active_record
+Combustion.initialize! :active_record do
+  require "noticed"
+end
 
 if ENV["LOG"].present?
   ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new($stdout)
