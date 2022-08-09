@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    acidic_job (1.0.0.beta.1)
+    acidic_job (1.0.0.beta.2)
       activejob
       activerecord
       activesupport
@@ -232,6 +232,7 @@ DEPENDENCIES
   acidic_job!
   combustion
   minitest
+  net-smtp
   noticed
   railties
   rake
