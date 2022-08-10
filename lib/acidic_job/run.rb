@@ -174,7 +174,7 @@ module AcidicJob
       end
 
       def current_step_awaits
-        current_step_hash.fetch("awaits", []) || []
+        current_step_hash["awaits"]
       end
 
       def next_step_finishes?

@@ -19,7 +19,7 @@ module AcidicJob
         if !@run.known_recovery_point?
           raise UnknownRecoveryPoint,
                 "Defined workflow does not reference this step: #{@run.current_step_name.inspect}"
-        elsif Array(awaited_jobs = jobs_from(@run.current_step_awaits)).compact.any?
+        elsif (awaited_jobs = jobs_from(@run.current_step_awaits)).any?
           # We only execute the current step, without progressing to the next step.
           # This ensures that any failures in parallel jobs will have this step retried in the main workflow
           step_result = @workflow.execute_current_step
@@ -65,10 +65,11 @@ module AcidicJob
     def jobs_from(jobs_or_jobs_getter)
       case jobs_or_jobs_getter
       when Array
-        jobs_or_jobs_getter
+        jobs_or_jobs_getter.compact
       when Symbol, String
         if @job.respond_to?(jobs_or_jobs_getter, _include_private = true)
-          @job.method(jobs_or_jobs_getter).call
+          jobs = @job.method(jobs_or_jobs_getter).call
+          Array(jobs).compact
         else
           raise UnknownAwaitedJob,
                 "Invalid `awaits`; unknown method `#{jobs_or_jobs_getter}` for this job"
