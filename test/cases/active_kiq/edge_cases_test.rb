@@ -38,14 +38,14 @@ module Cases
       end
 
       test "calling `with_acidic_workflow` with a block without an argument raises `MissingBlockArgument`" do
-        class WithoutSteps < AcidicJob::ActiveKiq
+        class WithoutBlockArg < AcidicJob::ActiveKiq
           def perform
             with_acidic_workflow {} # rubocop:disable Lint/EmptyBlock
           end
         end
 
         assert_raises AcidicJob::MissingBlockArgument do
-          WithoutSteps.perform_now
+          WithoutBlockArg.perform_now
         end
       end
 
@@ -154,6 +154,7 @@ module Cases
           define_callbacks :perform
           include ::AcidicJob::Mixin
 
+          # :nocov:
           def perform
             with_acidic_workflow do |workflow|
               workflow.step :do_something
@@ -163,6 +164,7 @@ module Cases
           def do_something
             Performance.performed!
           end
+          # :nocov:
         end
 
         assert_raises AcidicJob::UnknownJobAdapter do
@@ -231,6 +233,29 @@ module Cases
         end
 
         ErrAwaitsNil.perform_now
+
+        assert_equal 1, Performance.performances
+      end
+
+      test "nil `awaits` returned from method is ignored and workflow continues" do
+        class ErrAwaitsMethodNil < AcidicJob::ActiveKiq
+          def perform
+            with_acidic_workflow do |workflow|
+              workflow.step :await_step, awaits: :return_nil
+              workflow.step :do_something
+            end
+          end
+
+          def do_something
+            Performance.performed!
+          end
+
+          def return_nil
+            [nil]
+          end
+        end
+
+        ErrAwaitsMethodNil.perform_now
 
         assert_equal 1, Performance.performances
       end

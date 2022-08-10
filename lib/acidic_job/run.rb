@@ -173,6 +173,10 @@ module AcidicJob
         current_step_hash.fetch("then")
       end
 
+      def current_step_awaits
+        current_step_hash.fetch("awaits", []) || []
+      end
+
       def next_step_finishes?
         next_step_name.to_s == FINISHED_RECOVERY_POINT
       end
