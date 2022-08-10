@@ -15,4 +15,5 @@ module AcidicJob
   class UnserializableValue < Error; end
   class LockedIdempotencyKey < Error; end
   class MismatchedIdempotencyKeyAndJobArguments < Error; end
+  class MissingBlockArgument < Error; end
 end

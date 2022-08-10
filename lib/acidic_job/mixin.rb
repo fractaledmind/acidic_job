@@ -81,12 +81,9 @@ module AcidicJob
       @workflow_builder = WorkflowBuilder.new
 
       raise MissingWorkflowBlock, "A block must be passed to `with_acidic_workflow`" unless block_given?
+      raise MissingBlockArgument, "An argument must be passed to the `with_acidic_workflow` block" if block.arity.zero?
 
-      if block.arity.zero?
-        @workflow_builder.instance_exec(&block)
-      else
-        yield @workflow_builder
-      end
+      block.call @workflow_builder
 
       raise NoDefinedSteps if @workflow_builder.steps.empty?
 

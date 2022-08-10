@@ -841,6 +841,42 @@ module Cases
         assert_equal true, child_run.staged?
         assert_equal true, child_run.awaited?
       end
+
+      test "workflow job with successful awaits initialized with arguments defined in perform scope" do
+        class SucArgScopeAwaitStep < AcidicJob::Base
+          class SucArgJob < AcidicJob::Base
+            def perform(arg)
+              Performance.performed! unless arg.nil?
+            end
+          end
+
+          def perform
+            @arg = 123
+
+            with_acidic_workflow do |workflow|
+              workflow.step :await_step, awaits: [SucArgJob.with(@arg)]
+            end
+          end
+        end
+
+        perform_enqueued_jobs do
+          SucArgScopeAwaitStep.perform_now
+        end
+
+        assert_equal 2, AcidicJob::Run.count
+
+        parent_run = AcidicJob::Run.find_by(job_class: [self.class.name, "SucArgScopeAwaitStep"].join("::"))
+        assert_equal "FINISHED", parent_run.recovery_point
+        assert_nil parent_run.error_object
+        assert_equal false, parent_run.staged?
+
+        child_run = AcidicJob::Run.find_by(job_class: [self.class.name, "SucArgScopeAwaitStep::SucArgJob"].join("::"))
+        assert_equal "FINISHED", child_run.recovery_point
+        assert_nil child_run.error_object
+        assert_equal true, child_run.staged?
+
+        assert_equal 1, Performance.performances
+      end
     end
   end
 end
