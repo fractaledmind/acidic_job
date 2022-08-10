@@ -37,10 +37,22 @@ module Cases
         end
       end
 
-      test "calling `with_acidic_workflow` with a block without steps raises `NoDefinedSteps`" do
+      test "calling `with_acidic_workflow` with a block without an argument raises `MissingBlockArgument`" do
         class WithoutSteps < AcidicJob::ActiveKiq
           def perform
             with_acidic_workflow {} # rubocop:disable Lint/EmptyBlock
+          end
+        end
+
+        assert_raises AcidicJob::MissingBlockArgument do
+          WithoutSteps.perform_now
+        end
+      end
+
+      test "calling `with_acidic_workflow` with a block without steps raises `NoDefinedSteps`" do
+        class WithoutSteps < AcidicJob::ActiveKiq
+          def perform
+            with_acidic_workflow { |_workflow| } # rubocop:disable Lint/EmptyBlock
           end
         end
 
