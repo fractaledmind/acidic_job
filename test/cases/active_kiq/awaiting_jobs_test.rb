@@ -848,6 +848,47 @@ module Cases
         assert_equal true, child_run.staged?
         assert_equal true, child_run.awaited?
       end
+
+      test "awaiting method that returns single job runs successfully" do
+        class AwaitMethodSingleJob < AcidicJob::ActiveKiq
+          class SucAsyncJob < AcidicJob::ActiveKiq
+            def perform
+              Performance.performed!
+            end
+          end
+
+          def perform
+            with_acidic_workflow do |workflow|
+              workflow.step :await_step, awaits: :job_to_await
+              workflow.step :do_something
+            end
+          end
+
+          def do_something
+            Performance.performed!
+          end
+
+          def job_to_await
+            SucAsyncJob
+          end
+        end
+
+        perform_enqueued_jobs do
+          AwaitMethodSingleJob.perform_now
+        end
+
+        assert_equal 2, AcidicJob::Run.count
+
+        parent_run = AcidicJob::Run.find_by(job_class: [self.class.name, "AwaitMethodSingleJob"].join("::"))
+        assert_equal "FINISHED", parent_run.recovery_point
+        assert_equal false, parent_run.staged?
+
+        child_run = AcidicJob::Run.find_by(job_class: [self.class.name, "AwaitMethodSingleJob::SucAsyncJob"].join("::"))
+        assert_equal "FINISHED", child_run.recovery_point
+        assert_equal true, child_run.staged?
+
+        assert_equal 2, Performance.performances
+      end
     end
   end
 end
