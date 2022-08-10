@@ -227,7 +227,7 @@ module AcidicJob
 
       # "STG__#{idempotency_key}__#{encoded_global_id}"
       _prefix, _idempotency_key, encoded_global_id = job_id.split("__")
-      staged_job_gid = "gid://#{::Base64.decode64(encoded_global_id)}"
+      staged_job_gid = "gid://#{::Base64.urlsafe_decode64(encoded_global_id)}"
 
       @staged_job_run = ::GlobalID::Locator.locate(staged_job_gid)
     end

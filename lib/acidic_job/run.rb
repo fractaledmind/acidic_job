@@ -130,7 +130,7 @@ module AcidicJob
         # encode the identifier for this record in the job ID
         global_id = to_global_id.to_s.remove("gid://")
         # base64 encoding for minimal security
-        encoded_global_id = Base64.encode64(global_id).strip
+        encoded_global_id = Base64.urlsafe_encode64(global_id, padding: false)
 
         [
           STAGED_JOB_ID_PREFIX,
