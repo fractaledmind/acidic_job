@@ -50,10 +50,6 @@ module AcidicJob
       wrapped_method = WorkflowStep.new(run: @run, job: @job).wrapped
       current_step = @run.current_step_name
 
-      # can't reproduce yet, but saw a bug in production where
-      # nested awaits workflows had an unsaved `workflow` attribute
-      @run.save! if @run.has_changes_to_save?
-
       AcidicJob.logger.log_run_event("Executing #{current_step}...", @job, @run)
       @run.with_lock do
         @step_result = wrapped_method.call(@run)
@@ -63,10 +59,6 @@ module AcidicJob
 
     def run_step_result
       next_step = @run.next_step_name
-
-      # can't reproduce yet, but saw a bug in production where
-      # nested awaits workflows had an unsaved `workflow` attribute
-      @run.save! if @run.has_changes_to_save?
 
       AcidicJob.logger.log_run_event("Progressing to #{next_step}...", @job, @run)
       @run.with_lock do
