@@ -10,11 +10,11 @@ module AcidicJob
         return if json.nil? || json.empty?
 
         data = JSON.parse(json)
-        Arguments.deserialize(data).first
+        Arguments.send :deserialize_argument, data
       end
 
       def dump(obj)
-        data = Arguments.serialize [obj]
+        data = Arguments.send :serialize_argument, obj
         data.to_json
       rescue ActiveJob::SerializationError
         raise UnserializableValue
