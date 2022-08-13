@@ -918,6 +918,41 @@ module Cases
 
         assert_equal 2, Performance.performances
       end
+
+      test "workflow job with garbage collection before with_lock runs successfully" do
+        class WorkflowJobWithForcedGC < AcidicJob::Base
+          class SucAsyncJob < AcidicJob::Base
+            def perform(_arg)
+              Performance.performed!
+            end
+          end
+      
+          def perform
+            with_acidic_workflow do |workflow|
+              workflow.step :await_step, awaits: [SucAsyncJob.with('argument')]
+              workflow.step :do_something
+            end
+          end
+      
+          def do_something
+            Performance.performed!
+          end
+        end
+        
+        trace = TracePoint.new(:call) do |tp|
+          # when `Workflow#run_current_step` calls `AcidicJob.logger.log_run_event("Executing #{current_step}...")`, we can pause and garbage collect
+          if (tp.defined_class == AcidicJob::Logger) && (tp.method_id == :log_run_event) && (tp.binding.local_variable_get(:msg).start_with? "Executing")
+            ObjectSpace.garbage_collect()
+            sleep 1
+          end
+        end
+      
+        perform_enqueued_jobs do
+          trace.enable do
+            WorkflowJobWithForcedGC.perform_now
+          end
+        end
+      end
     end
   end
 end
