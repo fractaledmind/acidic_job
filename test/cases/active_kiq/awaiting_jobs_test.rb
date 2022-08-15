@@ -889,6 +889,58 @@ module Cases
 
         assert_equal 2, Performance.performances
       end
+
+      test "workflow job with forced sleep before with_lock runs successfully" do
+        class WorkflowJobWithForcedSleepBeforeLock < AcidicJob::ActiveKiq
+          class SucAsyncJob < AcidicJob::ActiveKiq
+            def perform(_arg)
+              Performance.performed!
+            end
+          end
+
+          def perform
+            with_acidic_workflow do |workflow|
+              # this needs to await a job **instance**
+              workflow.step :await_step, awaits: [SucAsyncJob.with("argument")]
+              workflow.step :do_something
+            end
+          end
+
+          def do_something
+            Performance.performed!
+          end
+        end
+
+        trace = TracePoint.new(:call) do |tp|
+          # when `Workflow#run_current_step` calls `AcidicJob.logger.log_run_event("Executing #{current_step}...")`,
+          # we can pause for 1 second to ensure the serialized job in the `Run#workflow` has a different `enqueued_at`
+          if (tp.defined_class == AcidicJob::Logger) &&
+             (tp.method_id == :log_run_event) &&
+             (tp.binding.local_variable_get(:msg).start_with? "Executing")
+            sleep 1
+          end
+        end
+
+        perform_enqueued_jobs do
+          trace.enable do
+            WorkflowJobWithForcedSleepBeforeLock.perform_now
+          end
+        end
+
+        assert_equal 2, AcidicJob::Run.count
+
+        parent_run = AcidicJob::Run.find_by(job_class: [self.class.name,
+                                                        "WorkflowJobWithForcedSleepBeforeLock"].join("::"))
+        assert_equal "FINISHED", parent_run.recovery_point
+        assert_equal false, parent_run.staged?
+
+        child_run = AcidicJob::Run.find_by(job_class: [self.class.name,
+                                                       "WorkflowJobWithForcedSleepBeforeLock::SucAsyncJob"].join("::"))
+        assert_equal "FINISHED", child_run.recovery_point
+        assert_equal true, child_run.staged?
+
+        assert_equal 2, Performance.performances
+      end
     end
   end
 end
