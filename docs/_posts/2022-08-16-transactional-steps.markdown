@@ -2,7 +2,7 @@
 layout: post
 title:  "Transactional Steps"
 date:   2022-08-16 12:46:19 +0200
-categories: features
+category: features
 author: Stephen Margheim
 ---
 

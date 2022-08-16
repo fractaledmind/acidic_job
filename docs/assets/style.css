@@ -18,7 +18,7 @@
   font-size: var(--font-size-fluid-1);
   padding: 0 var(--size-8);
 }
-:where(body > aside > header) {
+:where(body > aside > header > .header-link) {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -58,6 +58,9 @@
   list-style-type: none;
   padding-inline-start: 0;
 }
+:where(body > aside > nav > ul.flow-children > li) {
+  padding-inline-start: 0;
+}
 
 @media (min-width: 1024px) {
   :where(body) {
@@ -65,7 +68,7 @@
     overflow: hidden;
   }
   :where(body > aside) {
-    max-inline-size: var(--size-content-2);
+    inline-size: var(--size-content-2);
     flex: 0 0 auto;
     
     display: flex;
@@ -130,6 +133,7 @@
   line-height: var(--font-lineheight-3);
   margin-top: var(--size-3);
   margin-bottom: var(--size-3);
+  font-weight: bold;
 }
 pre {
   background-color: var(--surface-2);
