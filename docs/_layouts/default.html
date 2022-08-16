@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- the props -->
+  <link rel="stylesheet" href="https://unpkg.com/open-props"/>
+  
+  <!-- optional imports that use the props -->
+  <link rel="stylesheet" href="https://unpkg.com/open-props/normalize.min.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/open-props/buttons.min.css"/>
+  
+  <link rel="stylesheet" href="{{ "/assets/style.css" | relative_url }}">
+  
+  <link rel="shortcut icon" type="image/png" href="{{ "/assets/favicon.ico" | relative_url }}">
+</head>
+<body class="">
+  {%- include aside.html -%}
+  <main class="">
+    {{ content }}
+  </main>
+</body>
+</html>
