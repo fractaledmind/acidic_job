@@ -153,9 +153,9 @@ class RideCreateJob < AcidicJob::Base
     @params = ride_params
 
     with_acidic_workflow persisting: { ride: nil } do |workflow|
-      step :create_ride_and_audit_record, awaits: awaits: [SomeJob.with('argument_1', keyword: 'value'), AnotherJob.with(1, 2, 3, some: 'thing')]
-      step :create_stripe_charge
-      step :send_receipt
+      workflow.step :create_ride_and_audit_record, awaits: awaits: [SomeJob.with('argument_1', keyword: 'value'), AnotherJob.with(1, 2, 3, some: 'thing')]
+      workflow.step :create_stripe_charge
+      workflow.step :send_receipt
     end
   end
 end
@@ -172,9 +172,9 @@ class RideCreateJob < AcidicJob::Base
     @params = ride_params
 
     with_acidic_workflow persisting: { ride: nil } do |workflow|
-      step :create_ride_and_audit_record, awaits: :dynamic_awaits
-      step :create_stripe_charge
-      step :send_receipt
+      workflow.step :create_ride_and_audit_record, awaits: :dynamic_awaits
+      workflow.step :create_stripe_charge
+      workflow.step :send_receipt
     end
   end
 
@@ -228,9 +228,9 @@ class RideCreateJob < AcidicJob::Base
     @params = ride_params
 
     with_acidic_workflow persisting: { ride: nil } do |workflow|
-      step :create_ride_and_audit_record
-      step :create_stripe_charge
-      step :send_receipt
+      workflow.step :create_ride_and_audit_record
+      workflow.step :create_stripe_charge
+      workflow.step :send_receipt
     end
   end
 
@@ -264,9 +264,9 @@ class RideCreateJob < AcidicJob::Base
     @params = ride_params
     
     with_acidic_workflow persisting: { ride: nil } do |workflow|
-      step :create_ride_and_audit_record
-      step :create_stripe_charge
-      step :send_receipt
+      workflow.step :create_ride_and_audit_record
+      workflow.step :create_stripe_charge
+      workflow.step :send_receipt
     end
   end
 
@@ -294,11 +294,11 @@ class ExampleJob < AcidicJob::Base
 end
 ```
 
-Conversely, a job class can use the `acidic_by_job_args` method to configure that job class to use the arguments passed to the job as the foundation for the job run's idempotency key:
+Conversely, a job class can use the `acidic_by_job_arguments` method to configure that job class to use the arguments passed to the job as the foundation for the job run's idempotency key:
 
 ```ruby
 class ExampleJob < AcidicJob::Base
-  acidic_by_job_args
+  acidic_by_job_arguments
 
   def perform(arg_1, arg_2)
     # the idempotency key will be based on whatever the values of `arg_1` and `arg_2` are
@@ -348,9 +348,9 @@ class RideCreateJob < AcidicJob::Base
     @params = ride_params
 
     with_acidic_workflow persisting: { ride: nil } do |workflow|
-      step :create_ride_and_audit_record, awaits: [SomeJob.with('argument_1', keyword: 'value')]
-      step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
-      step :send_receipt
+      workflow.step :create_ride_and_audit_record, awaits: [SomeJob.with('argument_1', keyword: 'value')]
+      workflow.step :create_stripe_charge, args: [1, 2, 3], kwargs: { some: 'thing' }
+      workflow.step :send_receipt
     end
   end
 
