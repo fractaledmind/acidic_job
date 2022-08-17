@@ -556,6 +556,13 @@ module Cases
         end
         assert_equal 0, Performance.performances
       end
+
+      test "application-specific custom serializer is used" do
+        assert_equal(
+          '{"_aj_serialized":"MyCustomSerializer","state":"under_test"}',
+          AcidicJob::Serializer.dump(MyCustomObject.new(:under_test))
+        )
+      end
     end
   end
 end

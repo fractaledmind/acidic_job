@@ -35,11 +35,36 @@ class Performance
   end
 end
 
+class MyCustomObject
+  def initialize(state)
+    @state = state
+  end
+
+  def serializable_hash
+    { state: @state }
+  end
+end
+
+class MyCustomSerializer < ActiveJob::Serializers::ObjectSerializer
+  def serialize?(argument)
+    argument.is_a?(MyCustomObject)
+  end
+
+  def serialize(custom_object)
+    super(custom_object.serializable_hash)
+  end
+
+  def deserialize(hash)
+    MyCustomObject.new(hash)
+  end
+end
+
 require "combustion"
 require "sqlite3"
 Combustion.path = "test/combustion"
-Combustion.initialize! :active_record do
+Combustion.initialize! :active_record, :active_job do
   require "noticed"
+  config.active_job.custom_serializers << MyCustomSerializer
 end
 
 if ENV["LOG"].present?
