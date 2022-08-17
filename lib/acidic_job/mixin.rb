@@ -77,8 +77,7 @@ module AcidicJob
     end
 
     def with_acidic_workflow(persisting: {}, &block)
-      raise UnknownJobAdapter unless (defined?(::AcidicJob::Base) && self.class < ::AcidicJob::Base) ||
-                                     (defined?(::AcidicJob::ActiveKiq) && self.class < ::AcidicJob::ActiveKiq)
+      raise UnknownJobAdapter unless known_job_adapter?
 
       raise RedefiningWorkflow if defined? @workflow_builder
 
@@ -249,6 +248,14 @@ module AcidicJob
       else
         :serializable
       end
+    end
+
+    def known_job_adapter?
+      return true if defined?(::AcidicJob::Base) && self.class < ::AcidicJob::Base
+      return true if defined?(::AcidicJob::ActiveKiq) && self.class < ::AcidicJob::ActiveKiq
+      return true if defined?(::ActiveJob) && self.class < ::ActiveJob::Base
+
+      false
     end
   end
 end

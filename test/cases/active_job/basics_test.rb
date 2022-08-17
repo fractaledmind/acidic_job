@@ -308,6 +308,44 @@ module Cases
         assert_equal "FINISHED", run.recovery_point
         assert_equal 1, Notification.count
       end
+
+      test "job that inherits from AcidicJob::Base is a known job" do
+        class AcidicInheritsJob < ::AcidicJob::Base
+          def perform
+            with_acidic_workflow do |workflow|
+              workflow.step :do_something
+            end
+          end
+
+          def do_something
+            Performance.performed!
+          end
+        end
+
+        result = AcidicInheritsJob.perform_now
+        assert_equal true, result
+        assert_equal 1, Performance.performances
+      end
+
+      test "job that mixes in AcidicJob::Mixin is a known job" do
+        class AcidicMixesJob < ::ActiveJob::Base
+          include ::AcidicJob::Mixin
+
+          def perform
+            with_acidic_workflow do |workflow|
+              workflow.step :do_something
+            end
+          end
+
+          def do_something
+            Performance.performed!
+          end
+        end
+
+        result = AcidicMixesJob.perform_now
+        assert_equal true, result
+        assert_equal 1, Performance.performances
+      end
     end
   end
 end

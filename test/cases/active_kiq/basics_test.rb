@@ -315,6 +315,48 @@ module Cases
         assert_equal "FINISHED", run.recovery_point
         assert_equal 1, Notification.count
       end
+
+      test "job that inherits from AcidicJob::ActiveKiq is a known job" do
+        class AcidicInheritsJob < ::AcidicJob::ActiveKiq
+          def perform
+            with_acidic_workflow do |workflow|
+              workflow.step :do_something
+            end
+          end
+
+          def do_something
+            Performance.performed!
+          end
+        end
+
+        result = AcidicInheritsJob.perform_now
+        assert_equal true, result
+        assert_equal 1, Performance.performances
+      end
+
+      test "job that mixes in AcidicJob::Mixin is an unknown job" do
+        class AcidicMixesJob
+          include ::Sidekiq::Worker
+          include ::Sidekiq::JobUtil
+          include ::ActiveSupport::Callbacks
+          define_callbacks :perform
+          include ::AcidicJob::Mixin
+
+          def perform
+            with_acidic_workflow do |workflow|
+              workflow.step :do_something
+            end
+          end
+
+          def do_something
+            Performance.performed!
+          end
+        end
+
+        assert_raises AcidicJob::UnknownJobAdapter do
+          AcidicMixesJob.new.perform
+        end
+      end
     end
   end
 end
