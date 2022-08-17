@@ -57,7 +57,9 @@ module Cases
         end
 
         job = AcidicByBlockWithString.new
+        acidic_by = job.instance_exec(&job.send(:acidic_identifier))
         assert_equal "4ae41fb2fe4e33f819f42c3dcb5c0ae001cdc608", job.idempotency_key
+        assert_equal "a", acidic_by
       end
 
       test "`idempotency_key` when `acidic_by` is a block returning array of strings returns hexidigest" do
@@ -70,7 +72,9 @@ module Cases
         end
 
         job = AcidicByBlockWithArrayOfStrings.new
+        acidic_by = job.instance_exec(&job.send(:acidic_identifier))
         assert_equal "2cdcdb07113148a84a1d12198b0ea3bec74c7247", job.idempotency_key
+        assert_equal %w[a b], acidic_by
       end
 
       test "`idempotency_key` when `acidic_by` is a proc returning string returns hexidigest" do
@@ -81,7 +85,9 @@ module Cases
         end
 
         job = AcidicByProcWithString.new
+        acidic_by = job.instance_exec(&job.send(:acidic_identifier))
         assert_equal "3388db03d2eef3efabc68d092b98862b4b16a6a0", job.idempotency_key
+        assert_equal "a", acidic_by
       end
 
       test "`idempotency_key` when `acidic_by` is a proc returning array of strings returns hexidigest" do
@@ -92,65 +98,81 @@ module Cases
         end
 
         job = AcidicByProcWithArrayOfStrings.new
+        acidic_by = job.instance_exec(&job.send(:acidic_identifier))
         assert_equal "db6c53f8a65317ed8db2b9c73d721efb5e07e9f6", job.idempotency_key
+        assert_equal %w[a b], acidic_by
       end
 
       test "`idempotency_key` when `acidic_by` is a block referencing instance variable defined in `perform` returns hexidigest" do
-        class AcidicByBlockWithIvar < AcidicJob::Base
+        class AcidicByBlockWithArg < AcidicJob::Base
           acidic_by do
-            @ivar
+            arguments[0]
           end
 
-          def perform
-            @ivar = "a"
-          end
+          def perform; end
         end
 
-        job = AcidicByBlockWithIvar.new
-        assert_equal "3fa0423c8bdac5b6b31e9f3b5bef5b4dc76c411f", job.idempotency_key
+        job = AcidicByBlockWithArg.new("a")
+        acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+        assert_equal "dc4a6ecd3e9f2abae48e095e419baf9e7b24d464", job.idempotency_key
+        assert_equal "a", acidic_by
       end
 
       test "`idempotency_key` when `acidic_by` is a block referencing array of instance variables defined in `perform` returns hexidigest" do
-        class AcidicByBlockWithArrayOfIvars < AcidicJob::Base
+        class AcidicByBlockWithArgs < AcidicJob::Base
           acidic_by do
-            [@ivar1, @ivar2]
+            arguments
           end
 
-          def perform
-            @ivar1 = "a"
-            @ivar2 = "b"
-          end
+          def perform; end
         end
 
-        job = AcidicByBlockWithArrayOfIvars.new
-        assert_equal "b457cf301d7b086edbcac6c9745f6a13b70b88ea", job.idempotency_key
+        job = AcidicByBlockWithArgs.new("a", "b")
+        acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+        assert_equal "8540d60e1c53f7c36e21a0c3d5a21c542c2638fa", job.idempotency_key
+        assert_equal %w[a b], acidic_by
       end
 
-      test "`idempotency_key` when `acidic_by` is a proc referencing instance variable defined in `perform` returns hexidigest" do
-        class AcidicByProcWithIvar < AcidicJob::Base
-          acidic_by -> { @ivar }
-
-          def perform
-            @ivar = "a"
+      test "`idempotency_key` when `acidic_by` is a block returning job `argument` keyword returns hexidigest" do
+        class AcidicByBlockWithArgValue < AcidicJob::Base
+          acidic_by do
+            item = arguments.first[:a]
+            item.value
           end
+
+          def perform; end
         end
 
-        job = AcidicByProcWithIvar.new
-        assert_equal "296993b567116e170f9f2c84b382e43b645d12aa", job.idempotency_key
+        job = AcidicByBlockWithArgValue.new(a: Struct.new(:value).new("a"))
+        acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+        assert_equal "7b05d03f4ee4176a1e6604bf14b84f0750c39947", job.idempotency_key
+        assert_equal "a", acidic_by
       end
 
-      test "`idempotency_key` when `acidic_by` is a proc referencing array of instance variables defined in `perform` returns hexidigest" do
-        class AcidicByProcWithArrayOfIvars < AcidicJob::Base
-          acidic_by -> { [@ivar1, @ivar2] }
+      test "`idempotency_key` when `acidic_by` is a proc referencing job `arguments` returns hexidigest" do
+        class AcidicByProcWithArg < AcidicJob::Base
+          acidic_by -> { arguments[0] }
 
-          def perform
-            @ivar1 = "a"
-            @ivar2 = "b"
-          end
+          def perform; end
         end
 
-        job = AcidicByProcWithArrayOfIvars.new
-        assert_equal "9d8a13826c09cfa1bae14005f92112b36abb7ed0", job.idempotency_key
+        job = AcidicByProcWithArg.new("a")
+        acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+        assert_equal "2870cf6d05c9cd9f6b988571fd416c9e1c43fdd0", job.idempotency_key
+        assert_equal "a", acidic_by
+      end
+
+      test "`idempotency_key` when `acidic_by` is a proc referencing array of job `arguments` returns hexidigest" do
+        class AcidicByProcWithArgs < AcidicJob::Base
+          acidic_by -> { arguments }
+
+          def perform; end
+        end
+
+        job = AcidicByProcWithArgs.new("a", "b")
+        acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+        assert_equal "16e6be9d979300279a30cdd7e1a058b928c9355d", job.idempotency_key
+        assert_equal %w[a b], acidic_by
       end
 
       test "`idempotency_key` when `acidic_by` is string gets ignored and returns `job_id`" do

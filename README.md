@@ -306,24 +306,22 @@ class ExampleJob < AcidicJob::Base
 end
 ```
 
-These options cover the two common situations, but sometimes our systems need finer-grained control. For example, our job might take some record as the job argument, but we need to use a combination of the record identifier and record status as the foundation for the idempotency key. In these cases you can pass a `Proc` to an `acidic_by` class method:
+These options cover the two common situations, but sometimes our systems need finer-grained control. For example, our job might take some record as the job argument, but we need to use a combination of the record identifier and record status as the foundation for the idempotency key. In these cases you can pass a `Proc` or a `Block` to an `acidic_by` class method. This code will be executed in the context of the newly initialized job instance, so you will have access to whatever data the job is initialized with (like the `arguments`, for example):
 
 ```ruby
 class ExampleJob < AcidicJob::Base
-  acidic_by -> { [@record.id, @record.status] }
+  acidic_by do
+    record = arguments.first[:record]
+    [record.id, record.status]
+  end
 
   def perform(record:)
-    @record = record
-
-    # the idempotency key will be based on whatever the values of `@record.id` and `@record.status` are
-    with_acidic_workflow do |workflow|
-      workflow.step :do_something
-    end
+    # ...
   end
 end
 ```
 
-> **Note:** The `acidic_by` proc _will be executed in the context of the job instance_ at the moment the `with_acidic_workflow` method is called. This means it will have access to any instance variables defined in your `perform` method up to that point.
+> **Note:** The `acidic_by` proc/block _will be executed in the context of the job instance_ at the moment the job is initialized. This means it will **not** have access to any instance variables defined in your `perform` method.
 
 
 ### Sidekiq Callbacks
