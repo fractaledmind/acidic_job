@@ -8,9 +8,9 @@ module AcidicJob
       @arguments = args
 
       # we don't want to run the `perform` callbacks twice, since ActiveJob already handles that for us
-      if defined?(ActiveJob) && self.class < ActiveJob::Base
+      if defined?(::ActiveJob) && self.class < ::ActiveJob::Base
         super(*args)
-      elsif defined?(Sidekiq) && self.class.include?(Sidekiq::Worker)
+      elsif defined?(::Sidekiq) && self.class.include?(::Sidekiq::Worker)
         run_callbacks :perform do
           super(*args)
         end
