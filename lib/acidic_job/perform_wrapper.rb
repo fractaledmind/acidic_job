@@ -5,7 +5,7 @@ module AcidicJob
   # WHY?
   module PerformWrapper
     def perform(*args)
-      @arguments ||= args
+      @arguments = args
 
       # we don't want to run the `perform` callbacks twice, since ActiveJob already handles that for us
       if defined?(ActiveJob) && self.class < ActiveJob::Base
