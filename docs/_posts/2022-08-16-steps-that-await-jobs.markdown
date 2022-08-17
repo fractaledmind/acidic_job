@@ -34,12 +34,12 @@ class RideCreateJob < AcidicJob::Base
     @params = ride_params
 
     with_acidic_workflow persisting: { ride: nil } do |workflow|
-      step :create_ride_and_audit_record, awaits: [
+      workflow.step :create_ride_and_audit_record, awaits: [
         SomeJob.with('argument_1', keyword: 'value'),
         AnotherJob.with(1, 2, 3, some: 'thing')
       ]
-      step :create_stripe_charge
-      step :send_receipt
+      workflow.step :create_stripe_charge
+      workflow.step :send_receipt
     end
   end
 end
@@ -56,9 +56,9 @@ class RideCreateJob < AcidicJob::Base
     @params = ride_params
 
     with_acidic_workflow persisting: { ride: nil } do |workflow|
-      step :create_ride_and_audit_record, awaits: :dynamic_awaits
-      step :create_stripe_charge
-      step :send_receipt
+      workflow.step :create_ride_and_audit_record, awaits: :dynamic_awaits
+      workflow.step :create_stripe_charge
+      workflow.step :send_receipt
     end
   end
 

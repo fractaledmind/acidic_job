@@ -19,9 +19,9 @@ class RideCreateJob < AcidicJob::Base
     @params = ride_params
     
     with_acidic_workflow persisting: { ride: nil } do |workflow|
-      step :create_ride_and_audit_record
-      step :create_stripe_charge
-      step :send_receipt
+      workflow.step :create_ride_and_audit_record
+      workflow.step :create_stripe_charge
+      workflow.step :send_receipt
     end
   end
 

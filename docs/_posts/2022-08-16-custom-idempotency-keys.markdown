@@ -21,11 +21,11 @@ class ExampleJob < AcidicJob::Base
 end
 {% endhighlight %}
 
-Conversely, a job class can use the `acidic_by_job_args` method to configure that job class to use the arguments passed to the job as the foundation for the job run's idempotency key:
+Conversely, a job class can use the `acidic_by_job_arguments` method to configure that job class to use the arguments passed to the job as the foundation for the job run's idempotency key:
 
 {% highlight ruby %}
 class ExampleJob < AcidicJob::Base
-  acidic_by_job_args
+  acidic_by_job_arguments
 
   def perform(arg_1, arg_2)
     # the idempotency key will be based on whatever the values of `arg_1` and `arg_2` are
