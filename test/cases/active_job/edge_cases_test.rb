@@ -466,6 +466,19 @@ module Cases
         assert_equal 1, Performance.performances
       end
 
+      test "job with keyword arguments can be performed acidicly without acidic anything" do
+        class KwargsJobAcidiclyUnacidic < AcidicJob::Base
+          def perform(argument1:, argument2:) # rubocop:disable Lint/UnusedMethodArgument
+            Performance.performed!
+          end
+        end
+
+        perform_enqueued_jobs do
+          KwargsJobAcidiclyUnacidic.perform_acidicly(argument1: "hello", argument2: "world")
+        end
+        assert_equal 1, Performance.performances
+      end
+
       test "job with keyword arguments can be performed synchronously with acidic workflow" do
         class KwargsJobSyncAcidic < AcidicJob::Base
           def perform(argument1:, argument2:) # rubocop:disable Lint/UnusedMethodArgument
@@ -502,6 +515,27 @@ module Cases
           KwargsJobAsyncAcidic.perform_later(argument1: "hello", argument2: "world")
         end
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "KwargsJobAsyncAcidic"].join("::"))
+        assert_equal "FINISHED", run.recovery_point
+        assert_equal 1, Performance.performances
+      end
+
+      test "job with keyword arguments can be performed acidicly with acidic workflow" do
+        class KwargsJobAcidiclyAcidic < AcidicJob::Base
+          def perform(argument1:, argument2:) # rubocop:disable Lint/UnusedMethodArgument
+            with_acidic_workflow do |workflow|
+              workflow.step :do_something
+            end
+          end
+
+          def do_something
+            Performance.performed!
+          end
+        end
+
+        perform_enqueued_jobs do
+          KwargsJobAcidiclyAcidic.perform_acidicly(argument1: "hello", argument2: "world")
+        end
+        run = AcidicJob::Run.find_by(job_class: [self.class.name, "KwargsJobAcidiclyAcidic"].join("::"))
         assert_equal "FINISHED", run.recovery_point
         assert_equal 1, Performance.performances
       end
