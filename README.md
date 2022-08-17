@@ -3,7 +3,7 @@
 [![Gem Version](https://badge.fury.io/rb/acidic_job.svg)](https://rubygems.org/gems/acidic_job)
 [![Gem Downloads](https://img.shields.io/gem/dt/acidic_job)](https://rubygems.org/gems/acidic_job)
 ![Tests](https://github.com/fractaledmind/acidic_job/actions/workflows/main.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/Code%20Coverage-98%25-success)
+![Coverage](https://img.shields.io/badge/code%20coverage-98%25-success)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e0df63f7a6f141d4aecc3c477314fdb2)](https://www.codacy.com/gh/fractaledmind/acidic_job/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fractaledmind/acidic_job&amp;utm_campaign=Badge_Grade)
 
 ## Idempotent operations for Rails apps (for ActiveJob or Sidekiq)
