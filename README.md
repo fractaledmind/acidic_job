@@ -1,7 +1,8 @@
 # AcidicJob
 
-[![Gem Version](https://badge.fury.io/rb/acidic_job.svg)](https://badge.fury.io/rb/acidic_job)
-![main workflow](https://github.com/fractaledmind/acidic_job/actions/workflows/main.yml/badge.svg)
+[![Gem Version](https://badge.fury.io/rb/acidic_job.svg)](https://rubygems.org/gems/acidic_job)
+[![Gem Downloads](https://img.shields.io/gem/dt/acidic_job)](https://rubygems.org/gems/acidic_job)
+![Tests](https://github.com/fractaledmind/acidic_job/actions/workflows/main.yml/badge.svg)
 
 ## Idempotent operations for Rails apps (for ActiveJob or Sidekiq)
 
