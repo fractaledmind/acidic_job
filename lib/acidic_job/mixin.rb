@@ -18,7 +18,7 @@ module AcidicJob
       # You could unique job runs by the arguments passed to the job (e.g. memoization)
       other.define_singleton_method(:acidic_by_job_arguments) { @acidic_identifier = :job_arguments }
       # Or, you could unique jobs run by any logic you'd like using a block
-      other.define_singleton_method(:acidic_by) { |&block| @acidic_identifier = block }
+      other.define_singleton_method(:acidic_by) { |proc = nil, &block| @acidic_identifier = proc || block }
 
       # We add a callback to ensure that staged, non-workflow jobs are "finished" after they are "performed".
       # This allows us to ensure that we can always inspect whether a run is finished and get correct data
