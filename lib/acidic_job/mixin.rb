@@ -44,7 +44,11 @@ module AcidicJob
       # `perform_later` runs a job asynchronously and queues it immediately
       # `perform_acidicly` run a job asynchronously and queues it after a successful database commit
       def perform_acidicly(*args, **kwargs)
-        job = new(*args, **kwargs)
+        job = if kwargs.empty?
+                new(*args)
+              else
+                new(*args, **kwargs)
+              end
 
         Run.stage!(job)
       end
