@@ -9,12 +9,17 @@ p({ ruby: RUBY_VERSION, rails: Rails::VERSION::STRING })
 
 require "simplecov"
 SimpleCov.start do
+  add_filter "/test/"
   enable_coverage :branch
   primary_coverage :branch
 end
 
 require "acidic_job"
 require "minitest/autorun"
+
+# Filter out Minitest backtrace while allowing backtrace from other libraries
+# to be shown.
+Minitest.backtrace_filter = Minitest::BacktraceFilter.new
 
 GlobalID.app = :test
 

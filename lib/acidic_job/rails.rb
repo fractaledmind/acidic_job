@@ -25,9 +25,11 @@ module AcidicJob
       end
     end
 
+    # :nocov:
     generators do
       require "generators/acidic_job/install_generator"
     end
+    # :nocov:
 
     # This hook happens after all initializers are run, just before returning
     config.after_initialize do
