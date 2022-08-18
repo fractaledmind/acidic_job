@@ -10,7 +10,7 @@ module AcidicJob
         # by comparing the deserialized database value with a temporary in-memory generated value.
         # That temporary in-memory generated value can sometimes have an `enqueued_at` value that is 1 second off
         # from the original. In this case, ActiveRecord will think the record has unsaved changes and block the lock.
-        super(job.as_json.merge("job_class" => job.class.name))
+        super(job.serialize.except("enqueued_at"))
       end
 
       def deserialize(hash)

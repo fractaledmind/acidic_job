@@ -13,7 +13,7 @@ module AcidicJob
           "backtrace" => {}
         }
 
-        exception.backtrace.map do |trace|
+        exception&.backtrace&.map do |trace|
           path, _, location = trace.rpartition("/")
 
           next if hash["backtrace"].key?(path)
