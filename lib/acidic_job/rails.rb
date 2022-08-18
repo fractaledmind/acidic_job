@@ -20,7 +20,8 @@ module AcidicJob
           Serializers::JobSerializer,
           Serializers::RangeSerializer,
           Serializers::RecoveryPointSerializer,
-          Serializers::WorkerSerializer
+          Serializers::WorkerSerializer,
+          Serializers::ActiveKiqSerializer
         )
       end
     end

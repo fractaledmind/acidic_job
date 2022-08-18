@@ -15,6 +15,8 @@ SimpleCov.start do
 end
 
 require "acidic_job"
+require "sidekiq/worker"
+require "acidic_job/active_kiq"
 require "minitest/autorun"
 
 # Filter out Minitest backtrace while allowing backtrace from other libraries

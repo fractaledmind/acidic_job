@@ -4,21 +4,21 @@ require "active_job/serializers/object_serializer"
 
 module AcidicJob
   module Serializers
-    class WorkerSerializer < ::ActiveJob::Serializers::ObjectSerializer
+    class ActiveKiqSerializer < ::ActiveJob::Serializers::ObjectSerializer
       def serialize(worker)
         super(
-          "job_class" => worker.class.name
+          "job_class" => worker.class.name,
+          "arguments" => Arguments.serialize(worker.arguments),
         )
       end
 
       def deserialize(hash)
         worker_class = hash["job_class"].constantize
-        worker_class.new
+        worker_class.new(*hash["arguments"])
       end
 
       def serialize?(argument)
-        defined?(::Sidekiq) && argument.class.include?(::Sidekiq::Worker) &&
-          !(defined?(::AcidicJob::ActiveKiq) && argument.class < ::AcidicJob::ActiveKiq)
+        defined?(::AcidicJob::ActiveKiq) && argument.class < ::AcidicJob::ActiveKiq
       end
     end
   end
