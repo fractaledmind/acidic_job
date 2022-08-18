@@ -100,8 +100,7 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
     instance = RandomJobWithRangeArg.new(1..10)
     instance.job_id = "12a345bc-67e8-90f1-23g4-5h6i7jk8l901"
 
-    
-    expectation = if Gem::Version.new(Rails.version) >= Gem::Version.new('7.0')
+    expectation = if Gem::Version.new(Rails.version) >= Gem::Version.new("7.0")
                     { _aj_serialized: "AcidicJob::Serializers::JobSerializer",
                       job_class: "TestAcidicJobSerializer::RandomJobWithRangeArg",
                       job_id: "12a345bc-67e8-90f1-23g4-5h6i7jk8l901",
@@ -291,7 +290,7 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
     instance = RandomActiveKiqWithRangeArg.new(1..10)
     instance.job_id = "12a345bc-67e8-90f1-23g4-5h6i7jk8l901"
 
-    expectation = if Gem::Version.new(Rails.version) >= Gem::Version.new('7.0')
+    expectation = if Gem::Version.new(Rails.version) >= Gem::Version.new("7.0")
                     { _aj_serialized: "AcidicJob::Serializers::ActiveKiqSerializer",
                       job_class: "TestAcidicJobSerializer::RandomActiveKiqWithRangeArg",
                       arguments: [
