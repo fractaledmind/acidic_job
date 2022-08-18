@@ -100,21 +100,41 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
     instance = RandomJobWithRangeArg.new(1..10)
     instance.job_id = "12a345bc-67e8-90f1-23g4-5h6i7jk8l901"
 
+    
+    expectation = if Gem::Version.new(Rails.version) >= Gem::Version.new('7.0')
+                    { _aj_serialized: "AcidicJob::Serializers::JobSerializer",
+                      job_class: "TestAcidicJobSerializer::RandomJobWithRangeArg",
+                      job_id: "12a345bc-67e8-90f1-23g4-5h6i7jk8l901",
+                      provider_job_id: nil,
+                      queue_name: "default",
+                      priority: nil,
+                      arguments: [{ _aj_serialized: "ActiveJob::Serializers::RangeSerializer",
+                                    begin: 1,
+                                    end: 10,
+                                    exclude_end: false }],
+                      executions: 0,
+                      exception_executions: {},
+                      locale: "en",
+                      timezone: "UTC" }.to_json
+                  else
+                    { _aj_serialized: "AcidicJob::Serializers::JobSerializer",
+                      job_class: "TestAcidicJobSerializer::RandomJobWithRangeArg",
+                      job_id: "12a345bc-67e8-90f1-23g4-5h6i7jk8l901",
+                      provider_job_id: nil,
+                      queue_name: "default",
+                      priority: nil,
+                      arguments: [{ _aj_serialized: "AcidicJob::Serializers::RangeSerializer",
+                                    begin: 1,
+                                    end: 10,
+                                    exclude_end: false }],
+                      executions: 0,
+                      exception_executions: {},
+                      locale: "en",
+                      timezone: "UTC" }.to_json
+                  end
+
     assert_equal(
-      { _aj_serialized: "AcidicJob::Serializers::JobSerializer",
-        job_class: "TestAcidicJobSerializer::RandomJobWithRangeArg",
-        job_id: "12a345bc-67e8-90f1-23g4-5h6i7jk8l901",
-        provider_job_id: nil,
-        queue_name: "default",
-        priority: nil,
-        arguments: [{ _aj_serialized: "ActiveJob::Serializers::RangeSerializer",
-                      begin: 1,
-                      end: 10,
-                      exclude_end: false }],
-        executions: 0,
-        exception_executions: {},
-        locale: "en",
-        timezone: "UTC" }.to_json,
+      expectation,
       AcidicJob::Serializer.dump(instance)
     )
   end
@@ -271,12 +291,24 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
     instance = RandomActiveKiqWithRangeArg.new(1..10)
     instance.job_id = "12a345bc-67e8-90f1-23g4-5h6i7jk8l901"
 
+    expectation = if Gem::Version.new(Rails.version) >= Gem::Version.new('7.0')
+                    { _aj_serialized: "AcidicJob::Serializers::ActiveKiqSerializer",
+                      job_class: "TestAcidicJobSerializer::RandomActiveKiqWithRangeArg",
+                      arguments: [
+                        { _aj_serialized: "ActiveJob::Serializers::RangeSerializer", begin: 1, end: 10,
+                          exclude_end: false }
+                      ] }.to_json
+                  else
+                    { _aj_serialized: "AcidicJob::Serializers::ActiveKiqSerializer",
+                      job_class: "TestAcidicJobSerializer::RandomActiveKiqWithRangeArg",
+                      arguments: [
+                        { _aj_serialized: "AcidicJob::Serializers::RangeSerializer", begin: 1, end: 10,
+                          exclude_end: false }
+                      ] }.to_json
+                  end
+
     assert_equal(
-      { _aj_serialized: "AcidicJob::Serializers::ActiveKiqSerializer",
-        job_class: "TestAcidicJobSerializer::RandomActiveKiqWithRangeArg",
-        arguments: [
-          { _aj_serialized: "ActiveJob::Serializers::RangeSerializer", begin: 1, end: 10, exclude_end: false }
-        ] }.to_json,
+      expectation,
       AcidicJob::Serializer.dump(instance)
     )
   end
