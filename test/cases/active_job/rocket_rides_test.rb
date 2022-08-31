@@ -483,7 +483,7 @@ module Cases
 
         test "successfully handles Stripe card error" do
           assert_no_enqueued_jobs only: SendRideReceiptJob do
-            result = RideCreateJob.perform_now(@invalid_user, @valid_params)
+            result = RideCreateJob.perform_now(@invalid_user.id, @valid_params)
             assert_equal true, result
           end
 

@@ -487,7 +487,7 @@ module Cases
         end
 
         test "successfully handles Stripe card error" do
-          result = RideCreateJob.perform_now(@invalid_user, @valid_params)
+          result = RideCreateJob.perform_now(@invalid_user.id, @valid_params)
           assert_equal true, result
 
           # assert_enqueued_with(job: SendRideReceiptJob, args: @staged_job_params)
