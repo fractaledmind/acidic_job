@@ -36,6 +36,16 @@ class Performance
   def self.performed!
     @performances += 1
   end
+  
+  def self.processed!(item, scope: :default)
+    @processed_items ||= {}
+    @processed_items[scope] ||= []
+    @processed_items[scope] << item
+  end
+  
+  def self.processed_items(scope = :default)
+    @processed_items[scope]
+  end
 
   class << self
     attr_reader :performances

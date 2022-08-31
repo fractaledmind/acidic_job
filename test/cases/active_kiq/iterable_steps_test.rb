@@ -52,13 +52,6 @@ module Cases
 
       test "passing valid `for_each` option iterates over collection with step method" do
         class ValidForEachStep < AcidicJob::ActiveKiq
-          attr_reader :processed_items
-
-          def initialize
-            @processed_items = []
-            super()
-          end
-
           def perform
             with_acidic_workflow persisting: { collection: (1..5) } do |workflow|
               workflow.step :do_something, for_each: :collection
@@ -66,25 +59,17 @@ module Cases
           end
 
           def do_something(item)
-            @processed_items << item
+            Performance.processed!(item)
           end
         end
 
         job = ValidForEachStep.new
         job.perform_now
-        assert_equal [1, 2, 3, 4, 5], job.processed_items
+        assert_equal [1, 2, 3, 4, 5], Performance.processed_items
       end
 
       test "can pass same `for_each` option to multiple step methods" do
         class MultipleForEachSteps < AcidicJob::ActiveKiq
-          attr_reader :step_one_processed_items, :step_two_processed_items
-
-          def initialize
-            @step_one_processed_items = []
-            @step_two_processed_items = []
-            super()
-          end
-
           def perform
             with_acidic_workflow persisting: { items: (1..5) } do |workflow|
               workflow.step :step_one, for_each: :items
@@ -93,18 +78,18 @@ module Cases
           end
 
           def step_one(item)
-            @step_one_processed_items << item
+            Performance.processed!(item, scope: :step_one)
           end
 
           def step_two(item)
-            @step_two_processed_items << item
+            Performance.processed!(item, scope: :step_two)
           end
         end
 
         job = MultipleForEachSteps.new
         job.perform_now
-        assert_equal [1, 2, 3, 4, 5], job.step_one_processed_items
-        assert_equal [1, 2, 3, 4, 5], job.step_two_processed_items
+        assert_equal [1, 2, 3, 4, 5], Performance.processed_items(:step_one)
+        assert_equal [1, 2, 3, 4, 5], Performance.processed_items(:step_two)
       end
     end
   end
