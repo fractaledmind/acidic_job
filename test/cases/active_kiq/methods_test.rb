@@ -49,6 +49,7 @@ module Cases
           job_id
           job_id=
           perform
+          perform_acidicly
           perform_now
           queue_name
           queue_name=

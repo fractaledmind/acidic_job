@@ -23,6 +23,7 @@ module Cases
           _run_finish_callbacks
           _finish_callbacks
           with_acidic_workflow
+          perform_acidicly
           idempotency_key
           safely_finish_acidic_job
           idempotently
