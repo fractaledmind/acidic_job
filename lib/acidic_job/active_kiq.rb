@@ -13,11 +13,29 @@ module AcidicJob
     define_callbacks :perform
     include Mixin
 
+    concerning :Configuring do
+      # Configures the job with the given options.
+      def set(options = {}) # :nodoc:
+        self.scheduled_at = options[:wait].seconds.from_now.to_f if options[:wait]
+        self.scheduled_at = options[:wait_until].to_f if options[:wait_until]
+        self.queue_name   = self.class.queue_name_from_part(options[:queue]) if options[:queue]
+
+        self
+      end
+    end
+
     concerning :Initializing do
+      class_methods do
+        def job_or_instantiate(*args)
+          args.first.is_a?(self) ? args.first : new(*args)
+        end
+      end
+
       included do
         attr_accessor :arguments
         attr_accessor :job_id
         attr_accessor :queue_name
+        attr_accessor :scheduled_at
         attr_accessor :sidekiq_options
       end
       ##
@@ -25,8 +43,8 @@ module AcidicJob
       # +args+ are the arguments, if any, that will be passed to the perform method
       # +opts+ are any options to configure the job
       def initialize(*arguments)
-        @arguments  = arguments
-        @job_id     = ::SecureRandom.uuid
+        @arguments = arguments
+        @job_id = ::SecureRandom.uuid
         @sidekiq_options = sidekiq_options_hash || ::Sidekiq.default_job_options
         @queue_name = @sidekiq_options["queue"]
       end
@@ -43,22 +61,33 @@ module AcidicJob
 
     concerning :Performing do
       class_methods do
-        def perform_now(*args, **kwargs)
-          new.perform(*args, **kwargs)
+        def perform_later(*args)
+          perform_async(*args)
+        end
+
+        def perform_now(*args)
+          perform_inline(*args)
         end
       end
 
-      def perform_now(*args, **kwargs)
-        perform(*args, **kwargs)
+      def perform_later(*args)
+        Setter.new(self.class, {}).perform_async(*args)
+      end
+
+      def perform_now(*args)
+        Setter.new(self.class, {}).perform_inline(*args)
       end
 
       def enqueue
-        ::Sidekiq::Client.push(
+        item = {
           "class" => self.class,
           "args" => @arguments,
           "jid" => @job_id,
           "queue" => @queue_name
-        )
+        }
+        item["at"] = @scheduled_at if @scheduled_at
+
+        ::Sidekiq::Client.push(item)
       end
     end
 
