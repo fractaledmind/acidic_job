@@ -19,15 +19,17 @@ module Cases
           ::Object.methods +
           ::ActiveJob::Base.instance_methods
         )
-        @expected_methods = %i[
-          _run_finish_callbacks
-          _finish_callbacks
-          with_acidic_workflow
-          idempotency_key
-          safely_finish_acidic_job
-          idempotently
-          with_acidity
-        ].sort
+        @expected_methods = [
+          :_run_finish_callbacks,
+          :_finish_callbacks,
+          :with_acidic_workflow,
+          :perform_acidicly,
+          :idempotency_key,
+          :safely_finish_acidic_job,
+          :idempotently,
+          :with_acidity,
+          (:set if Gem::Version.new(Rails.version) < Gem::Version.new("7.0"))
+        ].compact.sort
       end
 
       test "`AcidicJob::Base` only adds a few methods to job" do

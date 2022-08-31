@@ -48,7 +48,11 @@ module Cases
           idempotently
           job_id
           job_id=
+          scheduled_at
+          scheduled_at=
           perform
+          perform_acidicly
+          perform_later
           perform_now
           queue_name
           queue_name=
@@ -57,6 +61,7 @@ module Cases
           serialize
           with_acidic_workflow
           with_acidity
+          set
         ].sort
       end
 

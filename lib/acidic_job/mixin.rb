@@ -10,6 +10,8 @@ module AcidicJob
       # Ensure our `perform` method always runs first to gather parameters
       # and run perform callbacks for Sidekiq workers
       other.prepend PerformWrapper
+      # Ensure both configured and base jobs can be performed acidicly
+      other.include PerformAcidicly
 
       # By default, we unique job runs by the `job_id`
       other.instance_variable_set(:@acidic_identifier, :job_id)
@@ -40,19 +42,6 @@ module AcidicJob
         super
       end
 
-      # `perform_now` runs a job synchronously and immediately
-      # `perform_later` runs a job asynchronously and queues it immediately
-      # `perform_acidicly` run a job asynchronously and queues it after a successful database commit
-      def perform_acidicly(*args, **kwargs)
-        job = if kwargs.empty?
-                new(*args)
-              else
-                new(*args, **kwargs)
-              end
-
-        Run.stage!(job)
-      end
-
       # Instantiate an instance of a job ready for serialization
       def with(...)
         # New delegation syntax (...) was introduced in Ruby 2.7.
@@ -62,10 +51,24 @@ module AcidicJob
         job.queue_name
         job
       end
+
+      def set(options = {})
+        ::AcidicJob::ConfiguredJob.new(self, options)
+      end
     end
 
     def idempotency_key
       IdempotencyKey.new(self).value(acidic_by: acidic_identifier)
+    end
+
+    # Configures the job with the given options.
+    def set(options = {}) # :nodoc:
+      self.scheduled_at = options[:wait].seconds.from_now.to_f if options[:wait]
+      self.scheduled_at = options[:wait_until].to_f if options[:wait_until]
+      self.queue_name   = self.class.queue_name_from_part(options[:queue]) if options[:queue]
+      self.priority     = options[:priority].to_i if options[:priority]
+
+      self
     end
 
     protected
