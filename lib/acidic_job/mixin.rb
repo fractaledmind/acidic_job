@@ -51,6 +51,10 @@ module AcidicJob
         job.queue_name
         job
       end
+
+      def set(options = {})
+        ::AcidicJob::ConfiguredJob.new(self, options)
+      end
     end
 
     def idempotency_key
