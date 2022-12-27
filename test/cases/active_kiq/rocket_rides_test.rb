@@ -64,7 +64,7 @@ module Cases
                 customer: user.stripe_customer_id,
                 description: "Charge for ride #{@ride.id}"
               },
-              **{
+              {
                 # Pass through our own unique ID rather than the value
                 # transmitted to us so that we can guarantee uniqueness to Stripe
                 # across all Rocket Rides accounts.
