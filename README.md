@@ -238,7 +238,7 @@ class RideCreateJob < AcidicJob::Base
   end
 
   def create_ride_and_audit_record
-    self.ride = Ride.create!
+    self.ride = @user.rides.create(@params)
   end
 
   def create_stripe_charge
