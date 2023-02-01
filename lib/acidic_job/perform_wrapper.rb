@@ -4,7 +4,7 @@ module AcidicJob
   # NOTE: it is essential that this be a bare module and not an ActiveSupport::Concern
   # WHY?
   module PerformWrapper
-    def perform(*args)
+    ruby2_keywords def perform(*args)
       @arguments = args
 
       # we don't want to run the `perform` callbacks twice, since ActiveJob already handles that for us
