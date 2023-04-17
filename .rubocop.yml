@@ -13,6 +13,9 @@ Style/StringLiteralsInInterpolation:
 Layout/LineLength:
   Max: 120
 
+Gemspec/DevelopmentDependencies:
+  Enabled: false
+
 Style/Documentation:
   Enabled: false
 
