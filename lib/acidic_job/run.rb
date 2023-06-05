@@ -188,7 +188,7 @@ module AcidicJob
 
     concerning :Jobbable do
       included do
-        serialize :serialized_job, JSON
+        serialize :serialized_job, coder: JSON
 
         validates :serialized_job, presence: true
         validates :job_class, presence: true
