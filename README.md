@@ -419,6 +419,23 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
+You can run a specific combination of Rails version and Sidekiq version using one of the Gemfiles defined in the `/gemfiles` directory via the `BUNDLE_GEMFILE` ENV variable, e.g.:
+```sh
+BUNDLE_GEMFILE=gemfiles/rails_7.0_sidekiq_6.5.gemfile bundle exec rake test
+```
+
+You can likewise test only one particular test file using the `TEST` ENV variable, e.g.:
+```sh
+TEST=test/acidic_job/extensions/noticed_test.rb
+```
+
+Finally, if you need to only run one particular test case itself, use the `TESTOPTS` ENV variable with the `--name` option, e.g.:
+```sh
+TESTOPTS="--name=test_deliver_acidicly_on_noticed_notification_with_only_database_delivery"
+```
+
+These options can of course be combined to help narrow down your debugging when you find a failing test in CI.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/acidic_job.
