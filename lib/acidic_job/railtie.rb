@@ -3,7 +3,7 @@
 require "rails/railtie"
 
 module AcidicJob
-  class Rails < ::Rails::Railtie
+  class Railtie < ::Rails::Railtie
     initializer "acidic_job.action_mailer_extension" do
       ::ActiveSupport.on_load(:action_mailer) do
         # Add `deliver_acidicly` to ActionMailer
