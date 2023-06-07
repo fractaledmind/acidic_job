@@ -31,7 +31,7 @@ require_relative "acidic_job/serializers/recovery_point_serializer"
 require_relative "acidic_job/serializers/worker_serializer"
 require_relative "acidic_job/serializers/active_kiq_serializer"
 
-require_relative "acidic_job/rails"
+require_relative "acidic_job/railtie"
 
 module AcidicJob
 end
