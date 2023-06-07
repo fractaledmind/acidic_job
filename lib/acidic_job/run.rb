@@ -15,6 +15,10 @@ module AcidicJob
     STAGED_JOB_ID_PREFIX = "STG"
     STAGED_JOB_ID_DELIMITER = "__"
     IDEMPOTENCY_KEY_LOCK_TIMEOUT_SECONDS = 2
+    RAILS_VERSION = Gem::Version.new(Rails.version)
+    TARGET_VERSION = Gem::Version.new("7.1")
+    REQUIRES_CODER_FOR_SERIALIZE = RAILS_VERSION >= TARGET_VERSION ||
+                                   RAILS_VERSION.segments[..1] == TARGET_VERSION.segments
 
     self.table_name = "acidic_job_runs"
 
@@ -47,7 +51,11 @@ module AcidicJob
 
         after_update_commit :proceed_with_parent, if: :finished?
 
-        serialize :returning_to, AcidicJob::Serializer
+        if REQUIRES_CODER_FOR_SERIALIZE
+          serialize :returning_to, coder: AcidicJob::Serializer
+        else
+          serialize :returning_to, AcidicJob::Serializer
+        end
       end
 
       class_methods do
@@ -142,8 +150,13 @@ module AcidicJob
 
     concerning :Workflowable do
       included do
-        serialize :workflow, AcidicJob::Serializer
-        serialize :error_object, AcidicJob::Serializer
+        if REQUIRES_CODER_FOR_SERIALIZE
+          serialize :workflow, coder: AcidicJob::Serializer
+          serialize :error_object, coder: AcidicJob::Serializer
+        else
+          serialize :workflow, AcidicJob::Serializer
+          serialize :error_object, AcidicJob::Serializer
+        end
         store :attr_accessors, coder: AcidicJob::Serializer
 
         with_options unless: :staged? do
@@ -188,7 +201,11 @@ module AcidicJob
 
     concerning :Jobbable do
       included do
-        serialize :serialized_job, JSON
+        if REQUIRES_CODER_FOR_SERIALIZE
+          serialize :serialized_job, coder: JSON
+        else
+          serialize :serialized_job, JSON
+        end
 
         validates :serialized_job, presence: true
         validates :job_class, presence: true
