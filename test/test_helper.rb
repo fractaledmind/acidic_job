@@ -15,7 +15,12 @@ SimpleCov.start do
 end
 
 require "acidic_job"
-require "sidekiq/worker"
+begin
+  require "sidekiq/job"
+rescue LoadError
+  require "sidekiq/worker"
+end
+
 require "acidic_job/active_kiq"
 require "minitest/autorun"
 
