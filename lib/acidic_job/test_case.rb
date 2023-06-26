@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "./testing"
+require_relative "testing"
 
 module AcidicJob
   class TestCase < ::ActiveJob::TestCase
