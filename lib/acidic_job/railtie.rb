@@ -16,6 +16,7 @@ module AcidicJob
       ::ActiveSupport.on_load(:active_job) do
         ::ActiveJob::Serializers.add_serializers(
           Serializers::ExceptionSerializer,
+          Serializers::NewRecordSerializer,
           Serializers::FinishedPointSerializer,
           Serializers::JobSerializer,
           Serializers::RangeSerializer,
