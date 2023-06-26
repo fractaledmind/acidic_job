@@ -18,7 +18,7 @@ module AcidicJob
     rescue ActiveRecord::RecordNotFound
       nil
     end
-    
+
     # In order to allow our `NewRecordSerializer` a chance to work, we need to ensure that
     # ActiveJob's first attempt to serialize an ActiveRecord model doesn't throw an exception.
     def convert_to_global_id_hash(argument)
