@@ -6,30 +6,23 @@ module AcidicJob
   module Serializers
     class ExceptionSerializer < ::ActiveJob::Serializers::ObjectSerializer
       def serialize(exception)
-        hash = {
-          "class" => exception.class.name,
-          "message" => exception.message,
-          "cause" => exception.cause,
-          "backtrace" => {}
-        }
-
-        exception&.backtrace&.map do |trace|
+        compressed_backtrace = {}
+        exception.backtrace.map do |trace|
           path, _, location = trace.rpartition("/")
-
-          next if hash["backtrace"].key?(path)
-
-          hash["backtrace"][path] = location
+          next if compressed_backtrace.key?(path)
+          compressed_backtrace[path] = location
         end
-
-        super(hash)
-      end
-
-      def deserialize(hash)
-        exception_class = hash["class"].constantize
-        exception = exception_class.new(hash["message"])
-        exception.set_backtrace(hash["backtrace"].map do |path, location|
+        exception.set_backtrace(compressed_backtrace.map do |path, location|
           [path, location].join("/")
         end)
+        exception.cause&.set_backtrace([])
+
+        super(exception.to_yaml)
+      end
+
+      def deserialize(yaml)
+        exception = YAML.unsafe_load(yaml)
+        
         exception
       end
 
