@@ -4,8 +4,9 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "bundler/setup"
 require "rails/version"
+require "sidekiq/version"
 
-p({ ruby: RUBY_VERSION, rails: Rails::VERSION::STRING })
+p({ ruby: RUBY_VERSION, rails: Rails::VERSION::STRING, sidekiq: Sidekiq::VERSION })
 
 require "simplecov"
 SimpleCov.start do
