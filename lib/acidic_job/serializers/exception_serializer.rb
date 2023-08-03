@@ -7,7 +7,7 @@ module AcidicJob
     class ExceptionSerializer < ::ActiveJob::Serializers::ObjectSerializer
       def serialize(exception)
         compressed_backtrace = {}
-        exception.backtrace.map do |trace|
+        exception.backtrace&.map do |trace|
           path, _, location = trace.rpartition("/")
           next if compressed_backtrace.key?(path)
           compressed_backtrace[path] = location
