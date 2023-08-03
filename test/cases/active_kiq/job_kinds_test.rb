@@ -124,11 +124,12 @@ module Cases
         assert_equal 1, Performance.performances
 
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "NowJobNonWorkflowStagedUnawaited"].join("::"))
+
         assert_equal "FINISHED", run.recovery_point
         assert_nil run.error_object
-        assert_equal false, run.workflow?
-        assert_equal true, run.staged?
-        assert_equal false, run.awaited?
+        refute_predicate run, :workflow?
+        assert_predicate run, :staged?
+        refute_predicate run, :awaited?
       end
 
       test "non-workflow, staged, awaited job successfully perfoms with 2 `Run` records" do
@@ -156,16 +157,18 @@ module Cases
         parent_run = AcidicJob::Run.find_by(
           job_class: [self.class.name, "JobAwaitingNonWorkflowStagedAwaited"].join("::")
         )
+
         assert_equal "FINISHED", parent_run.recovery_point
-        assert_equal true, parent_run.workflow?
-        assert_equal false, parent_run.staged?
-        assert_equal false, parent_run.awaited?
+        assert_predicate parent_run, :workflow?
+        refute_predicate parent_run, :staged?
+        refute_predicate parent_run, :awaited?
 
         child_run = AcidicJob::Run.find_by(job_class: [self.class.name, "JobNonWorkflowStagedAwaited"].join("::"))
+
         assert_equal "FINISHED", child_run.recovery_point
-        assert_equal false, child_run.workflow?
-        assert_equal true, child_run.staged?
-        assert_equal true, child_run.awaited?
+        refute_predicate child_run, :workflow?
+        assert_predicate child_run, :staged?
+        assert_predicate child_run, :awaited?
       end
 
       test "workflow, unstaged, unawaited job successfully performs with `Run` record" do
@@ -186,11 +189,12 @@ module Cases
         assert_equal 1, AcidicJob::Run.count
 
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "JobWorkflowUnstagedUnawaited"].join("::"))
+
         assert_equal "FINISHED", run.recovery_point
         assert_nil run.error_object
-        assert_equal true, run.workflow?
-        assert_equal false, run.staged?
-        assert_equal false, run.awaited?
+        assert_predicate run, :workflow?
+        refute_predicate run, :staged?
+        refute_predicate run, :awaited?
 
         assert_equal 1, Performance.performances
       end
@@ -276,11 +280,12 @@ module Cases
         assert_equal 1, AcidicJob::Run.count
 
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "JobWorkflowStagedUnawaited"].join("::"))
+
         assert_equal "FINISHED", run.recovery_point
         assert_nil run.error_object
-        assert_equal true, run.workflow?
-        assert_equal true, run.staged?
-        assert_equal false, run.awaited?
+        assert_predicate run, :workflow?
+        assert_predicate run, :staged?
+        refute_predicate run, :awaited?
 
         assert_equal 1, Performance.performances
       end
@@ -314,16 +319,18 @@ module Cases
         assert_equal 1, Performance.performances
 
         parent_run = AcidicJob::Run.find_by(job_class: [self.class.name, "JobAwaitingWorkflowStagedAwaited"].join("::"))
+
         assert_equal "FINISHED", parent_run.recovery_point
-        assert_equal true, parent_run.workflow?
-        assert_equal false, parent_run.staged?
-        assert_equal false, parent_run.awaited?
+        assert_predicate parent_run, :workflow?
+        refute_predicate parent_run, :staged?
+        refute_predicate parent_run, :awaited?
 
         child_run = AcidicJob::Run.find_by(job_class: [self.class.name, "JobWorkflowStagedAwaited"].join("::"))
+
         assert_equal "FINISHED", child_run.recovery_point
-        assert_equal true, child_run.workflow?
-        assert_equal true, child_run.staged?
-        assert_equal true, child_run.awaited?
+        assert_predicate child_run, :workflow?
+        assert_predicate child_run, :staged?
+        assert_predicate child_run, :awaited?
       end
     end
   end

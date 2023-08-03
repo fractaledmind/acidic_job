@@ -65,6 +65,7 @@ module Cases
 
         job = ValidForEachStep.new
         job.perform_now
+
         assert_equal [1, 2, 3, 4, 5], Performance.processed_items
       end
 
@@ -88,6 +89,7 @@ module Cases
 
         job = MultipleForEachSteps.new
         job.perform_now
+
         assert_equal [1, 2, 3, 4, 5], Performance.processed_items(:step_one)
         assert_equal [1, 2, 3, 4, 5], Performance.processed_items(:step_two)
       end

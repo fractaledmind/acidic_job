@@ -22,7 +22,7 @@ class TestAcidicJobRun < ActiveSupport::TestCase
     run.valid?
 
     assert_includes run.errors.messages, :serialized_job
-    assert_equal run.errors.messages[:serialized_job], ["can't be blank"]
+    assert_equal(["can't be blank"], run.errors.messages[:serialized_job])
   end
 
   def test_that_it_validates_idempotency_key_present
@@ -30,7 +30,7 @@ class TestAcidicJobRun < ActiveSupport::TestCase
     run.valid?
 
     assert_includes run.errors.messages, :idempotency_key
-    assert_equal run.errors.messages[:idempotency_key], ["can't be blank"]
+    assert_equal(["can't be blank"], run.errors.messages[:idempotency_key])
   end
 
   def test_that_it_validates_job_class_present
@@ -38,7 +38,7 @@ class TestAcidicJobRun < ActiveSupport::TestCase
     run.valid?
 
     assert_includes run.errors.messages, :job_class
-    assert_equal run.errors.messages[:job_class], ["can't be blank"]
+    assert_equal(["can't be blank"], run.errors.messages[:job_class])
   end
 
   def test_that_it_validates_last_run_at_present_if_not_staged
@@ -46,7 +46,7 @@ class TestAcidicJobRun < ActiveSupport::TestCase
     unstaged_run.valid?
 
     assert_includes unstaged_run.errors.messages, :last_run_at
-    assert_equal unstaged_run.errors.messages[:last_run_at], ["can't be blank"]
+    assert_equal(["can't be blank"], unstaged_run.errors.messages[:last_run_at])
 
     staged_run = AcidicJob::Run.new(staged: true)
     staged_run.valid?
@@ -59,7 +59,7 @@ class TestAcidicJobRun < ActiveSupport::TestCase
     unstaged_run.valid?
 
     assert_includes unstaged_run.errors.messages, :recovery_point
-    assert_equal unstaged_run.errors.messages[:recovery_point], ["can't be blank"]
+    assert_equal(["can't be blank"], unstaged_run.errors.messages[:recovery_point])
 
     staged_run = AcidicJob::Run.new(staged: true)
     staged_run.valid?
@@ -72,7 +72,7 @@ class TestAcidicJobRun < ActiveSupport::TestCase
     unstaged_run.valid?
 
     assert_includes unstaged_run.errors.messages, :workflow
-    assert_equal unstaged_run.errors.messages[:workflow], ["can't be blank"]
+    assert_equal(["can't be blank"], unstaged_run.errors.messages[:workflow])
 
     staged_run = AcidicJob::Run.new(staged: true)
     staged_run.valid?

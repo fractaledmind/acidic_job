@@ -36,6 +36,7 @@ module Cases
         assert_equal 1, AcidicJob::Run.count
 
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "StagedWorkflowJob"].join("::"))
+
         assert_equal "FINISHED", run.recovery_point
         assert_equal 1, Performance.performances
       end
