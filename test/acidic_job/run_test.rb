@@ -81,7 +81,7 @@ class TestAcidicJobRun < ActiveSupport::TestCase
   end
 
   def test_enqueue_staged_job_only_runs_for_staged_jobs
-    job_mock = MiniTest::Mock.new
+    job_mock = Minitest::Mock.new
     job_mock.expect :enqueue, true
 
     MyJob.stub :deserialize, job_mock do
