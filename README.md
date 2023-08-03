@@ -434,6 +434,13 @@ Finally, if you need to only run one particular test case itself, use the `TESTO
 TESTOPTS="--name=test_deliver_acidicly_on_noticed_notification_with_only_database_delivery"
 ```
 
+You may also need to run the test suite with a particular Ruby version. If you are using the ASDF version manager, you can set the Ruby version with the `ASDF_RUBY_VERSION` ENV variable, e.g.:
+```sh
+ASDF_RUBY_VERSION=2.7.7 bundle exec rake test
+```
+
+If you are using `rbenv` to manage your Ruby versions, you can use the `RBENV_VERSION` ENV variable instead.
+
 These options can of course be combined to help narrow down your debugging when you find a failing test in CI.
 
 ## Contributing
