@@ -22,7 +22,11 @@ module AcidicJob
       end
 
       def deserialize(hash)
-        YAML.unsafe_load(hash["yaml"])
+        if YAML.respond_to?(:unsafe_load)
+          YAML.unsafe_load(hash["yaml"])
+        else
+          YAML.load(hash["yaml"]) # rubocop:disable Security/YAMLLoad
+        end
       end
 
       def serialize?(argument)
