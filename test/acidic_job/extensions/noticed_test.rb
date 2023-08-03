@@ -39,6 +39,7 @@ class TestNoticedExtension < ActiveSupport::TestCase
     assert_equal 1, AcidicJob::Run.staged.count
 
     noticed_run = AcidicJob::Run.staged.first
+
     assert_equal "Noticed::DeliveryMethods::Test", noticed_run.job_class
     assert_equal "default", noticed_run.serialized_job["queue_name"]
   end

@@ -35,9 +35,11 @@ module Cases
         end
 
         result = PersistableValue.perform_now
-        assert_equal result, true
+
+        assert(result)
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "PersistableValue"].join("::"))
-        assert_equal run.attr_accessors, { "key" => :value }
+
+        assert_equal({ "key" => :value }, run.attr_accessors)
       end
 
       test "basic one step workflow runs successfully" do
@@ -54,7 +56,8 @@ module Cases
         end
 
         result = SucOneStep.perform_now
-        assert_equal true, result
+
+        assert result
         assert_equal 1, Performance.performances
       end
 
@@ -76,7 +79,8 @@ module Cases
         end
 
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "ErrOneStep"].join("::"))
-        assert_equal CustomErrorForTesting, run.error_object.class
+
+        assert_instance_of CustomErrorForTesting, run.error_object
       end
 
       test "basic two step workflow runs successfully" do
@@ -98,7 +102,8 @@ module Cases
         end
 
         result = SucTwoSteps.perform_now
-        assert_equal true, result
+
+        assert result
         assert_equal 2, Performance.performances
       end
 
@@ -124,7 +129,8 @@ module Cases
         end
 
         result = ShortCircuitTwoSteps.perform_now
-        assert_equal true, result
+
+        assert result
         assert_equal 1, Performance.performances
       end
 
@@ -173,7 +179,8 @@ module Cases
         )
         AcidicJob::Run.stub(:find_by, ->(*) { run }) do
           result = RestartedTwoSteps.perform_now
-          assert_equal true, result
+
+          assert result
         end
         assert_equal 1, Performance.performances
       end
@@ -196,8 +203,9 @@ module Cases
           ErrorInStepMethod.perform_now
         end
 
-        assert_equal AcidicJob::Run.count, 1
+        assert_equal(1, AcidicJob::Run.count)
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "ErrorInStepMethod"].join("::"))
+
         assert_equal run.error_object.class, CustomErrorForTesting
         assert_equal({ "accessor" => nil }, run.attr_accessors)
       end
@@ -266,7 +274,8 @@ module Cases
         )
         AcidicJob::Run.stub(:find_by, ->(*) { run }) do
           result = AlreadyFinished.perform_now
-          assert_equal true, result
+
+          assert result
         end
         assert_equal 0, Performance.performances
       end
@@ -286,7 +295,8 @@ module Cases
         end
 
         result = ArbitraryReturnValue.perform_now
-        assert_equal true, result
+
+        assert result
         assert_equal 1, Performance.performances
       end
 
@@ -312,6 +322,7 @@ module Cases
         assert_equal 1, Performance.performances
 
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "RecordPersisting"].join("::"))
+
         assert_equal "FINISHED", run.recovery_point
         assert_equal 1, Notification.count
       end
@@ -330,7 +341,8 @@ module Cases
         end
 
         result = AcidicInheritsJob.perform_now
-        assert_equal true, result
+
+        assert result
         assert_equal 1, Performance.performances
       end
 
@@ -378,6 +390,7 @@ module Cases
         assert_equal 1, AcidicJob::Run.count
 
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "ConfigurableJob"].join("::"))
+
         assert_equal "FINISHED", run.recovery_point
         assert_equal 1, Performance.performances
       end

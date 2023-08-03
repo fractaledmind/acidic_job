@@ -28,6 +28,7 @@ class TestActionMailerExtension < ActiveSupport::TestCase
     assert_equal 1, AcidicJob::Run.count
 
     mailer_run = AcidicJob::Run.first
+
     assert_equal "ActionMailer::MailDeliveryJob", mailer_run.job_class
     assert_equal "mailers", mailer_run.serialized_job["queue_name"]
   end
@@ -38,6 +39,7 @@ class TestActionMailerExtension < ActiveSupport::TestCase
     assert_equal 1, AcidicJob::Run.count
 
     mailer_run = AcidicJob::Run.first
+
     assert_equal "ActionMailer::MailDeliveryJob", mailer_run.job_class
     assert_equal "mailers", mailer_run.serialized_job["queue_name"]
   end

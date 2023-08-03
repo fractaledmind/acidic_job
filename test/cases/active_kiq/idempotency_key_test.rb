@@ -24,6 +24,7 @@ module Cases
         end
 
         job = WithoutAcidicIdentifier.new
+
         assert_equal job.job_id, job.idempotency_key
       end
 
@@ -35,6 +36,7 @@ module Cases
         end
 
         job = AcidicByIdentifier.new
+
         assert_equal job.job_id, job.idempotency_key
       end
 
@@ -46,6 +48,7 @@ module Cases
         end
 
         job = AcidicByArguments.new
+
         assert_equal "139fbab71fc0e01e7ddc62cbe140b42fee13d4c5", job.idempotency_key
       end
 
@@ -60,6 +63,7 @@ module Cases
 
         job = AcidicByBlockWithString.new
         acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+
         assert_equal "9224c11ec73bdd117d0349ebd32b7298dc284cba", job.idempotency_key
         assert_equal "a", acidic_by
       end
@@ -75,6 +79,7 @@ module Cases
 
         job = AcidicByBlockWithArrayOfStrings.new
         acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+
         assert_equal "b7ad797b0385e5db5458c70f9900bbb9bbf5ebbb", job.idempotency_key
         assert_equal %w[a b], acidic_by
       end
@@ -88,6 +93,7 @@ module Cases
 
         job = AcidicByProcWithString.new
         acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+
         assert_equal "114b77d491a282da24f2f1c019e7d6d266d51a3a", job.idempotency_key
         assert_equal "a", acidic_by
       end
@@ -101,6 +107,7 @@ module Cases
 
         job = AcidicByProcWithArrayOfStrings.new
         acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+
         assert_equal "be88bf2c523b41a9112672015dcb5a05847cee8e", job.idempotency_key
         assert_equal %w[a b], acidic_by
       end
@@ -116,6 +123,7 @@ module Cases
 
         job = AcidicByBlockWithArg.new("a")
         acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+
         assert_equal "d45b028573700da1cfcf42c3c1c9376ad4096367", job.idempotency_key
         assert_equal "a", acidic_by
       end
@@ -131,6 +139,7 @@ module Cases
 
         job = AcidicByBlockWithArgs.new("a", "b")
         acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+
         assert_equal "0c2e48298c4230181efe7aee3f52e83a654e1ddd", job.idempotency_key
         assert_equal %w[a b], acidic_by
       end
@@ -147,6 +156,7 @@ module Cases
 
         job = AcidicByBlockWithArgValue.new(a: Struct.new(:value).new("a"))
         acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+
         assert_equal "9c80defa6aab346fca1262aea92f1fb50ae9334b", job.idempotency_key
         assert_equal "a", acidic_by
       end
@@ -160,6 +170,7 @@ module Cases
 
         job = AcidicByProcWithArg.new("a")
         acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+
         assert_equal "fe26283a2d755668961e45f6f038e9b79ebea9c5", job.idempotency_key
         assert_equal "a", acidic_by
       end
@@ -173,6 +184,7 @@ module Cases
 
         job = AcidicByProcWithArgs.new("a", "b")
         acidic_by = job.instance_exec(&job.send(:acidic_identifier))
+
         assert_equal "c8d1703b5eeecc751fcdba542be49a6192cc2727", job.idempotency_key
         assert_equal %w[a b], acidic_by
       end
@@ -185,6 +197,7 @@ module Cases
         end
 
         job = AcidicByString.new
+
         assert_equal job.job_id, job.idempotency_key
       end
     end

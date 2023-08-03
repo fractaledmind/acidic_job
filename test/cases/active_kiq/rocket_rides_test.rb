@@ -163,6 +163,7 @@ module Cases
 
       def assert_enqueued_with(job:, args: [])
         @sidekiq_queue ||= Sidekiq::Queues["default"]
+
         assert_equal 1, @sidekiq_queue.size
         assert_equal job.to_s, @sidekiq_queue.first["class"]
         assert_equal args, @sidekiq_queue.first["args"]
@@ -172,12 +173,14 @@ module Cases
       class IdempotencyKeysAndRecoveryTest < self
         test "passes for a new key" do
           result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
-          assert_equal true, result
+
+          assert result
 
           assert_enqueued_with(job: SendRideReceiptJob, args: @staged_job_params)
 
           run = AcidicJob::Run.find_by(job_class: [self.class.name.split("::")[0..-2], "RideCreateJob"].join("::"))
-          assert_equal true, run.succeeded?
+
+          assert_predicate run, :succeeded?
           assert_equal 1, AcidicJob::Run.unstaged.count
           assert_equal 1, Ride.count
           assert_equal 1, Audit.count
@@ -188,11 +191,12 @@ module Cases
           run = create_run(recovery_point: :FINISHED)
           AcidicJob::Run.stub(:find_by, ->(*) { run }) do
             result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
-            assert_equal true, result
+
+            assert result
           end
           run.reload
 
-          assert_equal true, run.succeeded?
+          assert_predicate run, :succeeded?
           assert_equal 1, AcidicJob::Run.unstaged.count
           assert_equal 0, Ride.count
           assert_equal 0, Audit.count
@@ -204,13 +208,15 @@ module Cases
           run = create_run(locked_at: nil)
           AcidicJob::Run.stub(:find_by, ->(*) { run }) do
             result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
-            assert_equal true, result
+
+            assert result
           end
 
           assert_enqueued_with(job: SendRideReceiptJob, args: @staged_job_params)
 
           run.reload
-          assert_equal true, run.succeeded?
+
+          assert_predicate run, :succeeded?
           assert_equal 1, AcidicJob::Run.unstaged.count
           assert_equal 1, Ride.count
           assert_equal 1, Audit.count
@@ -222,13 +228,15 @@ module Cases
           run = create_run(locked_at: Time.now - 1.hour - 1)
           AcidicJob::Run.stub(:find_by, ->(*) { run }) do
             result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
-            assert_equal true, result
+
+            assert result
           end
 
           assert_enqueued_with(job: SendRideReceiptJob, args: @staged_job_params)
 
           run.reload
-          assert_equal true, run.succeeded?
+
+          assert_predicate run, :succeeded?
           assert_equal 1, AcidicJob::Run.unstaged.count
           assert_equal 1, Ride.count
           assert_equal 1, Audit.count
@@ -282,13 +290,15 @@ module Cases
           run = create_run(recovery_point: :create_ride_and_audit_record)
           AcidicJob::Run.stub(:find_by, ->(*) { run }) do
             result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
-            assert_equal true, result
+
+            assert result
           end
 
           assert_enqueued_with(job: SendRideReceiptJob, args: @staged_job_params)
 
           run.reload
-          assert_equal true, run.succeeded?
+
+          assert_predicate run, :succeeded?
           assert_equal 1, AcidicJob::Run.unstaged.count
           assert_equal 1, Ride.count
           assert_equal 1, Audit.count
@@ -303,13 +313,15 @@ module Cases
           run = create_run(recovery_point: :create_stripe_charge, attr_accessors: { ride: ride })
           AcidicJob::Run.stub(:find_by, ->(*) { run }) do
             result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
-            assert_equal true, result
+
+            assert result
           end
 
           assert_enqueued_with(job: SendRideReceiptJob, args: @staged_job_params)
 
           run.reload
-          assert_equal true, run.succeeded?
+
+          assert_predicate run, :succeeded?
           assert_equal 1, AcidicJob::Run.unstaged.count
           assert_equal 1, Ride.count
           assert_equal 0, Audit.count
@@ -321,13 +333,15 @@ module Cases
           run = create_run(recovery_point: :send_receipt)
           AcidicJob::Run.stub(:find_by, ->(*) { run }) do
             result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
-            assert_equal true, result
+
+            assert result
           end
 
           assert_enqueued_with(job: SendRideReceiptJob, args: @staged_job_params)
 
           run.reload
-          assert_equal true, run.succeeded?
+
+          assert_predicate run, :succeeded?
           assert_equal 1, AcidicJob::Run.unstaged.count
           assert_equal 0, Ride.count
           assert_equal 0, Audit.count
@@ -339,13 +353,15 @@ module Cases
           run = create_run(recovery_point: :send_receipt)
           AcidicJob::Run.stub(:find_by, ->(*) { run }) do
             result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
-            assert_equal true, result
+
+            assert result
           end
 
           assert_enqueued_with(job: SendRideReceiptJob, args: @staged_job_params)
 
           run.reload
-          assert_equal true, run.succeeded?
+
+          assert_predicate run, :succeeded?
           assert_equal 1, AcidicJob::Run.unstaged.count
           assert_equal 0, Ride.count
           assert_equal 0, Audit.count
@@ -388,6 +404,7 @@ module Cases
           end
 
           run.reload
+
           assert_nil run.locked_at
           assert_equal "ActiveRecord::SerializationFailure", run.error_object.class.name
         end
@@ -405,20 +422,23 @@ module Cases
           end
 
           run.reload
+
           assert_nil run.locked_at
-          assert_equal false, run.succeeded?
+          refute_predicate run, :succeeded?
         end
 
         test "throws error if recovering without ride record" do
           run = create_run(recovery_point: :create_stripe_charge)
+
           AcidicJob::Run.stub(:find_by, ->(*) { run }) do
             assert_raises NoMethodError do
               RideCreateJob.perform_now(@valid_user.id, @valid_params)
             end
           end
           run.reload
+
           assert_nil run.locked_at
-          assert_equal false, run.succeeded?
+          refute_predicate run, :succeeded?
           assert_equal "NoMethodError", run.error_object.class.name
         end
 
@@ -431,8 +451,9 @@ module Cases
             end
           end
           run.reload
-          assert !run.locked_at.nil?
-          assert_equal false, run.succeeded?
+
+          refute_nil run.locked_at
+          refute_predicate run, :succeeded?
         end
 
         test "swallows error when trying to unlock run after error" do
@@ -450,31 +471,36 @@ module Cases
             end
           end
           run.reload
-          assert run.locked?
-          assert_equal false, run.succeeded?
+
+          assert_predicate run, :locked?
+          refute_predicate run, :succeeded?
         end
       end
 
       class SpecificTest < self
         test "successfully performs job synchronously" do
           result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
+
           assert_equal 1, AcidicJob::Run.unstaged.count
-          assert_equal true, result
+          assert result
         end
 
         test "successfully performs job synchronously multiple times" do
           RideCreateJob.perform_now(@valid_user.id, @valid_params)
+
           assert_equal 1, AcidicJob::Run.unstaged.count
 
           result = RideCreateJob.perform_now(@valid_user.id, @valid_params)
+
           assert_equal 2, AcidicJob::Run.unstaged.count
 
-          assert_equal true, result
+          assert result
         end
 
         test "throws and stores error when step method throws exception" do
           RideCreateJob.instance_variable_set(:@error_in_create_stripe_charge, true)
           run = create_run
+
           AcidicJob::Run.stub(:find_by, ->(*) { run }) do
             assert_raises RideCreateJob::SimulatedTestingFailure do
               RideCreateJob.perform_now(@valid_user.id, @valid_params)
@@ -488,12 +514,13 @@ module Cases
 
         test "successfully handles Stripe card error" do
           result = RideCreateJob.perform_now(@invalid_user.id, @valid_params)
-          assert_equal true, result
+
+          assert result
 
           # assert_enqueued_with(job: SendRideReceiptJob, args: @staged_job_params)
 
           assert_equal 1, AcidicJob::Run.unstaged.count
-          assert_equal true, AcidicJob::Run.first.succeeded?
+          assert_predicate AcidicJob::Run.first, :succeeded?
         end
       end
     end

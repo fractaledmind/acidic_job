@@ -27,7 +27,7 @@ module Cases
         serialized_job = SerializableWorker.new.serialize
 
         assert_equal [self.class.name, "SerializableWorker"].join("::"), serialized_job["job_class"]
-        assert_equal [], serialized_job["arguments"]
+        assert_empty serialized_job["arguments"]
         assert_equal "some_queue", serialized_job["queue_name"]
         assert_equal 5, serialized_job["retry"]
         assert_equal "retry_queue", serialized_job["retry_queue"]

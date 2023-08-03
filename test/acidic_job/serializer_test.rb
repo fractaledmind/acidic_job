@@ -14,6 +14,7 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
   test "can serialize ActiveRecord model" do
     notice = Notification.create!(recipient_id: 1, recipient_type: "User")
     notice.id = 123
+
     assert_equal(
       { _aj_globalid: "gid://combustion/Notification/123" }.to_json,
       AcidicJob::Serializer.dump(notice)

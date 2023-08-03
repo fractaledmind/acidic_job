@@ -126,6 +126,7 @@ module Cases
 
         PersistingAttrReader.perform_now
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "PersistingAttrReader"].join("::"))
+
         assert_equal "FINISHED", run.recovery_point
         assert_nil run.error_object
 
@@ -298,6 +299,7 @@ module Cases
             "do_something" => { "does" => "do_something", "awaits" => [], "for_each" => nil, "then" => "FINISHED" }
           }
         )
+
         AcidicJob::Run.stub(:find_by, ->(*) { run }) do
           assert_raises AcidicJob::UnknownRecoveryPoint do
             InvalidWorkflowRun.perform_now
@@ -322,10 +324,12 @@ module Cases
         end
 
         result = ErrorAndRescueInPerform.perform_now
-        assert_equal result, true
+
+        assert(result)
         assert_equal 1, AcidicJob::Run.count
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "ErrorAndRescueInPerform"].join("::"))
-        assert_equal CustomErrorForTesting, run.error_object.class
+
+        assert_instance_of CustomErrorForTesting, run.error_object
       end
 
       test "run with unknown `recovery_point` value throws `UnknownRecoveryPoint` error when processed" do
@@ -366,6 +370,7 @@ module Cases
             "step_two" => { "does" => "step_two", "awaits" => [], "for_each" => nil, "then" => "FINISHED" }
           }
         )
+
         AcidicJob::Run.stub(:find_by, ->(*) { run }) do
           assert_raises AcidicJob::UnknownRecoveryPoint do
             ErrUnknownRecoveryPoint.perform_now
@@ -397,6 +402,7 @@ module Cases
         assert_equal 1, AcidicJob::Run.count
 
         run = AcidicJob::Run.find_by(job_class: [self.class.name, "RecordPersistingThenRollback"].join("::"))
+
         assert_equal "do_something", run.recovery_point
         assert_equal 0, Notification.count
       end
@@ -440,6 +446,7 @@ module Cases
         def run.store_error!(_error)
           raise RareErrorForTesting
         end
+
         AcidicJob::Run.stub(:find_by, ->(*) { run }) do
           assert_raises CustomErrorForTesting do
             ErrorUnlockingAfterError.perform_now
@@ -447,8 +454,9 @@ module Cases
         end
 
         run.reload
-        assert !run.locked_at.nil?
-        assert_equal false, run.succeeded?
+
+        refute_nil run.locked_at
+        refute_predicate run, :succeeded?
       end
 
       test "job with only `PerformWrapper` and no supported job adapter throws `UnknownJobAdapter`" do

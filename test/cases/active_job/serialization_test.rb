@@ -43,7 +43,7 @@ module Cases
         serialized_job = SerializableJob.new.serialize
 
         assert_equal [self.class.name, "SerializableJob"].join("::"), serialized_job["job_class"]
-        assert_equal [], serialized_job["arguments"]
+        assert_empty serialized_job["arguments"]
         assert_equal "some_queue", serialized_job["queue_name"]
         assert_equal 50, serialized_job["priority"]
         assert_equal "en", serialized_job["locale"]

@@ -34,7 +34,8 @@ module Cases
         end
 
         result = AfterFinishCallback.perform_now
-        assert_equal true, result
+
+        assert result
         assert_equal 0, AcidicJob::Run.count
       end
 
