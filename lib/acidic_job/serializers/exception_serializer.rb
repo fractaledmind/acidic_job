@@ -10,6 +10,7 @@ module AcidicJob
         exception.backtrace&.map do |trace|
           path, _, location = trace.rpartition("/")
           next if compressed_backtrace.key?(path)
+
           compressed_backtrace[path] = location
         end
         exception.set_backtrace(compressed_backtrace.map do |path, location|
@@ -17,13 +18,11 @@ module AcidicJob
         end)
         exception.cause&.set_backtrace([])
 
-        super({'yaml' => exception.to_yaml})
+        super({ "yaml" => exception.to_yaml })
       end
 
       def deserialize(hash)
-        exception = YAML.unsafe_load(hash['yaml'])
-        
-        exception
+        YAML.unsafe_load(hash["yaml"])
       end
 
       def serialize?(argument)

@@ -323,8 +323,7 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
         job_class: "TestAcidicJobSerializer::RandomActiveKiqWithExceptionArg",
         arguments: [
           { _aj_serialized: "AcidicJob::Serializers::ExceptionSerializer",
-            yaml: exception.to_yaml
-          }
+            yaml: exception.to_yaml }
         ] }.to_json,
       AcidicJob::Serializer.dump(instance)
     )
