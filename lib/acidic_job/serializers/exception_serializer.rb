@@ -17,11 +17,11 @@ module AcidicJob
         end)
         exception.cause&.set_backtrace([])
 
-        super(exception.to_yaml)
+        super({'yaml' => exception.to_yaml})
       end
 
-      def deserialize(yaml)
-        exception = YAML.unsafe_load(yaml)
+      def deserialize(hash)
+        exception = YAML.unsafe_load(hash['yaml'])
         
         exception
       end
