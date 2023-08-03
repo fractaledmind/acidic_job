@@ -15,7 +15,7 @@ module AcidicJob
     STAGED_JOB_ID_PREFIX = "STG"
     STAGED_JOB_ID_DELIMITER = "__"
     IDEMPOTENCY_KEY_LOCK_TIMEOUT_SECONDS = 2
-    RAILS_VERSION = Gem::Version.new(Rails.version)
+    RAILS_VERSION = Gem::Version.new(ActiveRecord.version)
     TARGET_VERSION = Gem::Version.new("7.1")
     REQUIRES_CODER_FOR_SERIALIZE = RAILS_VERSION >= TARGET_VERSION ||
                                    RAILS_VERSION.segments[..1] == TARGET_VERSION.segments

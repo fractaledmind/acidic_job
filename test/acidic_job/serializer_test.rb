@@ -140,7 +140,9 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
 
   test "can serialize a Job instance with Exception argument" do
     class RandomJobWithExceptionArg < ActiveJob::Base; end
-    instance = RandomJobWithExceptionArg.new(StandardError.new("CUSTOM MESSAGE"))
+    exception = StandardError.new("CUSTOM MESSAGE")
+    exception.set_backtrace([])
+    instance = RandomJobWithExceptionArg.new(exception)
     instance.job_id = "12a345bc-67e8-90f1-23g4-5h6i7jk8l901"
 
     assert_equal(
@@ -151,10 +153,7 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
         queue_name: "default",
         priority: nil,
         arguments: [{ _aj_serialized: "AcidicJob::Serializers::ExceptionSerializer",
-                      class: "StandardError",
-                      message: "CUSTOM MESSAGE",
-                      cause: nil,
-                      backtrace: {} }],
+                      yaml: exception.to_yaml }],
         executions: 0,
         exception_executions: {},
         locale: "en",
@@ -314,7 +313,9 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
 
   test "can serialize an ActiveKiq instance with Exception argument" do
     class RandomActiveKiqWithExceptionArg < AcidicJob::ActiveKiq; end
-    instance = RandomActiveKiqWithExceptionArg.new(StandardError.new("CUSTOM MESSAGE"))
+    exception = StandardError.new("CUSTOM MESSAGE")
+    exception.set_backtrace([])
+    instance = RandomActiveKiqWithExceptionArg.new(exception)
     instance.job_id = "12a345bc-67e8-90f1-23g4-5h6i7jk8l901"
 
     assert_equal(
@@ -322,10 +323,7 @@ class TestAcidicJobSerializer < ActiveSupport::TestCase
         job_class: "TestAcidicJobSerializer::RandomActiveKiqWithExceptionArg",
         arguments: [
           { _aj_serialized: "AcidicJob::Serializers::ExceptionSerializer",
-            class: "StandardError",
-            message: "CUSTOM MESSAGE",
-            cause: nil,
-            backtrace: {} }
+            yaml: exception.to_yaml }
         ] }.to_json,
       AcidicJob::Serializer.dump(instance)
     )

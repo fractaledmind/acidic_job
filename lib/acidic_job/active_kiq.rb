@@ -85,7 +85,7 @@ module AcidicJob
           "jid" => @job_id,
           "queue" => @queue_name
         }
-        item["at"] = @scheduled_at if @scheduled_at
+        item["at"] = @scheduled_at if defined?(@scheduled_at) && @scheduled_at
 
         ::Sidekiq::Client.push(item)
       end
@@ -126,16 +126,16 @@ module AcidicJob
     # https://github.com/rails/rails/blob/93c9534c9871d4adad4bc33b5edc355672b59c61/activejob/lib/active_job/callbacks.rb
     concerning :Callbacks do
       class_methods do
-        def around_perform(*filters, &blk)
-          set_callback(:perform, :around, *filters, &blk)
+        def around_perform(...)
+          set_callback(:perform, :around, ...)
         end
 
-        def before_perform(*filters, &blk)
-          set_callback(:perform, :before, *filters, &blk)
+        def before_perform(...)
+          set_callback(:perform, :before, ...)
         end
 
-        def after_perform(*filters, &blk)
-          set_callback(:perform, :after, *filters, &blk)
+        def after_perform(...)
+          set_callback(:perform, :after, ...)
         end
       end
     end
