@@ -85,7 +85,7 @@ module AcidicJob
           "jid" => @job_id,
           "queue" => @queue_name
         }
-        item["at"] = @scheduled_at if @scheduled_at
+        item["at"] = @scheduled_at if defined?(@scheduled_at) && @scheduled_at
 
         ::Sidekiq::Client.push(item)
       end
