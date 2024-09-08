@@ -1,7 +1,7 @@
 class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version %>
   def change
     create_table :acidic_job_runs do |t|
-      t.boolean     :staged, 					null: false,  default: -> { false }
+      t.boolean     :staged, 					null: false,  default: false
       t.string      :idempotency_key, null: false,  index: { unique: true }
       t.text        :serialized_job, 	null: false
       t.string      :job_class, 			null: false
