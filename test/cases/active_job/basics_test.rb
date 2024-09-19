@@ -8,6 +8,7 @@ module Cases
   module ActiveJob
     class Basics < ActiveSupport::TestCase
       include ::ActiveJob::TestHelper
+      include ActiveSupport::Testing::TimeHelpers
 
       def before_setup
         super()
@@ -383,6 +384,20 @@ module Cases
 
         assert_equal "FINISHED", run.recovery_point
         assert_equal 1, Performance.performances
+      end
+
+      test "job can be scheduled to be run in the future" do
+        class FutureJob < ::AcidicJob::Base
+          def perform; end
+        end
+
+        freeze_time
+
+        FutureJob.set(wait: 1.minute).perform_later
+        FutureJob.set(wait_until: 2.minutes.from_now).perform_later
+
+        assert_equal 1.minute.from_now, enqueued_jobs[0][:at]
+        assert_equal 2.minutes.from_now, enqueued_jobs[1][:at]
       end
     end
   end
