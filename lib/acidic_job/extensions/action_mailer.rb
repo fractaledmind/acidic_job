@@ -8,7 +8,7 @@ module AcidicJob
       extend ActiveSupport::Concern
 
       def deliver_acidicly(_options = {})
-        job_class = ::ActionMailer::MailDeliveryJob
+        job_class = ::ActionMailer::Base.delivery_job
         job_args = [@mailer_class.name, @action.to_s, "deliver_now", @params, *@args]
         job = job_class.new(job_args)
 
