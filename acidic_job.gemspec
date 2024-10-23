@@ -27,9 +27,14 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "activejob"
-  spec.add_dependency "activerecord"
-  spec.add_dependency "activesupport"
+  ">= 7.0".tap do |rails_version|
+    spec.add_dependency "activejob", rails_version
+    spec.add_dependency "activerecord", rails_version
+    spec.add_dependency "activesupport", rails_version
+    spec.add_dependency "railties", rails_version
+  end
+  spec.add_dependency "oj"
+
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "net-smtp"
