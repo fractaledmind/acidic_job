@@ -4,7 +4,8 @@ require "active_job/arguments"
 
 module AcidicJob
   module Arguments
-    include ActiveJob::Arguments
+    include ::ActiveJob::Arguments
+
     extend self # rubocop:disable Style/ModuleFunction
 
     # `ActiveJob` will throw an error if it tries to deserialize a GlobalID record.
@@ -14,8 +15,8 @@ module AcidicJob
     # non-persisted records. This is ok. We should simply return `nil` for that portion of the
     # serialized field.
     def deserialize_global_id(hash)
-      GlobalID::Locator.locate hash[GLOBALID_KEY]
-    rescue ActiveRecord::RecordNotFound
+      ::GlobalID::Locator.locate hash[GLOBALID_KEY]
+    rescue ::ActiveRecord::RecordNotFound
       nil
     end
 
@@ -23,8 +24,8 @@ module AcidicJob
     # ActiveJob's first attempt to serialize an ActiveRecord model doesn't throw an exception.
     def convert_to_global_id_hash(argument)
       { GLOBALID_KEY => argument.to_global_id.to_s }
-    rescue URI::GID::MissingModelIdError
-      Serializers.serialize(argument)
+    rescue ::URI::GID::MissingModelIdError
+      ::ActiveJob::Serializers.serialize(argument)
     end
   end
 end
