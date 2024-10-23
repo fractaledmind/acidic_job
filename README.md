@@ -29,21 +29,21 @@ Seriously, go and read these articles. `AcidicJob` brings these techniques and p
 
 ## Key Features
 
-* **Transactional Steps**  
+* **Transactional Steps**
     break your job into a series of steps, each of which will be run within an acidic database transaction, allowing retries to jump back to the last "recovery point".
-* **Steps that Await Jobs**  
+* **Steps that Await Jobs**
     have workflow steps await other jobs, which will be enqueued and processed independently, and only when they all have finished will the parent job be re-enqueued to continue the workflow
-* **Iterable Steps**  
+* **Iterable Steps**
     define steps that iterate over some collection fully until moving on to the next step
-* **Persisted Attributes**  
+* **Persisted Attributes**
     when retrying jobs at later steps, we need to ensure that data created in previous steps is still available to later steps on retry.
-* **Transactionally Staged Jobs**  
+* **Transactionally Staged Jobs**
     enqueue additional jobs within the acidic transaction safely
-* **Custom Idempotency Keys**  
+* **Custom Idempotency Keys**
     use something other than the job ID for the idempotency key of the job run
-* **Sidekiq Callbacks**  
+* **Sidekiq Callbacks**
     bring ActiveJob-like callbacks into your pure Sidekiq Workers
-* **Run Finished Callbacks**  
+* **Run Finished Callbacks**
     set callbacks for when a job run finishes fully
 
 ## Installation
@@ -265,7 +265,7 @@ class RideCreateJob < AcidicJob::Base
   def perform(user_id, ride_params)
     @user = User.find(user_id)
     @params = ride_params
-    
+
     with_acidic_workflow persisting: { ride: nil } do |workflow|
       workflow.step :create_ride_and_audit_record
       workflow.step :create_stripe_charge
@@ -374,7 +374,7 @@ When testing acidic jobs, you are likely to run into `ActiveRecord::TransactionI
 ActiveRecord::TransactionIsolationError: cannot set transaction isolation in a nested transaction
 ```
 
-This error is thrown because by default RSpec and most MiniTest test suites use database transactions to keep the test database clean between tests. The database transaction that is wrapping all of the code executed in your test is run at the standard isolation level, but `AcidicJob` then tries to create another transaction at a more conservative isolation level. You cannot have a nested transaction that runs at a different isolation level, thus, this error. 
+This error is thrown because by default RSpec and most MiniTest test suites use database transactions to keep the test database clean between tests. The database transaction that is wrapping all of the code executed in your test is run at the standard isolation level, but `AcidicJob` then tries to create another transaction at a more conservative isolation level. You cannot have a nested transaction that runs at a different isolation level, thus, this error.
 
 In order to avoid this error, you need to ensure firstly that your tests that run your acidic jobs are not using a database transaction and secondly that they use some different strategy to keep your test database clean. The [DatabaseCleaner](https://github.com/DatabaseCleaner/database_cleaner) gem is a commonly used tool to manage different strategies for keeping your test database clean. As for which strategy to use, `truncation` and `deletion` are both safe, but their speed varies based on our app's table structure (see https://github.com/DatabaseCleaner/database_cleaner#what-strategy-is-fastest). Either is fine; use whichever is faster for your app.
 
