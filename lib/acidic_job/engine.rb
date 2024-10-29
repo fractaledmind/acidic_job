@@ -37,8 +37,6 @@ module AcidicJob
       end
     end
 
-
-
     # :nocov:
     generators do
       require "generators/acidic_job/install_generator"

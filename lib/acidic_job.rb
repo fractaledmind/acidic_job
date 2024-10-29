@@ -2,9 +2,12 @@
 
 require_relative "acidic_job/version"
 require_relative "acidic_job/engine"
-require_relative "acidic_job/workflow"
-require_relative "acidic_job/log_subscriber"
+require_relative "acidic_job/errors"
+require_relative "acidic_job/builder"
+require_relative "acidic_job/context"
 require_relative "acidic_job/arguments"
+require_relative "acidic_job/log_subscriber"
+require_relative "acidic_job/workflow"
 
 require "active_support"
 
@@ -12,6 +15,7 @@ module AcidicJob
   extend self
 
   DEFAULT_LOGGER = ActiveSupport::Logger.new($stdout)
+  FINISHED_RECOVERY_POINT = "FINISHED"
 
   mattr_accessor :logger, default: DEFAULT_LOGGER
   mattr_accessor :connects_to
