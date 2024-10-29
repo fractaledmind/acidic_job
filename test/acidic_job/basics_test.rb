@@ -14,8 +14,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     TestObject.delete_all
   end
 
-  def after_teardown
-  end
+  def after_teardown; end
 
   test "workflow with each step succeeding" do
     class Job1 < ActiveJob::Base

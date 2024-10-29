@@ -37,8 +37,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     TestObject.delete_all
   end
 
-  def after_teardown
-  end
+  def after_teardown; end
 
   test "define_workflow: error with no job configuration fails job" do
     Job.perform_later
