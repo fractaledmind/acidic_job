@@ -4,6 +4,8 @@ require "test_helper"
 require "active_job/test_helper"
 
 class AcidicJob::BreakagesTest < ActiveJob::TestCase
+  include ::ActiveJob::TestHelper
+
   class Job < ActiveJob::Base
     include AcidicJob::Workflow
 

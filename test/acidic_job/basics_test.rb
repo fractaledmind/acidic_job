@@ -4,6 +4,8 @@ require "test_helper"
 require "active_job/test_helper"
 
 class AcidicJob::BasicsTest < ActiveJob::TestCase
+  include ::ActiveJob::TestHelper
+
   def before_setup
     Performance.reset!
     AcidicJob::Value.delete_all
