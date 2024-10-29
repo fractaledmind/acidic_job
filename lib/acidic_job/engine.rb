@@ -32,7 +32,7 @@ module AcidicJob
           Serializers::ExceptionSerializer,
           Serializers::NewRecordSerializer,
           Serializers::JobSerializer,
-          Serializers::RangeSerializer,
+          Serializers::RangeSerializer
         )
       end
     end

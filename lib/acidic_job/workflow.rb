@@ -35,12 +35,12 @@ module AcidicJob
 
       AcidicJob.instrument(:initialize_workflow, "definition" => @workflow_definition) do
         transaction_args = case ::ActiveRecord::Base.connection.adapter_name.downcase.to_sym
-                          # SQLite doesn't support `serializable` transactions
-                          when :sqlite
-                            {}
-                          else
-                            { isolation: :serializable }
-                          end
+                           # SQLite doesn't support `serializable` transactions
+                           when :sqlite
+                             {}
+                           else
+                             { isolation: :serializable }
+                           end
 
         @execution = ::ActiveRecord::Base.transaction(**transaction_args) do
           record = Execution.find_by(idempotency_key: idempotency_key)
@@ -86,7 +86,7 @@ module AcidicJob
 
           current_step = @execution.recover_to
 
-          if not @execution.definition.key?(current_step)
+          if not @execution.definition.key?(current_step) # rubocop:disable Style/Not
             raise UndefinedStepError.new(current_step)
           end
 
@@ -115,7 +115,7 @@ module AcidicJob
         end
         @execution.record!(step: curr_step, action: :succeeded, timestamp: Time.now, result: result)
 
-        return next_step
+        next_step
       rescue StandardError => e
         rescued_error = e
         raise e
@@ -132,7 +132,9 @@ module AcidicJob
           rescue StandardError => e
             # We're already inside an error condition, so swallow any additional
             # errors from here and just send them to logs.
-            logger.error("Failed to store exception at step #{curr_step} for execution ##{@execution.id} because of #{e}.")
+            logger.error(
+              "Failed to store exception at step #{curr_step} for execution ##{@execution.id} because of #{e}."
+            )
           end
         end
       end

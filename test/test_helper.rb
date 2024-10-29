@@ -22,8 +22,6 @@ require "active_record"
 # to be shown.
 Minitest.backtrace_filter = Minitest::BacktraceFilter.new
 
-
-
 class CustomErrorForTesting < StandardError; end
 class RareErrorForTesting < StandardError; end
 
@@ -93,8 +91,8 @@ require "acidic_job"
 
 GlobalID.app = :test
 
-if ENV["LOG"].present?
-  ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new($stdout)
-else
-  ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(IO::NULL)
-end
+ActiveJob::Base.logger = ActiveRecord::Base.logger = if ENV["LOG"].present?
+                                                       Logger.new($stdout)
+                                                     else
+                                                       Logger.new(IO::NULL)
+                                                     end

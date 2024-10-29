@@ -29,21 +29,22 @@ module AcidicJob
     end
 
     private
-      def formatted_event(event, action:, **attributes)
-        "AcidicJob-#{AcidicJob::VERSION} #{action} (#{event.duration.round(1)}ms)  #{formatted_attributes(**attributes)}"
-      end
 
-      def formatted_attributes(**attributes)
-        attributes.map { |attr, value| "#{attr}: #{value.inspect}" }.join(", ")
-      end
+    def formatted_event(event, action:, **attributes)
+      "AcidicJob-#{AcidicJob::VERSION} #{action} (#{event.duration.round(1)}ms)  #{formatted_attributes(**attributes)}"
+    end
 
-      def formatted_error(error)
-        [ error.class, error.message ].compact.join(" ")
-      end
+    def formatted_attributes(**attributes)
+      attributes.map { |attr, value| "#{attr}: #{value.inspect}" }.join(", ")
+    end
 
-      # Use the logger configured for AcidicJob
-      def logger
-        AcidicJob.logger
-      end
+    def formatted_error(error)
+      [error.class, error.message].compact.join(" ")
+    end
+
+    # Use the logger configured for AcidicJob
+    def logger
+      AcidicJob.logger
+    end
   end
 end

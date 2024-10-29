@@ -3,6 +3,9 @@ require:
  - rubocop-rake
 
 AllCops:
+  Exclude:
+    - inline.rb
+    - test/simulation.rb
   TargetRubyVersion: 2.7
   NewCops: enable
 
@@ -25,19 +28,19 @@ Style/Documentation:
 
 Metrics/ModuleLength:
   Enabled: false
-  
+
 Metrics/AbcSize:
   Enabled: false
-  
+
 Metrics/MethodLength:
   Enabled: false
-  
+
 Metrics/BlockLength:
   Enabled: false
-  
+
 Metrics/CyclomaticComplexity:
   Enabled: false
-  
+
 Metrics/PerceivedComplexity:
   Enabled: false
 
@@ -46,3 +49,28 @@ Metrics/ClassLength:
 
 Minitest/MultipleAssertions:
   Enabled: false
+
+Style/ModuleFunction:
+  Enabled: false
+
+Style/RaiseArgs:
+  EnforcedStyle: compact
+
+Style/NegatedIf:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Exclude:
+    - test/**/*_test.rb
+
+Naming/VariableNumber:
+  Exclude:
+    - test/**/*_test.rb
+
+Style/SingleLineMethods:
+  Exclude:
+    - test/**/*_test.rb
+
+Lint/ConstantDefinitionInBlock:
+  Exclude:
+    - test/**/*_test.rb

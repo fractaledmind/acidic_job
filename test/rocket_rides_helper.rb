@@ -22,7 +22,7 @@ module Stripe
   class Charge
     # :nocov:
     def self.create(params, _args)
-      raise CardError, "Your card was declined." if params[:customer] == "tok_chargeCustomerFail"
+      raise CardError.new("Your card was declined.") if params[:customer] == "tok_chargeCustomerFail"
 
       charge_struct = Struct.new(:id)
       charge_struct.new(123)

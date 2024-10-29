@@ -6,7 +6,7 @@ module AcidicJob
   module Arguments
     include ::ActiveJob::Arguments
 
-    extend self # rubocop:disable Style/ModuleFunction
+    extend self
 
     # `ActiveJob` will throw an error if it tries to deserialize a GlobalID record.
     # However, this isn't the behavior that we want for our custom `ActiveRecord` serializer.

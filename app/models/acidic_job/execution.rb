@@ -29,13 +29,13 @@ module AcidicJob
     end
 
     def deserialized_job
-      serialized_job["job_class"].constantize.new.yield_self do |job|
+      serialized_job["job_class"].constantize.new.then do |job|
         job.deserialize(serialized_job)
       end
     end
 
     def raw_arguments
-      JSON.load(serialized_job_before_type_cast)["arguments"]
+      JSON.parse(serialized_job_before_type_cast)["arguments"]
     end
   end
 end

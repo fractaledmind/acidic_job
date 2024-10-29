@@ -3,7 +3,6 @@
 require "test_helper"
 require "active_job/test_helper"
 
-# rubocop:disable Lint/ConstantDefinitionInBlock, Layout/LineLength
 class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
   include ::ActiveJob::TestHelper
 
@@ -31,7 +30,7 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     class AcidicByArguments < ActiveJob::Base
       include AcidicJob::Workflow
 
-      def unique_by = arguments
+      def unique_by; arguments; end
 
       def perform; end
     end
@@ -45,7 +44,7 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     class AcidicByBlockWithString < ActiveJob::Base
       include AcidicJob::Workflow
 
-      def unique_by = "a"
+      def unique_by; "a"; end
 
       def perform; end
     end
@@ -59,7 +58,7 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     class AcidicByBlockWithArrayOfStrings < ActiveJob::Base
       include AcidicJob::Workflow
 
-      def unique_by = %w[a b]
+      def unique_by; %w[a b]; end
 
       def perform; end
     end
@@ -73,7 +72,7 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     class AcidicByBlockWithArg < ActiveJob::Base
       include AcidicJob::Workflow
 
-      def unique_by = arguments[0]
+      def unique_by; arguments[0]; end
 
       def perform; end
     end
@@ -100,4 +99,3 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     assert_equal "ac8d8342bbb2362d13f0a559a3621bb407011368895164b628a54f7fc33fc43c", job.idempotency_key
   end
 end
-# rubocop:enable Lint/ConstantDefinitionInBlock, Layout/LineLength

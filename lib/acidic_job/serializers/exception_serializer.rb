@@ -8,7 +8,7 @@ module AcidicJob
   module Serializers
     class ExceptionSerializer < ::ActiveJob::Serializers::ObjectSerializer
       def serialize(exception)
-       compressed = Zlib::Deflate.deflate(exception.to_yaml)
+        compressed = Zlib::Deflate.deflate(exception.to_yaml)
 
         super("deflated_yaml" => compressed)
       end
