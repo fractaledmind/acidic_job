@@ -7,9 +7,8 @@ $VERBOSE = nil
 
 require "bundler/setup"
 
-# require_relative "../test/dummy/config/environment"
-# ActiveRecord::Migrator.migrations_paths = [File.expand_path("../test/dummy/db/migrate", __dir__)]
 require "combustion"
+require "sqlite3"
 Combustion.path = "test/combustion"
 Combustion.initialize! :active_record, :active_job
 
