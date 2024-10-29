@@ -2,20 +2,10 @@
 
 module AcidicJob
   class Entry < Record
-    self.table_name = "acidic_job_entries"
-
     belongs_to :execution, class_name: "AcidicJob::Execution"
 
-    serialize :data, coder: AcidicJob::Serializer
-
-    # action enum:
-    # :skipped
-    # :succeeded
-    # :retried
-    # :started
-    # :iterated
-    # :completed
-    # :compensated
-    # :errored
+    def started? = action == "started"
+    def succeeded? = action == "succeeded"
+    def errored? = action == "errored"
   end
 end
