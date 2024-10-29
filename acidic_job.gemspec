@@ -33,7 +33,6 @@ Gem::Specification.new do |spec|
     spec.add_dependency "activesupport", rails_version
     spec.add_dependency "railties", rails_version
   end
-  spec.add_dependency "oj"
 
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "minitest"
