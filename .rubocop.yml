@@ -6,7 +6,7 @@ AllCops:
   Exclude:
     - inline.rb
     - test/simulation.rb
-    - gemfiles/vendor/bundle/**/*
+    - vendor/bundle/**/*
   TargetRubyVersion: 2.7
   NewCops: enable
 
