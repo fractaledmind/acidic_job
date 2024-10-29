@@ -4,9 +4,8 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "bundler/setup"
 require "rails/version"
-require "sidekiq/version"
 
-p({ ruby: RUBY_VERSION, rails: Rails::VERSION::STRING, sidekiq: Sidekiq::VERSION })
+p({ ruby: RUBY_VERSION, rails: Rails::VERSION::STRING })
 
 require "simplecov"
 SimpleCov.start do
@@ -15,21 +14,15 @@ SimpleCov.start do
   primary_coverage :branch
 end
 
-require "acidic_job"
-begin
-  require "sidekiq/job"
-rescue LoadError
-  require "sidekiq/worker"
-end
-
-require "acidic_job/active_kiq"
 require "minitest/autorun"
+require "active_job"
+require "active_record"
 
 # Filter out Minitest backtrace while allowing backtrace from other libraries
 # to be shown.
 Minitest.backtrace_filter = Minitest::BacktraceFilter.new
 
-GlobalID.app = :test
+
 
 class CustomErrorForTesting < StandardError; end
 class RareErrorForTesting < StandardError; end
@@ -82,17 +75,26 @@ class MyCustomSerializer < ActiveJob::Serializers::ObjectSerializer
   end
 end
 
+class DefaultsError < StandardError; end
+class RetryableError < StandardError; end
+class DiscardableError < StandardError; end
+
+class TestObject < ActiveRecord::Base
+end
+
 require "combustion"
 require "sqlite3"
 Combustion.path = "test/combustion"
 Combustion.initialize! :active_record, :active_job do
-  require "noticed"
   config.active_job.custom_serializers << MyCustomSerializer
 end
+
+require "acidic_job"
+
+GlobalID.app = :test
 
 if ENV["LOG"].present?
   ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new($stdout)
 else
   ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(IO::NULL)
-  AcidicJob.silence_logger!
 end

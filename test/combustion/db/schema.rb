@@ -3,11 +3,11 @@
 ActiveRecord::Schema.define do
   create_table :acidic_job_executions, force: true do |t|
     t.string      :idempotency_key, null: false,  index: { unique: true }
-    t.text        :serialized_job, 	null: false,  default: "{}"
+    t.json        :serialized_job, 	null: false,  default: "{}"
     t.datetime    :last_run_at, 		null: true,   default: -> { "CURRENT_TIMESTAMP" }
     t.datetime    :locked_at, 			null: true
     t.string      :recover_to, 	    null: true
-    t.text        :definition, 			null: true,   default: "{}"
+    t.json        :definition, 			null: true,   default: "{}"
     t.timestamps
   end
 
@@ -16,7 +16,7 @@ ActiveRecord::Schema.define do
     t.string :step, null: false
     t.string :action, null: false
     t.datetime :timestamp, null: false
-    t.text :data, 			null: true,   default: "{}"
+    t.json :data, 			null: true,   default: "{}"
 
     t.timestamps
   end
@@ -25,7 +25,7 @@ ActiveRecord::Schema.define do
   create_table :acidic_job_values do |t|
     t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }
     t.string :key, null: false
-    t.text :value, null: false,   default: "{}"
+    t.json :value, null: false,   default: "{}"
 
     t.timestamps
   end
@@ -34,11 +34,23 @@ ActiveRecord::Schema.define do
   create_table :acidic_job_batched_jobs, force: true do |t|
     t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }
     t.string     :job_id, null: false, index: true
-    t.text       :serialized_job, 	null: false,  default: "{}"
+    t.json       :serialized_job, 	null: false,  default: "{}"
     t.string     :progress_to, 	  null: false
     t.datetime   :performed_at, 	null: true
 
     t.timestamps
+  end
+
+  # -----------------------------------------------------------------------
+
+  create_table :test_objects, force: true
+
+  create_table :test_events do |t|
+    t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }
+    t.string :name, null: false
+    t.json :payload, null: false, default: "{}"
+    t.datetime :started_at, null: false
+    t.datetime :finished_at, null: false
   end
 
   # -----------------------------------------------------------------------
