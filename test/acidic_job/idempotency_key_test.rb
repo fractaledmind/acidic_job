@@ -14,6 +14,9 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     TestObject.delete_all
   end
 
+  def after_teardown
+  end
+
   test "`unique_by` unconfigured returns `job_id`" do
     class WithoutAcidicIdentifier < ActiveJob::Base
       include AcidicJob::Workflow

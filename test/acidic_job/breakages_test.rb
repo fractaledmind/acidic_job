@@ -6,6 +6,10 @@ require "active_job/test_helper"
 class AcidicJob::BreakagesTest < ActiveJob::TestCase
   include ::ActiveJob::TestHelper
 
+  class DefaultsError < StandardError; end
+  class DiscardableError < StandardError; end
+  class BreakingError < StandardError; end
+
   class Job < ActiveJob::Base
     include AcidicJob::Workflow
 
@@ -25,14 +29,15 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     def step_3; Performance.performed!; end
   end
 
-  class BreakingError < StandardError; end
-
   def before_setup
     Performance.reset!
     AcidicJob::Value.delete_all
     AcidicJob::Entry.delete_all
     AcidicJob::Execution.delete_all
     TestObject.delete_all
+  end
+
+  def after_teardown
   end
 
   test "define_workflow: error with no job configuration fails job" do

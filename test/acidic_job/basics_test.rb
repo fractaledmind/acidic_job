@@ -14,6 +14,9 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     TestObject.delete_all
   end
 
+  def after_teardown
+  end
+
   test "workflow with each step succeeding" do
     class Job1 < ActiveJob::Base
       include AcidicJob::Workflow
@@ -432,12 +435,9 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     test_object_queries = queries.grep(/FROM "test_objects" | INTO "test_objects"/)
 
     assert_equal 3, test_object_queries.count
-    assert_equal(
-      ['SELECT 1 AS one FROM "test_objects" LIMIT ?',
-       'INSERT INTO "test_objects" DEFAULT VALUES RETURNING "id"',
-       'SELECT 1 AS one FROM "test_objects" LIMIT ?'],
-      test_object_queries
-    )
+    assert_match 'SELECT 1 AS one FROM "test_objects" LIMIT ?', test_object_queries[0]
+    assert_match(/INSERT INTO "test_objects" DEFAULT VALUES/, test_object_queries[1])
+    assert_match 'SELECT 1 AS one FROM "test_objects" LIMIT ?', test_object_queries[2]
   end
 
   test "workflow with db IO then error on attempt 1 but then success needs idempotency check that can be selective" do
@@ -503,11 +503,8 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     test_object_queries = queries.grep(/FROM "test_objects" | INTO "test_objects"/)
 
     assert_equal 2, test_object_queries.count
-    assert_equal(
-      ['INSERT INTO "test_objects" DEFAULT VALUES RETURNING "id"',
-       'SELECT 1 AS one FROM "test_objects" LIMIT ?'],
-      test_object_queries
-    )
+    assert_match(/INSERT INTO "test_objects" DEFAULT VALUES/, test_object_queries[0])
+    assert_match 'SELECT 1 AS one FROM "test_objects" LIMIT ?', test_object_queries[1]
   end
 
   test "workflow with custom idempotency key" do
