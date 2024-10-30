@@ -24,6 +24,10 @@ module AcidicJob
       end
     end
 
+    def context
+      @context ||= Context.new(self)
+    end
+
     def finished?
       recover_to.to_s == FINISHED_RECOVERY_POINT
     end
