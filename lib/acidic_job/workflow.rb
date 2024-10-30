@@ -6,6 +6,7 @@ module AcidicJob
   module Workflow
     NO_OP_WRAPPER = proc { |&block| block.call }
     REPEAT_STEP = :REPEAT_STEP
+    HALT_STEP = :HALT_STEP
 
     # PUBLIC
     # provide a default mechanism for identifying unique job runs
@@ -93,8 +94,14 @@ module AcidicJob
 
           step_definition = @execution.definition[current_step]
           AcidicJob.instrument(:process_step, **step_definition) do
-            recover_to = take_step(step_definition)
-            @execution.update!(recover_to: recover_to)
+            recover_to = catch(:halt) { take_step(step_definition) }
+            case recover_to
+            when HALT_STEP
+              @execution.record!(step: step_definition.fetch("does"), action: :halted, timestamp: Time.now)
+              return true
+            else
+              @execution.update!(recover_to: recover_to)
+            end
           end
         end
       end
@@ -170,6 +177,10 @@ module AcidicJob
     # PUBLIC
     def repeat_step!
       throw :repeat, REPEAT_STEP
+    end
+
+    def halt_step!
+      throw :halt, HALT_STEP
     end
   end
 end
