@@ -29,7 +29,7 @@ ActiveRecord::Schema.define do
 
     t.timestamps
   end
-  add_index :acidic_job_values, %i[execution_id key]
+  add_index :acidic_job_values, %i[execution_id key], unique: true
 
   create_table :acidic_job_batched_jobs, force: true do |t|
     t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }

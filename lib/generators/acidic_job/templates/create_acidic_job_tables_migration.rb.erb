@@ -28,6 +28,6 @@ class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version
 
       t.timestamps
     end
-    add_index :acidic_job_values, [:execution_id, :key]
+    add_index :acidic_job_values, [:execution_id, :key], unique: true
   end
 end
