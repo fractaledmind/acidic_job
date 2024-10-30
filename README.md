@@ -1,4 +1,4 @@
-# Acidic Job
+# 🧪 Acidic Job
 
 [![Gem Version](https://badge.fury.io/rb/acidic_job.svg)](https://rubygems.org/gems/acidic_job)
 [![Gem Downloads](https://img.shields.io/gem/dt/acidic_job)](https://rubygems.org/gems/acidic_job)
@@ -8,12 +8,15 @@
 [![Sponsors](https://img.shields.io/github/sponsors/fractaledmind?color=eb4aaa&logo=GitHub%20Sponsors)](https://github.com/sponsors/fractaledmind)
 [![Twitter Follow](https://img.shields.io/twitter/url?label=%40fractaledmind&style=social&url=https%3A%2F%2Ftwitter.com%2Ffractaledmind)](https://twitter.com/fractaledmind)
 
+> [!WARNING]
+> This is the README for the _new_ release candidate of v1, which is a major refactor from the [previous release candidate of v1](https://github.com/fractaledmind/acidic_job/tree/v1.0.0.pre29). If you are looking for the stable release, please refer to the [v0.9.0 README](https://github.com/fractaledmind/acidic_job/tree/v0.9.0).
+
 
 ## Durable execution workflows for Active Job
 
 Rails applications today frequently need to coordinate complex multi-step operations across external services, databases, and systems. While Active Job provides eventual consistency guarantees, it doesn't address the challenges of managing stateful, long-running operations that must be resilient to failures, timeouts, and partial completions. `AcidicJob` enhances Active Job with durable execution workflows that automatically track state and resiliently handle retries, while providing you the tools to ensure your operations are truly idempotent through careful state management and IO awareness.
 
-`AcidicJob` lets you define complex workflows as a sequence of discrete, retriable steps, and by building on top of Active job you leverage your existing job infrastructure. Each step in a workflow is individually tracked and monitored, with the system maintaining consistent state even in the face of network issues, timeouts, or service outages. `AcidicJob` makes it simple to implement robust distributed operations without managing your own state machines or complex retry logic.
+With AcidicJob, you can write reliable and repeatable multi-step distributed operations that are Atomic ⚛️, Consistent 🤖, Isolated 🕴🏼, and Durable ⛰️.
 
 
 ## Installation
@@ -150,7 +153,7 @@ end
 As you see, you access the `@ctx` object as if it were a hash, though it is a custom `AcidicJob::Context` object that persists the data to `AcidicJob::Value` records associated with the workflow's `AcidicJob::Execution` record.
 
 > [!NOTE]
-> This does mean that you are restricted to objects that can be serialized by **`ActiveJob`** (for more info, see [the Rails Guide on `ActiveJob`](https://edgeguides.rubyonrails.org/active_job_basics.html#supported-types-for-arguments)). This means you can persist ActiveRecord models, and any simple Ruby data types, but you can't persist things like Procs or custom class instances, for example. `AcidicJob` does, though, extend the standard set of supported types to include Active Job instances themselves, unpersisted ActiveRecord instances, and Ruby exceptions.
+> This does mean that you are restricted to objects that can be serialized by **`ActiveJob`** (for more info, see [the Rails Guide on `ActiveJob`](https://edgeguides.rubyonrails.org/active_job_basics.html#supported-types-for-arguments)). This means you can persist Active Record models, and any simple Ruby data types, but you can't persist things like Procs or custom class instances, for example. `AcidicJob` does, though, extend the standard set of supported types to include Active Job instances themselves, unpersisted Active Record instances, and Ruby exceptions.
 
 As the code sample also suggests, you should always use standard instance variables defined in your `perform` method when you have any values that your `step` methods need access to, but are present at the start of the `perform` method. You only need to persist attributes that will be set _during a step_ via `@ctx`.
 
