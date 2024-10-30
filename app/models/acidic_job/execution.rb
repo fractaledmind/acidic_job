@@ -29,7 +29,7 @@ module AcidicJob
     end
 
     def deserialized_job
-      serialized_job["job_class"].constantize.new.then do |job|
+      serialized_job["job_class"].constantize.new.tap do |job|
         job.deserialize(serialized_job)
       end
     end
