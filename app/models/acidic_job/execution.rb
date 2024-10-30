@@ -41,5 +41,10 @@ module AcidicJob
     def raw_arguments
       JSON.parse(serialized_job_before_type_cast)["arguments"]
     end
+
+    def enqueue_job
+      deserialized_job.enqueue
+      true
+    end
   end
 end
