@@ -5,6 +5,7 @@ require "active_job"
 module AcidicJob
   module Workflow
     NO_OP_WRAPPER = proc { |&block| block.call }
+    REPEAT_STEP = :REPEAT_STEP
 
     # PUBLIC
     # provide a default mechanism for identifying unique job runs
@@ -113,9 +114,13 @@ module AcidicJob
         result = AcidicJob.instrument(:perform_step, **step_definition) do
           step_method.call
         end
-        @execution.record!(step: curr_step, action: :succeeded, timestamp: Time.now, result: result)
-
-        next_step
+        case result
+        when REPEAT_STEP
+          curr_step
+        else
+          @execution.record!(step: curr_step, action: :succeeded, timestamp: Time.now, result: result)
+          next_step
+        end
       rescue StandardError => e
         rescued_error = e
         raise e
@@ -156,10 +161,15 @@ module AcidicJob
       wrapper = step_definition["transactional"] ? @execution.method(:with_lock) : NO_OP_WRAPPER
 
       proc do
-        wrapper.call { step_method.call }
+        catch(:repeat) { wrapper.call { step_method.call } }
       end
     rescue NameError
       raise UndefinedMethodError.new(step_name)
+    end
+
+    # PUBLIC
+    def repeat_step!
+      throw :repeat, REPEAT_STEP
     end
   end
 end

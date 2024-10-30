@@ -548,4 +548,76 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       execution.entries.order(timestamp: :asc).pluck(:step, :action)
     )
   end
+
+  test "workflow with iteration" do
+    class Job11 < ActiveJob::Base
+      include AcidicJob::Workflow
+
+      def perform
+        @enumerable = ("a".."z").to_a
+        execute_workflow do |w|
+          w.step :step_1
+        end
+      end
+
+      def step_1
+        cursor = @ctx[:cursor] || 0
+        item = @enumerable[cursor]
+        return if item.nil?
+
+        # do thing with `item`
+        Performance.performed!
+
+        @ctx[:cursor] = cursor + 1
+        repeat_step!
+      end
+    end
+
+    Job11.perform_later
+    flush_enqueued_jobs until enqueued_jobs.empty?
+
+    assert_equal 26, Performance.performances
+    assert_equal 1, AcidicJob::Execution.count
+
+    execution = AcidicJob::Execution.first
+
+    assert_equal [self.class.name, "Job11"].join("::"), execution.serialized_job["job_class"]
+    assert_equal "FINISHED", execution.recover_to
+
+    assert_equal 28, AcidicJob::Entry.count
+    assert_equal(
+      [%w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 started],
+       %w[step_1 succeeded]],
+      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+    )
+
+    assert_equal 1, AcidicJob::Value.count
+    assert_equal 26, AcidicJob::Value.first.value
+  end
 end
