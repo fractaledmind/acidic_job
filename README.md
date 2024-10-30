@@ -159,7 +159,7 @@ As the code sample also suggests, you should always use standard instance variab
 
 Resilient workflows must, necessarily, be idempotent.[^2] Idempotency is a fancy word that simply means your jobs need to be able to be run multiple times while any side effects only happen once. In order for your workflow executions to be idempotent, `AcidicJob` needs to know what constitutes a unique execution of your job. You can define what makes your job unique by implementing the `unique_by` method in your job:
 
-[^2] This is echoed both by [Mike Perham](https://www.mikeperham.com), the creator of Sidekiq, in the Sidekiq [docs on best practices](https://github.com/mperham/sidekiq/wiki/Best-Practices#2-make-your-job-idempotent-and-transactional) by the GitLab team in their [Sidekiq Style Guide](https://docs.gitlab.com/ee/development/sidekiq_style_guide.html#idempotent-jobs).
+[^2]: This is echoed both by [Mike Perham](https://www.mikeperham.com), the creator of Sidekiq, in the Sidekiq [docs on best practices](https://github.com/mperham/sidekiq/wiki/Best-Practices#2-make-your-job-idempotent-and-transactional) by the GitLab team in their [Sidekiq Style Guide](https://docs.gitlab.com/ee/development/sidekiq_style_guide.html#idempotent-jobs).
 
 ```ruby
 class Job < ActiveJob::Base
