@@ -7,6 +7,7 @@ module AcidicJob
     NO_OP_WRAPPER = proc { |&block| block.call }
     REPEAT_STEP = :REPEAT_STEP
     HALT_STEP = :HALT_STEP
+    private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
 
     # PUBLIC
     # provide a default mechanism for identifying unique job runs
@@ -107,6 +108,16 @@ module AcidicJob
       end
     end
 
+    def repeat_step!
+      throw :repeat, REPEAT_STEP
+    end
+
+    def halt_step!
+      throw :halt, HALT_STEP
+    end
+
+    private
+
     # PRIVATE
     def take_step(step_definition)
       curr_step = step_definition.fetch("does")
@@ -172,15 +183,6 @@ module AcidicJob
       end
     rescue NameError
       raise UndefinedMethodError.new(step_name)
-    end
-
-    # PUBLIC
-    def repeat_step!
-      throw :repeat, REPEAT_STEP
-    end
-
-    def halt_step!
-      throw :halt, HALT_STEP
     end
   end
 end
