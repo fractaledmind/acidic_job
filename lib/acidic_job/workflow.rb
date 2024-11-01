@@ -14,20 +14,20 @@ module AcidicJob
     def execute_workflow(unique_by:, &block)
       serialized_job = serialize
 
-      AcidicJob.instrument(:define_workflow, **serialized_job) do
-        raise RedefiningWorkflowError if defined? @builder
+      workflow_definition = AcidicJob.instrument(:define_workflow, **serialized_job) do
+        raise RedefiningWorkflowError if defined? @_builder
 
-        @builder = Builder.new
+        @_builder = Builder.new
 
         raise UndefinedWorkflowBlockError unless block_given?
         raise InvalidWorkflowBlockError if block.arity != 1
 
-        block.call @builder
+        block.call @_builder
 
-        raise MissingStepsError if @builder.steps.empty?
+        raise MissingStepsError if @_builder.steps.empty?
 
         # convert the array of steps into a hash of recovery_points and next steps
-        workflow_definition = @builder.define_workflow
+        @_builder.define_workflow
       end
 
       AcidicJob.instrument(:initialize_workflow, "definition" => workflow_definition) do

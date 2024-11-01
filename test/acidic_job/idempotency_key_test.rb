@@ -46,7 +46,9 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     job = AcidicByArguments.new
     job.perform_now
 
-    assert_equal "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945", job.idempotency_key
+    execution = AcidicJob::Execution.first
+
+    assert_equal "bab619c21aa975baef217fbd5c6e01a7674d9d8ee3fa1c4e2a178e41d7952b23", execution.idempotency_key
   end
 
   test "idempotency_key when unique_by is arguments and arguments are a static string" do
@@ -63,7 +65,9 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     job = AcidicByBlockWithString.new("a")
     job.perform_now
 
-    assert_equal "0eb5b8d6f81bc677da8a08567cc4fa9a06a57e9ec8da85ed73a7f62727996002", job.idempotency_key
+    execution = AcidicJob::Execution.first
+
+    assert_equal "11460654191869f08d979326233f4d4b1287b77ed069c53ac79036d96d54dd3e", execution.idempotency_key
   end
 
   test "idempotency_key when unique_by is arguments and arguments are an array of strings" do
@@ -80,7 +84,9 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     job = AcidicByBlockWithArrayOfStrings.new("a", "b")
     job.perform_now
 
-    assert_equal "0473ef2dc0d324ab659d3580c1134e9d812035905c4781fdd6d529b0c6860e13", job.idempotency_key
+    execution = AcidicJob::Execution.first
+
+    assert_equal "76564b0604a5dfd81d1f637416e664352eda527e2cd78a806e91ad6ccd609eb3", execution.idempotency_key
   end
 
   test "idempotency_key when unique_by is arguments and arguments are an array of different values" do
@@ -97,6 +103,8 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
     job = AcidicByBlockWithArgValue.new([1, "string", { a: 1, b: 2 }, [3, 4, 5]])
     job.perform_now
 
-    assert_equal "e493eb3be3e78cb3f40d40402c532efad9cf240d2dd6af839d37ef51a6f71aba", job.idempotency_key
+    execution = AcidicJob::Execution.first
+
+    assert_equal "a7c36d24b42051092df5547146952d4707bf6e04b84774576bad6a37937d018a", execution.idempotency_key
   end
 end

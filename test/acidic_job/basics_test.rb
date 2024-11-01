@@ -533,7 +533,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal [self.class.name, "Job10"].join("::"), execution.serialized_job["job_class"]
     assert_equal "FINISHED", execution.recover_to
-    assert_equal "a615eeaee21de5179de080de8c3052c8da901138406ba71c38c032845f7d54f4", execution.idempotency_key
+    assert_equal "0ce3d65c09b390b8a53060eb6184a30d4a7025ca403b9f5aeda769932a9e2c86", execution.idempotency_key
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
