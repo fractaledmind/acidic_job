@@ -510,10 +510,8 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     class Job10 < ActiveJob::Base
       include AcidicJob::Workflow
 
-      def unique_by; arguments; end
-
       def perform(*_args)
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3

@@ -9,15 +9,9 @@ module AcidicJob
     HALT_STEP = :HALT_STEP
     private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
 
-    # PUBLIC
-    # provide a default mechanism for identifying unique job runs
-    # typical: [self.class.name, self.arguments]
-    def unique_by
-      job_id
-    end
 
-    # PUBLIC
-    def execute_workflow(&block)
+    def execute_workflow(unique_by: job_id, &block)
+      @unique_by = unique_by
       serialized_job = serialize
 
       AcidicJob.instrument(:define_workflow, **serialized_job) do
