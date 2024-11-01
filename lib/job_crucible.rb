@@ -105,6 +105,7 @@ module JobCrucible
       while enqueued_jobs.any?
         enqueued_jobs.each do |payload|
           enqueued_jobs.delete(payload)
+          next if payload["job_id"] == @template.job_id
           performed_jobs << payload
           instance = payload[:job].deserialize(payload)
           instance.scheduled_at = Time.at(payload[:at]) if payload.key?(:at)
