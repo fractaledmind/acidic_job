@@ -11,7 +11,7 @@ module Crucibles
       include AcidicJob::Workflow
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: job_id) do |w|
           w.step :delay
           w.step :do_something
         end

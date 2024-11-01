@@ -11,7 +11,7 @@ module AcidicJob
 
     attr_reader :execution, :ctx, :unique_by, :idempotency_key
 
-    def execute_workflow(unique_by: job_id, &block)
+    def execute_workflow(unique_by:, &block)
       @unique_by = unique_by
       serialized_job = serialize
 

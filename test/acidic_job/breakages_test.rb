@@ -17,7 +17,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     discard_on DiscardableError
 
     def perform
-      execute_workflow do |w|
+      execute_workflow(unique_by: arguments) do |w|
         w.step :step_1
         w.step :step_2
         w.step :step_3

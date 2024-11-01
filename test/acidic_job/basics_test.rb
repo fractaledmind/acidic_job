@@ -21,7 +21,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       include AcidicJob::Workflow
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3
@@ -63,7 +63,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       retry_on DefaultsError
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3
@@ -111,7 +111,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       discard_on DiscardableError
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3
@@ -149,7 +149,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       discard_on DiscardableError
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3
@@ -189,7 +189,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       include AcidicJob::Workflow
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3
@@ -231,7 +231,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       include AcidicJob::Workflow
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3
@@ -278,7 +278,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       include AcidicJob::Workflow
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2, transactional: true
           w.step :step_3
@@ -327,7 +327,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       retry_on DefaultsError
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3
@@ -380,7 +380,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       retry_on DefaultsError
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3
@@ -446,7 +446,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       retry_on DefaultsError
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: arguments) do |w|
           w.step :step_1
           w.step :step_2
           w.step :step_3

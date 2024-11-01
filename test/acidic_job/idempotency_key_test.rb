@@ -16,7 +16,7 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
 
   def after_teardown; end
 
-  test "unique_by unconfigured returns job_id" do
+  test "unique_by unconfigured raises error" do
     class WithoutAcidicIdentifier < ActiveJob::Base
       include AcidicJob::Workflow
 
@@ -27,10 +27,9 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
       def step_1; nil; end
     end
 
-    job = WithoutAcidicIdentifier.new
-    job.perform_now
-
-    assert_equal job.job_id, job.unique_by
+    assert_raises(ArgumentError, "missing keyword: :unique_by") do
+      WithoutAcidicIdentifier.perform_now
+    end
   end
 
   test "idempotency_key when unique_by is arguments and arguments are empty" do

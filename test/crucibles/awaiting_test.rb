@@ -39,7 +39,7 @@ module Crucibles
       end
 
       def perform
-        execute_workflow do |w|
+        execute_workflow(unique_by: job_id) do |w|
           w.step :enqueue_jobs
           w.step :await_jobs
           w.step :do_something

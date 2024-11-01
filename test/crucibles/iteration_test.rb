@@ -12,7 +12,7 @@ module Crucibles
 
       def perform
         @enumerable = (1..3).to_a
-        execute_workflow do |w|
+        execute_workflow(unique_by: job_id) do |w|
           w.step :step_1
         end
       end
