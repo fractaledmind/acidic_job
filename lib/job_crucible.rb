@@ -15,7 +15,7 @@ module JobCrucible
     end
 
     def run(&callback)
-      @template.class.retry_on RetryableError, attempts: @depth + 1
+      @template.class.retry_on RetryableError, attempts: @depth + 2
 
       debug "Running #{variants.size} simulations of the total #{permutations.size} possibilities..."
 
@@ -159,7 +159,7 @@ module JobCrucible
       end
     end
 
-    def to_s
+    def inspect
       @breakpoints.flat_map do |location, configs|
         configs.keys.map { |position| "#{position}-#{location}" }
       end.join("|>")
