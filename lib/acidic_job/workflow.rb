@@ -9,10 +9,9 @@ module AcidicJob
     HALT_STEP = :HALT_STEP
     private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
 
-    attr_reader :execution, :ctx, :unique_by, :idempotency_key
+    attr_reader :execution, :ctx
 
     def execute_workflow(unique_by:, &block)
-      @unique_by = unique_by
       serialized_job = serialize
 
       AcidicJob.instrument(:define_workflow, **serialized_job) do
@@ -28,10 +27,10 @@ module AcidicJob
         raise MissingStepsError if @builder.steps.empty?
 
         # convert the array of steps into a hash of recovery_points and next steps
-        @workflow_definition = @builder.define_workflow
+        workflow_definition = @builder.define_workflow
       end
 
-      AcidicJob.instrument(:initialize_workflow, "definition" => @workflow_definition) do
+      AcidicJob.instrument(:initialize_workflow, "definition" => workflow_definition) do
         transaction_args = case ::ActiveRecord::Base.connection.adapter_name.downcase.to_sym
                            # SQLite doesn't support `serializable` transactions
                            when :sqlite
@@ -39,10 +38,10 @@ module AcidicJob
                            else
                              { isolation: :serializable }
                            end
-        @idempotency_key = Digest::SHA256.hexdigest(JSON.dump(unique_by))
+        idempotency_key = Digest::SHA256.hexdigest(JSON.dump([self.class.name, unique_by]))
 
         @execution = ::ActiveRecord::Base.transaction(**transaction_args) do
-          record = Execution.find_by(idempotency_key: @idempotency_key)
+          record = Execution.find_by(idempotency_key: idempotency_key)
 
           if record.present?
             # Programs enqueuing multiple jobs with different parameters but the
@@ -51,8 +50,8 @@ module AcidicJob
               raise ArgumentMismatchError.new(serialized_job["arguments"], record.raw_arguments)
             end
 
-            if record.definition != @workflow_definition
-              raise DefinitionMismatchError.new(@workflow_definition, record.definition)
+            if record.definition != workflow_definition
+              raise DefinitionMismatchError.new(workflow_definition, record.definition)
             end
 
             # Only acquire a lock if the key is unlocked or its lock has expired
@@ -64,10 +63,10 @@ module AcidicJob
             )
           else
             record = Execution.create!(
-              idempotency_key: @idempotency_key,
+              idempotency_key: idempotency_key,
               serialized_job: serialized_job,
-              definition: @workflow_definition,
-              recover_to: @workflow_definition.keys.first
+              definition: workflow_definition,
+              recover_to: workflow_definition.keys.first
             )
           end
 
@@ -114,7 +113,6 @@ module AcidicJob
 
     private
 
-    # PRIVATE
     def take_step(step_definition)
       curr_step = step_definition.fetch("does")
       next_step = step_definition.fetch("then")
@@ -159,7 +157,6 @@ module AcidicJob
       end
     end
 
-    # PRIVATE
     def performable_step_for(step_definition)
       step_name = step_definition.fetch("does")
       step_method = method(step_name)
