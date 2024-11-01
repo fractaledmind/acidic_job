@@ -49,7 +49,9 @@ module Crucibles
       def enqueue_jobs
         job_1 = ChildJob1.new(@execution)
         job_2 = ChildJob2.new(@execution)
-        ActiveJob.perform_all_later(job_1, job_2)
+        job_1.enqueue
+        job_2.enqueue
+        # ActiveJob.perform_all_later(job_1, job_2)
 
         @ctx[:job_ids] = [job_1.job_id, job_2.job_id]
         @ctx[job_1.job_id] = false
