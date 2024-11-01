@@ -6,8 +6,9 @@ module JobCrucible
   class RetryableError < StandardError; end
 
   class Simulation
-    def initialize(job, variations: 100, seed: nil, depth: 1)
+    def initialize(job, test: nil, variations: 100, seed: nil, depth: 1)
       @template = job
+      @test = test
       @variations = variations
       @seed = seed || Random.new_seed
       @random = Random.new(@seed)
@@ -69,13 +70,12 @@ module JobCrucible
       end
 
       trace.enable { @template.perform_now }
-
       @callstack
     end
 
     def run_scenario(scenario, &callback)
       debug "Running simulation with scenario: #{scenario}"
-
+      @test.before_setup
       events = []
       ActiveSupport::Notifications.subscribed(->(event) { events << event.dup }, /active_job/) do
         scenario.enable do
@@ -87,6 +87,7 @@ module JobCrucible
       end
 
       scenario.events = events
+      @test.after_teardown
       callback.call(scenario)
     end
 
