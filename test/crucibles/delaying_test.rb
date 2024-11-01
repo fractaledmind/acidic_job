@@ -3,8 +3,6 @@
 require "test_helper"
 require "job_crucible"
 
-ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(IO::NULL)
-
 module Crucibles
   class DelayingTest < ActiveJob::TestCase
     class Job < ActiveJob::Base
