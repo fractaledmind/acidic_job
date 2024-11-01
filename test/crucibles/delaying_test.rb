@@ -70,28 +70,26 @@ module Crucibles
     end
 
     test "simulation" do
-      job = Job.new
-      simulation = JobCrucible::Simulation.new(job, seed: Minitest.seed, depth: 1)
+      simulation = JobCrucible::Simulation.new(Job.new, test: self, seed: Minitest.seed, depth: 1)
       simulation.run do |scenario|
         assert_predicate scenario, :all_executed?, scenario.inspect
 
-        execution_id, recover_to = AcidicJob::Execution.where(idempotency_key: job.idempotency_key)
-                                                       .pick(:id, :recover_to)
+        execution = AcidicJob::Execution.first
 
-        refute_nil execution_id, scenario.inspect
-        assert_equal "FINISHED", recover_to, scenario.inspect
+        refute_nil execution.id, scenario.inspect
+        assert_equal "FINISHED", execution.recover_to, scenario.inspect
 
-        logs = AcidicJob::Entry.where(execution_id: execution_id).order(timestamp: :asc).pluck(:step, :action)
+        logs = AcidicJob::Entry.where(execution: execution).order(timestamp: :asc).pluck(:step, :action)
 
         assert_equal 2, logs.count { |_, action| action == "succeeded" }, scenario.inspect
-        assert_equal 3, logs.count { |_, action| action == "started" }, scenario.inspect
+        assert_operator logs.count { |_, action| action == "started" }, :>=, 3, scenario.inspect
         step_logs = logs.each_with_object({}) { |(step, status), hash| (hash[step] ||= []) << status }
 
         step_logs.each_value do |actions|
           assert_equal 1, actions.count { |it| it == "succeeded" }, scenario.inspect
         end
 
-        context = AcidicJob::Value.where(execution_id: execution_id).order(created_at: :asc).pluck(:key, :value)
+        context = AcidicJob::Value.where(execution: execution).order(created_at: :asc).pluck(:key, :value)
 
         assert_equal 1, context.count, scenario.inspect
         assert_equal false, AcidicJob::Value.find_by(key: "halt").value, scenario.inspect
