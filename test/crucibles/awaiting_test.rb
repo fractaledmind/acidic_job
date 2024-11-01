@@ -119,30 +119,32 @@ module Crucibles
         execution_id, recover_to = AcidicJob::Execution.where(idempotency_key: job.idempotency_key)
                                                        .pick(:id, :recover_to)
 
-        assert execution_id
+        refute_nil execution_id, scenario.inspect
         assert_equal "FINISHED", recover_to
 
         logs = AcidicJob::Entry.where(execution_id: execution_id).order(timestamp: :asc).pluck(:step, :action)
 
-        assert_equal(3, logs.count { |_, action| action == "succeeded" })
-        assert_equal(4, logs.count { |_, action| action == "started" })
+        assert_equal 3, logs.count { |_, action| action == "succeeded" }, scenario.inspect
+        assert_equal 4, logs.count { |_, action| action == "started" }, scenario.inspect
         step_logs = logs.each_with_object({}) { |(step, status), hash| (hash[step] ||= []) << status }
 
         step_logs.each_value do |actions|
-          assert_equal(1, actions.count { |it| it == "succeeded" })
+          assert_equal 1, actions.count { |it| it == "succeeded" }, scenario.inspect
         end
 
         context = AcidicJob::Value.where(execution_id: execution_id).order(created_at: :asc).pluck(:key, :value)
 
-        assert_equal 3, context.count
+        assert_equal 3, context.count, scenario.inspect
 
         job_ids = context.find { |key, _| key == "job_ids" }&.last
 
         job_ids.each do |job_id|
-          assert AcidicJob::Value.find_by(key: job_id).value
+          assert_equal true, AcidicJob::Value.find_by(key: job_id).value, scenario.inspect
         end
 
-        assert_operator scenario.events.size, :>=, 18
+        assert_operator scenario.events.size, :>=, 18, scenario.inspect
+
+        print "."
       end
     end
   end

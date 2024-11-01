@@ -70,35 +70,38 @@ module Crucibles
       job = Job.new
       simulation = JobCrucible::Simulation.new(job, seed: Minitest.seed, depth: 1)
       simulation.run do |scenario|
-        assert_predicate scenario, :all_executed?
+        assert_predicate scenario, :all_executed?, scenario.inspect
 
         execution_id, recover_to = AcidicJob::Execution.where(idempotency_key: job.idempotency_key)
                                                        .pick(:id, :recover_to)
 
-        assert execution_id
-        assert_equal "FINISHED", recover_to
+        refute_nil execution_id, scenario.inspect
+        assert_equal "FINISHED", recover_to, scenario.inspect
 
         logs = AcidicJob::Entry.where(execution_id: execution_id).order(timestamp: :asc).pluck(:step, :action)
 
-        assert_equal(1, logs.count { |_, action| action == "succeeded" })
-        assert_equal(4, logs.count { |_, action| action == "started" })
+        assert_equal 1, logs.count { |_, action| action == "succeeded" }, scenario.inspect
+        assert_equal 4, logs.count { |_, action| action == "started" }, scenario.inspect
         step_logs = logs.each_with_object({}) { |(step, status), hash| (hash[step] ||= []) << status }
 
         step_logs.each_value do |actions|
-          assert_equal(1, actions.count { |it| it == "succeeded" })
+          assert_equal 1, actions.count { |it| it == "succeeded" }, scenario.inspect
         end
 
         context = AcidicJob::Value.where(execution_id: execution_id).order(created_at: :asc).pluck(:key, :value)
 
-        assert_equal 1, context.count
-        assert_equal [["cursor", 3]], context
+        assert_equal 1, context.count, scenario.inspect
+        assert_equal [["cursor", 3]], context, scenario.inspect
 
-        assert_equal 7, scenario.events.size
+        assert_equal 7, scenario.events.size, scenario.inspect
         assert_equal(
           ["enqueue.active_job", "perform_start.active_job", "enqueue_at.active_job", "enqueue_retry.active_job",
            "perform.active_job", "perform_start.active_job", "perform.active_job"],
-          scenario.events.map(&:name)
+          scenario.events.map(&:name),
+          scenario.inspect
         )
+
+        print "."
       end
     end
   end
