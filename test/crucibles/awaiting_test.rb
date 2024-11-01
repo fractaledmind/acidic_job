@@ -123,7 +123,8 @@ module Crucibles
         logs = AcidicJob::Entry.where(execution: execution).order(timestamp: :asc).pluck(:step, :action)
 
         assert_equal 3, logs.count { |_, action| action == "succeeded" }, scenario.inspect
-        assert_equal 4, logs.count { |_, action| action == "started" }, scenario.inspect
+        # if error occurs during `enqueue_jobs` step, can have more than 1 start for that step
+        assert_operator logs.count { |_, action| action == "started" }, :>=, 4, scenario.inspect
         step_logs = logs.each_with_object({}) { |(step, status), hash| (hash[step] ||= []) << status }
 
         step_logs.each_value do |actions|
@@ -132,7 +133,8 @@ module Crucibles
 
         context = AcidicJob::Value.where(execution: execution).order(created_at: :asc).pluck(:key, :value)
 
-        assert_equal 3, context.count, scenario.inspect
+        # If error occurs after some jobs enqueued, but before new ctx is set, can have more than 3
+        assert_operator context.count, :>=, 3, [scenario.inspect, context]
 
         job_ids = context.find { |key, _| key == "job_ids" }&.last
 

@@ -82,6 +82,7 @@ module Crucibles
         logs = AcidicJob::Entry.where(execution: execution).order(timestamp: :asc).pluck(:step, :action)
 
         assert_equal 2, logs.count { |_, action| action == "succeeded" }, scenario.inspect
+        # if error occurs during `delay` step, can have more than 1 start for that step
         assert_operator logs.count { |_, action| action == "started" }, :>=, 3, scenario.inspect
         step_logs = logs.each_with_object({}) { |(step, status), hash| (hash[step] ||= []) << status }
 
