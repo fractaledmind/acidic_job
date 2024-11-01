@@ -9,6 +9,7 @@ module AcidicJob
     HALT_STEP = :HALT_STEP
     private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
 
+    attr_reader :execution, :ctx, :unique_by, :idempotency_key
 
     def execute_workflow(unique_by: job_id, &block)
       @unique_by = unique_by
@@ -38,9 +39,10 @@ module AcidicJob
                            else
                              { isolation: :serializable }
                            end
+        @idempotency_key = Digest::SHA256.hexdigest(JSON.dump(unique_by))
 
         @execution = ::ActiveRecord::Base.transaction(**transaction_args) do
-          record = Execution.find_by(idempotency_key: idempotency_key)
+          record = Execution.find_by(idempotency_key: @idempotency_key)
 
           if record.present?
             # Programs enqueuing multiple jobs with different parameters but the
@@ -62,7 +64,7 @@ module AcidicJob
             )
           else
             record = Execution.create!(
-              idempotency_key: idempotency_key,
+              idempotency_key: @idempotency_key,
               serialized_job: serialized_job,
               definition: @workflow_definition,
               recover_to: @workflow_definition.keys.first
@@ -155,12 +157,6 @@ module AcidicJob
           end
         end
       end
-    end
-
-    # PRIVATE
-    # encode the job run identifier as a hex string
-    def idempotency_key
-      @idempotency_key ||= Digest::SHA256.hexdigest(JSON.dump(unique_by))
     end
 
     # PRIVATE
