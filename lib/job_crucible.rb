@@ -139,11 +139,17 @@ module JobCrucible
       trace = TracePoint.new(:line) do |tp|
         key = "#{tp.path}:#{tp.lineno}"
 
-        execute_block(@breakpoints[prev_key][:after]) if prev_key && @breakpoints.key?(prev_key)
+        begin
+          if prev_key && @breakpoints.key?(prev_key)
+            execute_block(@breakpoints[prev_key][:after])
+          end
 
-        execute_block(@breakpoints[key][:before]) if @breakpoints.key?(key)
-
-        prev_key = key
+          if @breakpoints.key?(key)
+            execute_block(@breakpoints[key][:before])
+          end
+        ensure
+          prev_key = key
+        end
       end
 
       trace.enable

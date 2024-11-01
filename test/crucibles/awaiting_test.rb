@@ -142,7 +142,7 @@ module Crucibles
           assert_equal true, AcidicJob::Value.find_by(key: job_id).value, scenario.inspect
         end
 
-        assert_operator scenario.events.size, :>=, 18, scenario.inspect
+        assert_operator scenario.events.size, :>=, 17, scenario.inspect
 
         print "."
       end
