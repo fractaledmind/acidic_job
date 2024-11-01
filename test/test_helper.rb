@@ -21,6 +21,8 @@ ActiveSupport.on_load :active_job do
   self.queue_adapter = :test
 end
 
+ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(ENV["LOG"].present? ? $stdout : IO::NULL)
+
 class Performance
   def self.reset!
     @performances = 0
