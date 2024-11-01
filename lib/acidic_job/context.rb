@@ -12,8 +12,7 @@ module AcidicJob
           { execution_id: @execution.id,
             key: key,
             value: value },
-          unique_by: %i[execution_id key],
-          returning: %i[id execution_id key value]
+          unique_by: %i[execution_id key]
         )
       end
     end
