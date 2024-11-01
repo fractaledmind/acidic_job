@@ -75,3 +75,9 @@ Style/SingleLineMethods:
 Lint/ConstantDefinitionInBlock:
   Exclude:
     - test/**/*_test.rb
+
+Minitest/AssertTruthy:
+  Enabled: false
+
+Minitest/RefuteFalse:
+  Enabled: false
