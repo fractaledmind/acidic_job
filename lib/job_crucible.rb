@@ -70,6 +70,7 @@ module JobCrucible
       end
 
       trace.enable { @template.perform_now }
+      @template.class.queue_adapter.enqueued_jobs = []
       @callstack
     end
 
@@ -107,6 +108,7 @@ module JobCrucible
         enqueued_jobs.each do |payload|
           enqueued_jobs.delete(payload)
           next if payload["job_id"] == @template.job_id
+
           performed_jobs << payload
           instance = payload[:job].deserialize(payload)
           instance.scheduled_at = Time.at(payload[:at]) if payload.key?(:at)
@@ -142,13 +144,9 @@ module JobCrucible
         key = "#{tp.path}:#{tp.lineno}"
 
         begin
-          if prev_key && @breakpoints.key?(prev_key)
-            execute_block(@breakpoints[prev_key][:after])
-          end
+          execute_block(@breakpoints[prev_key][:after]) if prev_key && @breakpoints.key?(prev_key)
 
-          if @breakpoints.key?(key)
-            execute_block(@breakpoints[key][:before])
-          end
+          execute_block(@breakpoints[key][:before]) if @breakpoints.key?(key)
         ensure
           prev_key = key
         end
