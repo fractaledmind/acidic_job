@@ -93,7 +93,7 @@ module JobCrucible
     def clone_job_template_for(scenario)
       serialized_template = @template.serialize
       job = ActiveJob::Base.deserialize(serialized_template)
-      job.job_id = scenario.to_s
+      job.job_id = scenario.inspect
       job.exception_executions = {}
       job
     end
