@@ -48,3 +48,21 @@ end
 class DefaultsError < StandardError; end
 class DiscardableError < StandardError; end
 class BreakingError < StandardError; end
+
+class ActiveSupport::TestCase
+  # Run tests in parallel with specified workers
+  parallelize(workers: :number_of_processors)
+
+  # Set default before_setup and after_teardown methods
+  def before_setup
+    Performance.reset!
+    AcidicJob::Value.delete_all
+    AcidicJob::Entry.delete_all
+    AcidicJob::Execution.delete_all
+    TestObject.delete_all
+    performed_jobs.clear if defined?(performed_jobs)
+    enqueued_jobs.clear if defined?(enqueued_jobs)
+  end
+
+  def after_teardown; end
+end

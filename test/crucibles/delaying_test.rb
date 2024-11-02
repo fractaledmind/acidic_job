@@ -30,17 +30,8 @@ module Crucibles
         end
         Performance.performed!
       end
-    end
 
-    def before_setup
-      Performance.reset!
-      AcidicJob::Value.delete_all
-      AcidicJob::Entry.delete_all
-      AcidicJob::Execution.delete_all
-      TestObject.delete_all
     end
-
-    def after_teardown; end
 
     test "workflow runs successfully" do
       Job.perform_later

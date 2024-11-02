@@ -6,16 +6,6 @@ require "active_job/test_helper"
 class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
   include ::ActiveJob::TestHelper
 
-  def before_setup
-    Performance.reset!
-    AcidicJob::Value.delete_all
-    AcidicJob::Entry.delete_all
-    AcidicJob::Execution.delete_all
-    TestObject.delete_all
-  end
-
-  def after_teardown; end
-
   test "unique_by unconfigured raises error" do
     class WithoutAcidicIdentifier < ActiveJob::Base
       include AcidicJob::Workflow

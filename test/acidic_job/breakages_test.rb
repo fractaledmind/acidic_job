@@ -29,16 +29,6 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     def step_3; Performance.performed!; end
   end
 
-  def before_setup
-    Performance.reset!
-    AcidicJob::Value.delete_all
-    AcidicJob::Entry.delete_all
-    AcidicJob::Execution.delete_all
-    TestObject.delete_all
-  end
-
-  def after_teardown; end
-
   test "define_workflow: error with no job configuration fails job" do
     Job.perform_later
 
