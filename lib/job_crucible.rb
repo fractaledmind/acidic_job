@@ -40,7 +40,7 @@ module JobCrucible
     def scenarios
       variants.map do |variant|
         scenario = Scenario.new
-        variant.each_with_index do |(type, path_with_line, _desc), _i|
+        variant.each do |type, path_with_line, _desc|
           scenario.public_send(type, path_with_line) { raise RetryableError }
         end
         scenario
