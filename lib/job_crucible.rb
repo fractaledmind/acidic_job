@@ -26,10 +26,8 @@ module JobCrucible
     end
 
     def permutations
-      callstack = capture_callstack
-      error_locations = callstack.flat_map do |key, desc|
-        [["before", key, desc], ["after", key, desc]]
-      end
+      callstack = capture_callstack.to_a
+      error_locations = callstack.map { |key, desc| ["before", key, desc] }.push [["after"] + callstack.last]
       error_locations.permutation(@depth)
     end
 
