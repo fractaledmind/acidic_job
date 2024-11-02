@@ -49,7 +49,7 @@ class DefaultsError < StandardError; end
 class DiscardableError < StandardError; end
 class BreakingError < StandardError; end
 
-class ActiveSupport::TestCase
+class ActiveSupport::TestCase # rubocop:disable Style/ClassAndModuleChildren
   # Run tests in parallel with specified workers
   parallelize(workers: :number_of_processors)
 

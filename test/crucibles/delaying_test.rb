@@ -95,6 +95,7 @@ module Crucibles
       assert_equal false, AcidicJob::Value.find_by(key: "halt").value
 
       job_that_performed = Performance.all.first
+
       assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i
     end
 
@@ -133,7 +134,9 @@ module Crucibles
     test "scenario with error before halt_step!" do
       Job.retry_on JobCrucible::RetryableError
       scenario = JobCrucible::Scenario.new
-      scenario.before(__FILE__ + ":31") { raise JobCrucible::RetryableError }
+      scenario.before("#{__FILE__}:31") do
+        raise JobCrucible::RetryableError
+      end
       scenario.enable do
         Job.perform_later
         window = 1.minute.from_now
@@ -199,6 +202,7 @@ module Crucibles
       assert_equal false, AcidicJob::Value.find_by(key: "halt").value
 
       job_that_performed = Performance.all.first
+
       assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i
     end
   end
