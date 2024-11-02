@@ -45,7 +45,7 @@ module Crucibles
       Job.perform_later
       flush_enqueued_jobs until enqueued_jobs.empty?
 
-      assert_equal 1, Performance.performances
+      assert_equal 1, Performance.total
       assert_equal 1, AcidicJob::Execution.count
 
       execution = AcidicJob::Execution.first

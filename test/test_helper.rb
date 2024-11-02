@@ -23,27 +23,25 @@ end
 
 ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(ENV["LOG"].present? ? $stdout : IO::NULL)
 
-class Performance
-  def self.reset!
-    @performances = 0
+module Performance
+  extend self
+
+  def reset!
+    @performances = {}
   end
 
-  def self.performed!
-    @performances += 1
+  def performed!(item = 1, scope: :default)
+    @performances ||= {}
+    @performances[scope] ||= []
+    @performances[scope] << item
   end
 
-  def self.processed!(item, scope: :default)
-    @processed_items ||= {}
-    @processed_items[scope] ||= []
-    @processed_items[scope] << item
+  def total(scope: :default)
+    @performances[scope]&.size || 0
   end
 
-  def self.processed_items(scope = :default)
-    @processed_items[scope]
-  end
-
-  class << self
-    attr_reader :performances
+  def all(scope: :default)
+    @performances[scope]
   end
 end
 

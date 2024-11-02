@@ -36,7 +36,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     Job1.perform_later
     flush_enqueued_jobs until enqueued_jobs.empty?
 
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -78,7 +78,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     Job2.perform_later
     flush_enqueued_jobs until enqueued_jobs.empty?
 
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -126,7 +126,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     Job3.perform_later
     flush_enqueued_jobs until enqueued_jobs.empty?
 
-    assert_equal 0, Performance.performances
+    assert_equal 0, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -164,7 +164,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     ThreeStepDiscardOnThreeJob.perform_later
     flush_enqueued_jobs until enqueued_jobs.empty?
 
-    assert_equal 2, Performance.performances
+    assert_equal 2, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -206,7 +206,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       flush_enqueued_jobs until enqueued_jobs.empty?
     end
 
-    assert_equal 2, Performance.performances
+    assert_equal 2, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -253,7 +253,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       flush_enqueued_jobs until enqueued_jobs.empty?
     end
 
-    assert_equal 1, Performance.performances
+    assert_equal 1, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -300,7 +300,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       flush_enqueued_jobs until enqueued_jobs.empty?
     end
 
-    assert_equal 1, Performance.performances
+    assert_equal 1, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -349,7 +349,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     Job7.perform_later
     flush_enqueued_jobs until enqueued_jobs.empty?
 
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -408,7 +408,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       flush_enqueued_jobs until enqueued_jobs.empty?
     end
 
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -476,7 +476,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       flush_enqueued_jobs until enqueued_jobs.empty?
     end
 
-    assert_equal 2, Performance.performances
+    assert_equal 2, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -526,7 +526,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     Job10.perform_later(1, 2, 3)
     flush_enqueued_jobs until enqueued_jobs.empty?
 
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first

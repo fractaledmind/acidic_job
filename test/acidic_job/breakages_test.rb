@@ -61,7 +61,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     end
 
     assert already_raised
-    assert_equal 0, Performance.performances
+    assert_equal 0, Performance.total
     assert_equal 0, AcidicJob::Execution.count
     assert_equal 1, events.count
     assert_equal 0, AcidicJob::Entry.count
@@ -85,7 +85,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     end
 
     assert already_raised
-    assert_equal 0, Performance.performances
+    assert_equal 0, Performance.total
     assert_equal 0, AcidicJob::Execution.count
     assert_equal 1, events.count
     assert_equal 0, AcidicJob::Entry.count
@@ -112,7 +112,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     end
 
     assert already_raised
-    assert_equal 0, Performance.performances
+    assert_equal 0, Performance.total
     assert_equal 0, AcidicJob::Execution.count
     assert_equal 5, events.count
     assert_equal 0, AcidicJob::Entry.count
@@ -137,7 +137,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     end
 
     assert already_raised
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 16, events.count
 
@@ -197,7 +197,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     end
 
     assert already_raised
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 17, events.count
 
@@ -260,7 +260,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     end
 
     assert already_raised
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 21, events.count
 
@@ -328,7 +328,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     end
 
     assert already_raised
-    assert_equal 4, Performance.performances
+    assert_equal 4, Performance.total
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 22, events.count
 
@@ -398,7 +398,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     end
 
     assert already_raised
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 20, events.count
 
@@ -464,7 +464,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     end
 
     assert already_raised
-    assert_equal 3, Performance.performances
+    assert_equal 3, Performance.total
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 18, events.count
 
