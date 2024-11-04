@@ -39,7 +39,7 @@ module JobCrucible
 
     def scenarios
       variants.map do |glitches|
-        job = clone_job_template()
+        job = clone_job_template
         scenario = Scenario.new(job, glitches: glitches)
         job.job_id = scenario.to_s
         scenario
@@ -103,11 +103,11 @@ module JobCrucible
       @events = []
     end
 
-    def enact!()
+    def enact!
       @job.class.retry_on RetryableError, attempts: 10, wait: 1, jitter: 0
 
       ActiveSupport::Notifications.subscribed(->(event) { @events << event.dup }, @capture) do
-        prepare_glitch.inject! do
+        glitch.inject! do
           block_given? ? yield : Performance.rehearse(@job)
         end
       end
@@ -123,7 +123,7 @@ module JobCrucible
 
     private
 
-    def prepare_glitch
+    def glitch
       @glitch ||= Glitch.new.tap do |glitch|
         @glitches.each do |position, location, _description|
           glitch.public_send(position, location) { raise @raise }
