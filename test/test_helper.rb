@@ -21,6 +21,10 @@ ActiveSupport.on_load :active_job do
   self.queue_adapter = :test
 end
 
+if ActiveRecord.respond_to?(:commit_transaction_on_non_local_return)
+  ActiveRecord.commit_transaction_on_non_local_return = true
+end
+
 ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(ENV["LOG"].present? ? $stdout : IO::NULL)
 
 module Performance
