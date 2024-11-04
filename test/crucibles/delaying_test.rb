@@ -17,10 +17,7 @@ module Crucibles
       end
 
       def delay
-        new_job = self.class.new(*arguments)
-        new_job.job_id = job_id
-        # new_job.provider_job_id = provider_job_id
-        new_job.enqueue(wait: 14.days)
+        enqueue(wait: 14.days)
         @ctx[:halt] = true
       end
 
@@ -100,6 +97,8 @@ module Crucibles
     end
 
     test "simulation" do
+      # TODO: how to test with stubs?
+      # test that my side-effects happened, and that they happened idempotently (only once)
       simulation = JobCrucible::Simulation.new(Job.new, test: self, seed: Minitest.seed, depth: 1)
       simulation.run do |scenario|
         assert_predicate scenario, :all_executed?, scenario.inspect
@@ -132,16 +131,10 @@ module Crucibles
     end
 
     test "scenario with error before halt_step!" do
-      Job.retry_on JobCrucible::RetryableError
-      scenario = JobCrucible::Scenario.new
-      scenario.before("#{__FILE__}:31") do
-        raise JobCrucible::RetryableError
-      end
-      scenario.enable do
-        Job.perform_later
-        window = 1.minute.from_now
-        flush_enqueued_jobs(at: window) until enqueued_jobs_with(at: window).empty?
-      end
+      glitch = ["before", "#{__FILE__}:28"]
+      job = Job.new
+      scenario = JobCrucible::Scenario.new(job, glitches: [glitch])
+      scenario.enact! { JobCrucible::Performance.only_retries(job) }
 
       # Performed the first job, then retried it
       assert_equal 2, performed_jobs.size
@@ -173,7 +166,7 @@ module Crucibles
       assert_equal false, AcidicJob::Value.find_by(key: "halt").value
 
       # Now, perform the future scheduled job and check the final state of the execution
-      flush_enqueued_jobs until enqueued_jobs_with.empty?
+      JobCrucible::Performance.with_future(job)
 
       assert_equal 1, Performance.total
       assert_equal 1, AcidicJob::Execution.count
@@ -205,5 +198,80 @@ module Crucibles
 
       assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i
     end
+
+    # test "scenario with error before setting halt intention" do
+    #   Job.retry_on JobCrucible::RetryableError
+    #   scenario = JobCrucible::Scenario.new
+    #   scenario.before("#{__FILE__}:21") do
+    #     raise JobCrucible::RetryableError
+    #   end
+    #   scenario.enable do
+    #     Job.perform_later
+    #     window = 1.minute.from_now
+    #     flush_enqueued_jobs(at: window) until enqueued_jobs_with(at: window).empty?
+    #   end
+
+    #   # Performed the first job, then retried it
+    #   assert_equal 2, performed_jobs.size
+    #   # Job in 14 days hasn't been executed yet, but has been enqueued twice
+    #   assert_equal 2, enqueued_jobs.size
+
+    #   assert_predicate scenario, :all_executed?, scenario.inspect
+
+    #   assert_equal 0, Performance.total
+    #   assert_equal 1, AcidicJob::Execution.count
+
+    #   execution = AcidicJob::Execution.first
+
+    #   assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
+    #   assert_equal "halt", execution.recover_to
+
+    #   assert_equal 6, AcidicJob::Entry.count
+    #   assert_equal(
+    #     [%w[delay started],
+    #      %w[delay errored],
+    #      %w[delay started],
+    #      %w[delay succeeded],
+    #      %w[halt started],
+    #      %w[halt halted]],
+    #     execution.entries.order(timestamp: :asc).pluck(:step, :action)
+    #   )
+
+    #   assert_equal 1, AcidicJob::Value.count
+    #   assert_equal false, AcidicJob::Value.find_by(key: "halt").value
+
+    #   # Now, perform the future scheduled job and check the final state of the execution
+    #   flush_enqueued_jobs until enqueued_jobs_with.empty?
+
+    #   assert_equal 1, Performance.total
+    #   assert_equal 1, AcidicJob::Execution.count
+
+    #   execution = AcidicJob::Execution.first
+
+    #   assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
+    #   assert_equal "FINISHED", execution.recover_to
+
+    #   assert_equal 10, AcidicJob::Entry.count
+    #   assert_equal(
+    #     [%w[delay started],
+    #      %w[delay errored],
+    #      %w[delay started],
+    #      %w[delay succeeded],
+    #      %w[halt started],
+    #      %w[halt halted],
+    #      %w[halt started],
+    #      %w[halt succeeded],
+    #      %w[do_something started],
+    #      %w[do_something succeeded]],
+    #     execution.entries.order(timestamp: :asc).pluck(:step, :action)
+    #   )
+
+    #   assert_equal 1, AcidicJob::Value.count
+    #   assert_equal false, AcidicJob::Value.find_by(key: "halt").value
+
+    #   job_that_performed = Performance.all.first
+
+    #   assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i
+    # end
   end
 end
