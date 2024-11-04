@@ -16,7 +16,7 @@ module JobCrucible
     end
 
     def run(&callback)
-      @template.class.retry_on RetryableError, attempts: @depth + 2
+      @template.class.retry_on RetryableError, attempts: @depth + 2, wait: 1, jitter: 0
 
       debug "Running #{variants.size} simulations of the total #{permutations.size} possibilities..."
 
@@ -38,11 +38,10 @@ module JobCrucible
     end
 
     def scenarios
-      variants.map do |variant|
-        scenario = Scenario.new
-        variant.each do |type, path_with_line, _desc|
-          scenario.public_send(type, path_with_line) { raise RetryableError }
-        end
+      variants.map do |glitches|
+        job = clone_job_template()
+        scenario = Scenario.new(job, glitches: glitches)
+        job.job_id = scenario.to_s
         scenario
       end
     end
@@ -67,7 +66,7 @@ module JobCrucible
         @callstack << [key, desc]
       end
 
-      trace.enable { @template.perform_now }
+      trace.enable { @template.dup.perform_now }
       @template.class.queue_adapter.enqueued_jobs = []
       @callstack
     end
@@ -75,44 +74,16 @@ module JobCrucible
     def run_scenario(scenario, &callback)
       debug "Running simulation with scenario: #{scenario}"
       @test.before_setup
-      events = []
-      ActiveSupport::Notifications.subscribed(->(event) { events << event.dup }, /active_job/) do
-        scenario.enable do
-          job = clone_job_template_for(scenario)
-          job.enqueue
-
-          perform_all_enqueued_jobs
-        end
-      end
-
-      scenario.events = events
+      scenario.enact!
       @test.after_teardown
       callback.call(scenario)
     end
 
-    def clone_job_template_for(scenario)
+    def clone_job_template
       serialized_template = @template.serialize
       job = ActiveJob::Base.deserialize(serialized_template)
-      job.job_id = scenario.inspect
       job.exception_executions = {}
       job
-    end
-
-    def perform_all_enqueued_jobs
-      enqueued_jobs = @template.class.queue_adapter.enqueued_jobs
-      performed_jobs = @template.class.queue_adapter.performed_jobs
-
-      while enqueued_jobs.any?
-        enqueued_jobs.each do |payload|
-          enqueued_jobs.delete(payload)
-          next if payload["job_id"] == @template.job_id
-
-          performed_jobs << payload
-          instance = payload[:job].deserialize(payload)
-          instance.scheduled_at = Time.at(payload[:at]) if payload.key?(:at)
-          instance.perform_now
-        end
-      end
     end
 
     def debug(...)
@@ -121,9 +92,47 @@ module JobCrucible
   end
 
   class Scenario
-    attr_reader :breakpoints
-    attr_accessor :events
+    attr_reader :events
 
+    def initialize(job, glitches:, raise: RetryableError, capture: /active_job/)
+      @job = job
+      @glitches = glitches
+      @raise = raise
+      @capture = capture
+      @glitch = nil
+      @events = []
+    end
+
+    def enact!()
+      @job.class.retry_on RetryableError, attempts: 10, wait: 1, jitter: 0
+
+      ActiveSupport::Notifications.subscribed(->(event) { @events << event.dup }, @capture) do
+        prepare_glitch.inject! do
+          block_given? ? yield : Performance.rehearse(@job)
+        end
+      end
+    end
+
+    def to_s
+      @glitches.map { |position, location| "#{position}-#{location}" }.join("|>")
+    end
+
+    def all_executed?
+      @glitch.all_executed?
+    end
+
+    private
+
+    def prepare_glitch
+      @glitch ||= Glitch.new.tap do |glitch|
+        @glitches.each do |position, location, _description|
+          glitch.public_send(position, location) { raise @raise }
+        end
+      end
+    end
+  end
+
+  class Glitch
     def initialize
       @breakpoints = {}
     end
@@ -136,7 +145,7 @@ module JobCrucible
       set_breakpoint(path_with_line, :after, &block)
     end
 
-    def enable
+    def inject!
       prev_key = nil
       trace = TracePoint.new(:line) do |tp|
         key = "#{tp.path}:#{tp.lineno}"
@@ -158,16 +167,16 @@ module JobCrucible
     end
 
     def all_executed?
-      @breakpoints.all? do |_location, configs|
-        configs.all? { |_position, config| config[:executed] }
+      @breakpoints.all? do |_location, handlers|
+        handlers.all? { |_position, handler| handler[:executed] }
       end
     end
 
-    def inspect
-      @breakpoints.flat_map do |location, configs|
-        configs.keys.map { |position| "#{position}-#{location}" }
-      end.join("|>")
-    end
+    # def inspect
+    #   @breakpoints.flat_map do |location, configs|
+    #     configs.keys.map { |position| "#{position}-#{location}" }
+    #   end.join("|>")
+    # end
 
     private
 
@@ -182,6 +191,55 @@ module JobCrucible
 
       handler[:executed] = true
       handler[:block].call
+    end
+  end
+
+  # Performance.of(Job1).rehearse!
+  class Performance
+    include ActiveJob::TestHelper
+
+    def self.rehearse(job, retry_window: 4)
+      new(job, retry_window: retry_window).rehearse
+    end
+
+    def self.only_retries(job, retry_window: 4)
+      new(job, retry_window: retry_window).only_retries
+    end
+
+    def self.with_future(job)
+      new(job).with_future
+    end
+
+    def initialize(job, retry_window: 4)
+      @job = job
+      @retry_window = retry_window
+    end
+
+    def rehearse
+      @job.enqueue
+      perform_enqueued_jobs_with_retries
+      perform_future_scheduled_jobs
+    end
+
+    def only_retries
+      @job.enqueue
+      perform_enqueued_jobs_with_retries
+    end
+
+    def with_future
+      @job.enqueue
+      perform_future_scheduled_jobs
+    end
+
+    private
+
+    def perform_enqueued_jobs_with_retries
+      retry_window = Time.now + @retry_window
+      flush_enqueued_jobs(at: retry_window) until enqueued_jobs_with(at: retry_window).empty?
+    end
+
+    def perform_future_scheduled_jobs
+      flush_enqueued_jobs until enqueued_jobs_with.empty?
     end
   end
 end
