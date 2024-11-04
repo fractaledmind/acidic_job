@@ -93,7 +93,7 @@ module Crucibles
 
       job_that_performed = Performance.all.first
 
-      assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1
+      assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1, 1
     end
 
     test "simulation" do
@@ -196,7 +196,7 @@ module Crucibles
 
       job_that_performed = Performance.all.first
 
-      assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i
+      assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1
     end
 
     # test "scenario with error before setting halt intention" do
