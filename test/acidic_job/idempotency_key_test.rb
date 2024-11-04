@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "active_job/test_helper"
 
 class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
-  include ::ActiveJob::TestHelper
-
   test "unique_by unconfigured raises error" do
     class WithoutAcidicIdentifier < ActiveJob::Base
       include AcidicJob::Workflow

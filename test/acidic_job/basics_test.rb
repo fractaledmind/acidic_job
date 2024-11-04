@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "active_job/test_helper"
 
 class AcidicJob::BasicsTest < ActiveJob::TestCase
-  include ::ActiveJob::TestHelper
-
   test "workflow with each step succeeding" do
     class Job1 < ActiveJob::Base
       include AcidicJob::Workflow

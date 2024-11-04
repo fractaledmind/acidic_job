@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "active_job/test_helper"
 require "rocket_rides_helper"
 
 # class RocketRides < ActiveSupport::TestCase
-#   include ::ActiveJob::TestHelper
-
 #   class SendRideReceiptJob < AcidicJob::Base
 #     def perform(_context)
 #       Performance.performed!

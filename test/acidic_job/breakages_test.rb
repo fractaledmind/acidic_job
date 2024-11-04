@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "active_job/test_helper"
 
 class AcidicJob::BreakagesTest < ActiveJob::TestCase
-  include ::ActiveJob::TestHelper
-
   class DefaultsError < StandardError; end
   class DiscardableError < StandardError; end
   class BreakingError < StandardError; end
