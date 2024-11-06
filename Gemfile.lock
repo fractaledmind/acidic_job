@@ -2,10 +2,10 @@ PATH
   remote: .
   specs:
     acidic_job (1.0.0.alpha1)
-      activejob (>= 7.0)
-      activerecord (>= 7.0)
-      activesupport (>= 7.0)
-      railties (>= 7.0)
+      activejob (>= 7.1)
+      activerecord (>= 7.1)
+      activesupport (>= 7.1)
+      railties (>= 7.1)
 
 GEM
   remote: https://rubygems.org/
