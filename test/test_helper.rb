@@ -6,6 +6,9 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 $VERBOSE = nil
 
 require "bundler/setup"
+require "rails/version"
+
+p({ ruby: RUBY_VERSION, rails: Rails::VERSION::STRING })
 
 require "combustion"
 require "sqlite3"
