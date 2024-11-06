@@ -18,10 +18,7 @@ module Crucibles
       def wait_until
         return if @execution.entries.where(step: "wait_until", action: "started").count == 2
 
-        new_job = self.class.new(*arguments)
-        new_job.job_id = job_id
-        new_job.provider_job_id = provider_job_id
-        new_job.enqueue(wait: 2.seconds)
+        enqueue(wait: 2.seconds)
 
         halt_step!
       end
