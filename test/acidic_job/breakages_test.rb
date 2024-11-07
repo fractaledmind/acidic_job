@@ -21,9 +21,9 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       end
     end
 
-    def step_1; Performance.performed!; end
-    def step_2; Performance.performed!; end
-    def step_3; Performance.performed!; end
+    def step_1; ChaoticJob.log_to_journal!; end
+    def step_2; ChaoticJob.log_to_journal!; end
+    def step_3; ChaoticJob.log_to_journal!; end
   end
 
   test "define_workflow: error with no job configuration fails job" do
@@ -43,12 +43,12 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
       assert_raises(BreakingError) do
-        flush_enqueued_jobs until enqueued_jobs.empty?
+        perform_all
       end
     end
 
     assert already_raised
-    assert_equal 0, Performance.total
+    assert_equal 0, ChaoticJob.journal_size
     assert_equal 0, AcidicJob::Execution.count
     assert_equal 1, events.count
     assert_equal 0, AcidicJob::Entry.count
@@ -68,11 +68,11 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DiscardableError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
     assert already_raised
-    assert_equal 0, Performance.total
+    assert_equal 0, ChaoticJob.journal_size
     assert_equal 0, AcidicJob::Execution.count
     assert_equal 1, events.count
     assert_equal 0, AcidicJob::Entry.count
@@ -94,12 +94,12 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
       assert_raises(DefaultsError) do
-        flush_enqueued_jobs until enqueued_jobs.empty?
+        perform_all
       end
     end
 
     assert already_raised
-    assert_equal 0, Performance.total
+    assert_equal 0, ChaoticJob.journal_size
     assert_equal 0, AcidicJob::Execution.count
     assert_equal 5, events.count
     assert_equal 0, AcidicJob::Entry.count
@@ -120,11 +120,11 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
     assert already_raised
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 16, events.count
 
@@ -180,11 +180,11 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
     assert already_raised
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 17, events.count
 
@@ -243,11 +243,11 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
     assert already_raised
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 21, events.count
 
@@ -311,11 +311,11 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
     assert already_raised
-    assert_equal 4, Performance.total
+    assert_equal 4, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 22, events.count
 
@@ -381,11 +381,11 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
     assert already_raised
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 20, events.count
 
@@ -447,11 +447,11 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
     assert already_raised
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
     assert_equal 18, events.count
 

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "job_crucible"
 
 module Crucibles
   class WaitingTest < ActiveJob::TestCase
@@ -16,7 +15,7 @@ module Crucibles
       end
 
       def wait_until
-        return if @execution.entries.where(step: "wait_until", action: "started").count == 2
+        return if step_retrying?
 
         enqueue(wait: 2.seconds)
 
@@ -24,15 +23,15 @@ module Crucibles
       end
 
       def do_something
-        Performance.performed!
+        ChaoticJob.log_to_journal!
       end
     end
 
     test "workflow runs successfully" do
       Job.perform_later
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
 
-      assert_equal 1, Performance.total
+      assert_equal 1, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count
 
       execution = AcidicJob::Execution.first
@@ -55,10 +54,7 @@ module Crucibles
     end
 
     test "simulation" do
-      simulation = JobCrucible::Simulation.new(Job.new, test: self, seed: Minitest.seed, depth: 1)
-      simulation.run do |scenario|
-        assert_predicate scenario, :all_executed?, scenario.inspect
-
+      run_simulation(Job.new) do |scenario|
         execution = AcidicJob::Execution.first
 
         refute_nil execution.id, scenario.inspect
@@ -78,8 +74,6 @@ module Crucibles
 
         assert_equal 0, context.count, scenario.inspect
         assert_operator scenario.events.size, :>=, 7, scenario.inspect
-
-        print "."
       end
     end
   end

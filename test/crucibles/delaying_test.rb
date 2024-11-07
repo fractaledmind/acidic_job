@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "job_crucible"
 
 module Crucibles
   class DelayingTest < ActiveJob::TestCase
@@ -29,14 +28,13 @@ module Crucibles
       end
 
       def do_something
-        Performance.performed!(serialize)
+        ChaoticJob.log_to_journal!(serialize)
       end
     end
 
     test "workflow runs successfully" do
       Job.perform_later
-      window = 1.minute.from_now
-      flush_enqueued_jobs(at: window) until enqueued_jobs_with(at: window).empty?
+      perform_all_within(1.minute)
 
       # Performed the first job, then retried it
       assert_equal 1, performed_jobs.size
@@ -44,7 +42,7 @@ module Crucibles
       assert_equal 1, enqueued_jobs.size
 
       # First, test the state of the execution after the first job is halted
-      assert_equal 0, Performance.total
+      assert_equal 0, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count
 
       execution = AcidicJob::Execution.first
@@ -65,9 +63,9 @@ module Crucibles
       assert_equal false, AcidicJob::Value.find_by(key: "halt").value
 
       # Now, perform the future scheduled job and check the final state of the execution
-      flush_enqueued_jobs until enqueued_jobs_with.empty?
+      perform_all_after(14.days)
 
-      assert_equal 1, Performance.total
+      assert_equal 1, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count
 
       execution = AcidicJob::Execution.first
@@ -91,18 +89,13 @@ module Crucibles
       assert_equal 1, AcidicJob::Value.count
       assert_equal false, AcidicJob::Value.find_by(key: "halt").value
 
-      job_that_performed = Performance.all.first
+      job_that_performed = ChaoticJob.top_journal_entry
 
       assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1, 1
     end
 
     test "simulation" do
-      # TODO: how to test with stubs?
-      # test that my side-effects happened, and that they happened idempotently (only once)
-      simulation = JobCrucible::Simulation.new(Job.new, test: self, seed: Minitest.seed, depth: 1)
-      simulation.run do |scenario|
-        assert_predicate scenario, :all_executed?, scenario.inspect
-
+      run_simulation(Job.new) do |scenario|
         execution = AcidicJob::Execution.first
 
         refute_nil execution.id, scenario.inspect
@@ -125,25 +118,20 @@ module Crucibles
         assert_equal false, AcidicJob::Value.find_by(key: "halt").value, scenario.inspect
 
         assert_operator scenario.events.size, :>=, 10, scenario.inspect
-
-        print "."
       end
     end
 
     test "scenario with error before halt_step!" do
-      glitch = ["before", "#{__FILE__}:28"]
-      job = Job.new
-      scenario = JobCrucible::Scenario.new(job, glitches: [glitch])
-      scenario.enact! { JobCrucible::Performance.only_retries(job) }
+      run_scenario(Job.new, glitch: ["before", "#{__FILE__}:27"]) do
+        perform_all_within(1.minute)
+      end
 
       # Performed the first job, then retried it
       assert_equal 2, performed_jobs.size
       # Job in 14 days hasn't been executed yet
       assert_equal 1, enqueued_jobs.size
 
-      assert_predicate scenario, :all_executed?, scenario.inspect
-
-      assert_equal 0, Performance.total
+      assert_equal 0, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count
 
       execution = AcidicJob::Execution.first
@@ -166,9 +154,9 @@ module Crucibles
       assert_equal false, AcidicJob::Value.find_by(key: "halt").value
 
       # Now, perform the future scheduled job and check the final state of the execution
-      JobCrucible::Performance.with_future(job)
+      perform_all_after(14.days)
 
-      assert_equal 1, Performance.total
+      assert_equal 1, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count
 
       execution = AcidicJob::Execution.first
@@ -194,7 +182,7 @@ module Crucibles
       assert_equal 1, AcidicJob::Value.count
       assert_equal false, AcidicJob::Value.find_by(key: "halt").value
 
-      job_that_performed = Performance.all.first
+      job_that_performed = ChaoticJob.top_journal_entry
 
       assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1
     end
@@ -218,7 +206,7 @@ module Crucibles
 
     #   assert_predicate scenario, :all_executed?, scenario.inspect
 
-    #   assert_equal 0, Performance.total
+    #   assert_equal 0, ChaoticJob.journal_size
     #   assert_equal 1, AcidicJob::Execution.count
 
     #   execution = AcidicJob::Execution.first
@@ -243,7 +231,7 @@ module Crucibles
     #   # Now, perform the future scheduled job and check the final state of the execution
     #   flush_enqueued_jobs until enqueued_jobs_with.empty?
 
-    #   assert_equal 1, Performance.total
+    #   assert_equal 1, ChaoticJob.journal_size
     #   assert_equal 1, AcidicJob::Execution.count
 
     #   execution = AcidicJob::Execution.first

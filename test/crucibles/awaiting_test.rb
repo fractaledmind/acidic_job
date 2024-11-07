@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "job_crucible"
 
 module Crucibles
   class AwaitingTest < ActiveJob::TestCase
@@ -18,7 +17,7 @@ module Crucibles
 
         def perform(execution)
           self.execution = execution
-          Performance.performed!
+          ChaoticJob.log_to_journal!
         end
       end
 
@@ -32,7 +31,7 @@ module Crucibles
 
         def perform(execution)
           self.execution = execution
-          Performance.performed!
+          ChaoticJob.log_to_journal!
         end
       end
 
@@ -51,27 +50,27 @@ module Crucibles
         job_2.enqueue
         # ActiveJob.perform_all_later(job_1, job_2)
 
-        @ctx[:job_ids] = [job_1.job_id, job_2.job_id]
-        @ctx[job_1.job_id] = false
-        @ctx[job_2.job_id] = false
+        ctx[:job_ids] = [job_1.job_id, job_2.job_id]
+        ctx[job_1.job_id] = false
+        ctx[job_2.job_id] = false
       end
 
       def await_jobs
-        @ctx[:job_ids].each do |job_id|
-          halt_step! unless @ctx[job_id]
+        ctx[:job_ids].each do |job_id|
+          halt_step! unless ctx[job_id]
         end
       end
 
       def do_something
-        Performance.performed!
+        ChaoticJob.log_to_journal!
       end
     end
 
     test "workflow runs successfully" do
       Job.perform_later
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
 
-      assert_equal 3, Performance.total
+      assert_equal 3, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count
 
       execution = AcidicJob::Execution.first
@@ -101,10 +100,7 @@ module Crucibles
     end
 
     test "simulation" do
-      simulation = JobCrucible::Simulation.new(Job.new, test: self, seed: Minitest.seed, depth: 1)
-      simulation.run do |scenario|
-        assert_predicate scenario, :all_executed?
-
+      run_simulation(Job.new) do |scenario|
         execution = AcidicJob::Execution.first
 
         refute_nil execution.id, scenario.inspect
@@ -133,8 +129,6 @@ module Crucibles
         end
 
         assert_operator scenario.events.size, :>=, 17, scenario.inspect
-
-        print "."
       end
     end
   end

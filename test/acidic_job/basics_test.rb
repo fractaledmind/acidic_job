@@ -15,15 +15,15 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; Performance.performed!; end
-      def step_2; Performance.performed!; end
-      def step_3; Performance.performed!; end
+      def step_1; ChaoticJob.log_to_journal!; end
+      def step_2; ChaoticJob.log_to_journal!; end
+      def step_3; ChaoticJob.log_to_journal!; end
     end
 
     Job1.perform_later
-    flush_enqueued_jobs until enqueued_jobs.empty?
+    perform_all
 
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -57,15 +57,15 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; executions > 1 ? Performance.performed! : (raise DefaultsError); end
-      def step_2; executions > 2 ? Performance.performed! : (raise DefaultsError); end
-      def step_3; executions > 3 ? Performance.performed! : (raise DefaultsError); end
+      def step_1; executions > 1 ? ChaoticJob.log_to_journal! : (raise DefaultsError); end
+      def step_2; executions > 2 ? ChaoticJob.log_to_journal! : (raise DefaultsError); end
+      def step_3; executions > 3 ? ChaoticJob.log_to_journal! : (raise DefaultsError); end
     end
 
     Job2.perform_later
-    flush_enqueued_jobs until enqueued_jobs.empty?
+    perform_all
 
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -106,14 +106,14 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       end
 
       def step_1; raise DiscardableError; end
-      def step_2; Performance.performed!; end
-      def step_3; Performance.performed!; end
+      def step_2; ChaoticJob.log_to_journal!; end
+      def step_3; ChaoticJob.log_to_journal!; end
     end
 
     Job3.perform_later
-    flush_enqueued_jobs until enqueued_jobs.empty?
+    perform_all
 
-    assert_equal 0, Performance.total
+    assert_equal 0, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -143,15 +143,15 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; Performance.performed!; end
-      def step_2; Performance.performed!; end
+      def step_1; ChaoticJob.log_to_journal!; end
+      def step_2; ChaoticJob.log_to_journal!; end
       def step_3; raise DiscardableError; end
     end
 
     ThreeStepDiscardOnThreeJob.perform_later
-    flush_enqueued_jobs until enqueued_jobs.empty?
+    perform_all
 
-    assert_equal 2, Performance.total
+    assert_equal 2, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -183,17 +183,17 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; Performance.performed!; end
-      def step_2; Performance.performed!; end
+      def step_1; ChaoticJob.log_to_journal!; end
+      def step_2; ChaoticJob.log_to_journal!; end
       def step_3; raise StandardError; end
     end
 
     Job4.perform_later
     assert_raises StandardError do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
-    assert_equal 2, Performance.total
+    assert_equal 2, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -225,22 +225,22 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; Performance.performed!; end
+      def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
         TestObject.create!
         raise StandardError
       end
 
-      def step_3; Performance.performed!; end
+      def step_3; ChaoticJob.log_to_journal!; end
     end
 
     Job5.perform_later
     assert_raises StandardError do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
-    assert_equal 1, Performance.total
+    assert_equal 1, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -272,22 +272,22 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; Performance.performed!; end
+      def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
         TestObject.create!
         raise StandardError
       end
 
-      def step_3; Performance.performed!; end
+      def step_3; ChaoticJob.log_to_journal!; end
     end
 
     Job6.perform_later
     assert_raises StandardError do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
-    assert_equal 1, Performance.total
+    assert_equal 1, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -321,22 +321,22 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; Performance.performed!; end
+      def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
         TestObject.create!
         raise DefaultsError if executions == 1
 
-        Performance.performed!
+        ChaoticJob.log_to_journal!
       end
 
-      def step_3; Performance.performed!; end
+      def step_3; ChaoticJob.log_to_journal!; end
     end
 
     Job7.perform_later
-    flush_enqueued_jobs until enqueued_jobs.empty?
+    perform_all
 
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -374,16 +374,16 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; Performance.performed!; end
+      def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
         TestObject.create! if !TestObject.exists?
         raise DefaultsError if executions == 1
 
-        Performance.performed!
+        ChaoticJob.log_to_journal!
       end
 
-      def step_3; Performance.performed!; end
+      def step_3; ChaoticJob.log_to_journal!; end
     end
 
     Job8.perform_later
@@ -392,10 +392,10 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       queries << event.payload.fetch(:sql)
     end
     ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -440,7 +440,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; Performance.performed!; end
+      def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
         return if executions > 1 && TestObject.exists?
@@ -448,10 +448,10 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         TestObject.create!
         raise DefaultsError if executions == 1
 
-        Performance.performed!
+        ChaoticJob.log_to_journal!
       end
 
-      def step_3; Performance.performed!; end
+      def step_3; ChaoticJob.log_to_journal!; end
     end
 
     Job9.perform_later
@@ -460,10 +460,10 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       queries << event.payload.fetch(:sql)
     end
     ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
     end
 
-    assert_equal 2, Performance.total
+    assert_equal 2, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first
@@ -505,15 +505,15 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; Performance.performed!; end
-      def step_2; Performance.performed!; end
-      def step_3; Performance.performed!; end
+      def step_1; ChaoticJob.log_to_journal!; end
+      def step_2; ChaoticJob.log_to_journal!; end
+      def step_3; ChaoticJob.log_to_journal!; end
     end
 
     Job10.perform_later(1, 2, 3)
-    flush_enqueued_jobs until enqueued_jobs.empty?
+    perform_all
 
-    assert_equal 3, Performance.total
+    assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
 
     execution = AcidicJob::Execution.first

@@ -34,6 +34,7 @@ Gem::Specification.new do |spec|
     spec.add_dependency "railties", rails_version
   end
 
+  spec.add_development_dependency "chaotic_job"
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "rake"

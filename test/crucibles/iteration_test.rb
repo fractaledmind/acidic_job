@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "job_crucible"
 
 module Crucibles
   class IterationTest < ActiveJob::TestCase
@@ -21,7 +20,7 @@ module Crucibles
         return if item.nil?
 
         # do thing with `item`
-        Performance.performed!
+        ChaoticJob.log_to_journal!
 
         @ctx[:cursor] = cursor + 1
         repeat_step!
@@ -30,9 +29,9 @@ module Crucibles
 
     test "workflow runs successfully" do
       Job.perform_later
-      flush_enqueued_jobs until enqueued_jobs.empty?
+      perform_all
 
-      assert_equal 3, Performance.total
+      assert_equal 3, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count
 
       execution = AcidicJob::Execution.first
@@ -55,10 +54,7 @@ module Crucibles
     end
 
     test "simulation" do
-      simulation = JobCrucible::Simulation.new(Job.new, test: self, seed: Minitest.seed, depth: 1)
-      simulation.run do |scenario|
-        assert_predicate scenario, :all_executed?, scenario.inspect
-
+      run_simulation(Job.new) do |scenario|
         execution = AcidicJob::Execution.first
 
         refute_nil execution.id, scenario.inspect
@@ -87,8 +83,6 @@ module Crucibles
           scenario.events.map(&:name),
           scenario.inspect
         )
-
-        print "."
       end
     end
   end
