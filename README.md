@@ -232,9 +232,7 @@ class Job < ActiveJob::Base
   end
 
   def delay
-    new_job = self.class.new(*arguments)
-    new_job.job_id = job_id
-    new_job.enqueue(wait: 14.days)
+    enqueue(wait: 14.days)
     ctx[:halt] = true
   end
 
