@@ -111,6 +111,16 @@ module AcidicJob
       throw :halt, HALT_STEP
     end
 
+    def step_retrying?
+      step_name = caller_locations.first.label
+
+      if not @execution.definition.key?(step_name) # rubocop:disable Style/IfUnlessModifier, Style/Not
+        raise UndefinedStepError.new(step_name)
+      end
+
+      @execution.entries.where(step: step_name, action: "started").count > 1
+    end
+
     private
 
     def take_step(step_definition)
