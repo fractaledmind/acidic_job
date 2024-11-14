@@ -29,7 +29,7 @@ module Crucibles
 
     test "workflow runs successfully" do
       Job.perform_later
-      perform_all
+      perform_all_jobs
 
       assert_equal 1, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count

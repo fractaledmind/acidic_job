@@ -34,7 +34,7 @@ module Crucibles
 
     test "workflow runs successfully" do
       Job.perform_later
-      perform_all_within(1.minute)
+      perform_all_jobs_within(1.minute)
 
       # Performed the first job, then retried it
       assert_equal 1, performed_jobs.size
@@ -63,7 +63,7 @@ module Crucibles
       assert_equal false, AcidicJob::Value.find_by(key: "halt").value
 
       # Now, perform the future scheduled job and check the final state of the execution
-      perform_all_after(14.days)
+      perform_all_jobs_after(14.days)
 
       assert_equal 1, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count
@@ -123,7 +123,7 @@ module Crucibles
 
     test "scenario with error before halt_step!" do
       run_scenario(Job.new, glitch: ["before", "#{__FILE__}:27"]) do
-        perform_all_within(1.minute)
+        perform_all_jobs_within(1.minute)
       end
 
       # Performed the first job, then retried it
@@ -154,7 +154,7 @@ module Crucibles
       assert_equal false, AcidicJob::Value.find_by(key: "halt").value
 
       # Now, perform the future scheduled job and check the final state of the execution
-      perform_all_after(14.days)
+      perform_all_jobs_after(14.days)
 
       assert_equal 1, ChaoticJob.journal_size
       assert_equal 1, AcidicJob::Execution.count

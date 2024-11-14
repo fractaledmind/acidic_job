@@ -43,7 +43,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
       assert_raises(BreakingError) do
-        perform_all
+        perform_all_jobs
       end
     end
 
@@ -68,7 +68,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DiscardableError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      perform_all
+      perform_all_jobs
     end
 
     assert already_raised
@@ -94,7 +94,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
       assert_raises(DefaultsError) do
-        perform_all
+        perform_all_jobs
       end
     end
 
@@ -120,7 +120,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      perform_all
+      perform_all_jobs
     end
 
     assert already_raised
@@ -180,7 +180,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      perform_all
+      perform_all_jobs
     end
 
     assert already_raised
@@ -243,7 +243,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      perform_all
+      perform_all_jobs
     end
 
     assert already_raised
@@ -311,7 +311,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      perform_all
+      perform_all_jobs
     end
 
     assert already_raised
@@ -381,7 +381,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      perform_all
+      perform_all_jobs
     end
 
     assert already_raised
@@ -447,7 +447,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       raise DefaultsError
     end
     ActiveSupport::Notifications.subscribed(callback, /acidic_job/) do
-      perform_all
+      perform_all_jobs
     end
 
     assert already_raised

@@ -21,7 +21,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     end
 
     Job1.perform_later
-    perform_all
+    perform_all_jobs
 
     assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
@@ -63,7 +63,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     end
 
     Job2.perform_later
-    perform_all
+    perform_all_jobs
 
     assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
@@ -111,7 +111,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     end
 
     Job3.perform_later
-    perform_all
+    perform_all_jobs
 
     assert_equal 0, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
@@ -149,7 +149,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     end
 
     ThreeStepDiscardOnThreeJob.perform_later
-    perform_all
+    perform_all_jobs
 
     assert_equal 2, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
@@ -190,7 +190,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     Job4.perform_later
     assert_raises StandardError do
-      perform_all
+      perform_all_jobs
     end
 
     assert_equal 2, ChaoticJob.journal_size
@@ -237,7 +237,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     Job5.perform_later
     assert_raises StandardError do
-      perform_all
+      perform_all_jobs
     end
 
     assert_equal 1, ChaoticJob.journal_size
@@ -284,7 +284,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     Job6.perform_later
     assert_raises StandardError do
-      perform_all
+      perform_all_jobs
     end
 
     assert_equal 1, ChaoticJob.journal_size
@@ -334,7 +334,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     end
 
     Job7.perform_later
-    perform_all
+    perform_all_jobs
 
     assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
@@ -392,7 +392,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       queries << event.payload.fetch(:sql)
     end
     ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
-      perform_all
+      perform_all_jobs
     end
 
     assert_equal 3, ChaoticJob.journal_size
@@ -460,7 +460,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       queries << event.payload.fetch(:sql)
     end
     ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
-      perform_all
+      perform_all_jobs
     end
 
     assert_equal 2, ChaoticJob.journal_size
@@ -511,7 +511,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     end
 
     Job10.perform_later(1, 2, 3)
-    perform_all
+    perform_all_jobs
 
     assert_equal 3, ChaoticJob.journal_size
     assert_equal 1, AcidicJob::Execution.count
