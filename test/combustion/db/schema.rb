@@ -1,20 +1,56 @@
 # frozen_string_literal: true
 
 ActiveRecord::Schema.define do
-  create_table :acidic_job_runs, force: true do |t|
-    t.boolean     :staged,          null: false,  default: false
+  create_table :acidic_job_executions, force: true do |t|
     t.string      :idempotency_key, null: false,  index: { unique: true }
-    t.text        :serialized_job,  null: false
-    t.string      :job_class,       null: false
-    t.datetime    :last_run_at,     null: true, default: -> { "CURRENT_TIMESTAMP" }
-    t.datetime    :locked_at,       null: true
-    t.string      :recovery_point,  null: true
-    t.text        :error_object,    null: true
-    t.text        :attr_accessors,  null: true
-    t.text        :workflow,        null: true
-    t.references  :awaited_by,      null: true, index: true
-    t.text        :returning_to,    null: true
+    t.json        :serialized_job, 	null: false,  default: "{}"
+    t.datetime    :last_run_at,	null: true, default: -> { "CURRENT_TIMESTAMP" }
+    t.datetime    :locked_at,	null: true
+    t.string      :recover_to, null: true
+    t.json        :definition,	null: true, default: "{}"
     t.timestamps
+  end
+
+  create_table :acidic_job_entries do |t|
+    t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }
+    t.string :step, null: false
+    t.string :action, null: false
+    t.datetime :timestamp, null: false
+    t.json :data,	null: true, default: "{}"
+
+    t.timestamps
+  end
+  add_index :acidic_job_entries, %i[execution_id step]
+
+  create_table :acidic_job_values do |t|
+    t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }
+    t.string :key, null: false
+    t.json :value, null: false, default: "{}"
+
+    t.timestamps
+  end
+  add_index :acidic_job_values, %i[execution_id key], unique: true
+
+  create_table :acidic_job_batched_jobs, force: true do |t|
+    t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }
+    t.string     :job_id, null: false, index: true
+    t.json       :serialized_job,	null: false, default: "{}"
+    t.string     :progress_to, null: false
+    t.datetime   :performed_at,	null: true
+
+    t.timestamps
+  end
+
+  # -----------------------------------------------------------------------
+
+  create_table :test_objects, force: true
+
+  create_table :test_events do |t|
+    t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }
+    t.string :name, null: false
+    t.json :payload, null: false, default: "{}"
+    t.datetime :started_at, null: false
+    t.datetime :finished_at, null: false
   end
 
   # -----------------------------------------------------------------------
@@ -45,7 +81,7 @@ ActiveRecord::Schema.define do
     t.integer :target_lat
     t.integer :target_lon
     t.string :stripe_charge_id
-    t.references :user, foreign_key: true, on_delete: :restrict
+    t.references :user, foreign_key: true
     t.timestamps
   end
 

@@ -1,0 +1,77 @@
+- [x] Track number of runs per execution (resolves #79)
+  This is accomplished with the new `entries` table, as proven by the `idempotency_check` feature, which only runs on a retry.
+
+- [x] Store errors with more context and without full error history (resolves #80)
+  This is also accomplished with the new `entries` table, by storing a separate error entry for any raised errors.
+
+- [x] All traversal over a collection added to the context within the workflow (resolves #81)
+  The new collection traversal logic resolves #81, as proven by the test case. You can traverse a key for a context value. For example,
+  ```ruby
+  execute :prepare_collection
+  traverse :collection, using: :process_item
+
+  def prepare_collection = @ctx[:collection] = 1..5
+  def process_item(item) = @processed_items << item
+  ```
+
+- [x] Handle case where non-idempotent external write succeeds but recording fails (resolves #82)
+  The new `idempotency_check` option accomplishes this, by allowing a step making external IO to define a method that checks if the write was already successfully made when re-running a step in a retry.
+
+- [x] Ensure any and all exceptions can be serialized and deserialized (resolves #83)
+  The original serializer was too naive and couldn't deserialize, for example, an `ActionView::Template::Error` which requires that `$!` be set when initializing the object.
+
+  The new `ExceptionSerializer` uses Ruby's built-in YAML encoding of exceptions to serialize and deserialize the objects, laying on Zlib to ensure compact byte storage.
+
+- [x] Handle duplicate workflow step names (resolves #87)
+  Adding a `DuplicateStepError` exception raised when building the workflow definition resolved this issue.
+
+- [ ] Add a `context` step type (resolves #89)
+  Use case: the workflow may or may not have the data it needs to proceed. If it doesn't, it should make an API call to fetch the data. The API call may take a while, so we should be able to handle that as well.
+
+  Example usage:
+  ```ruby
+  context :slack_author, fallback: :fetch_slack_author
+
+  def slack_author
+    Slack::Profile.find_by(uid: @user_uid)
+  end
+
+  def fetch_slack_author
+    api_response = Slack::Client.new().get_user(uid: @user_uid)
+    if api_response[:ok]
+      [Slack::ProcessProfileSlackJob.new(@installation, api_response[:user])]
+    else
+      raise DoNotRetryJob
+    end
+  end
+  ```
+
+  Psuedo code for implementation:
+  ```ruby
+  result = resolve_method(primary_method_name).call
+  if result
+    @ctx[primary_method_name] = result
+  else
+    fallback = resolve_method(fallback_method_name).call
+    case fallback
+    in ActiveJob::Base then awaits(fallback)
+    in Array[ActiveJob::Base] then awaits(fallback)
+    else @ctx[primary_method_name] = result
+    end
+  end
+  ```
+
+- [ ] Add documentation on how to "migrate" a workflow (resolves #90)
+  The v1 alpha already includes a check that the persisted workflow definition matches the job's current definition. This ensures that no job tries to run with an outdated definition. However, we should document the proper way to update a workflow definition.
+
+  The process can only be additive, like a strong migration. First, you create a new job with a new name that is a clone of the original job. Make the necessary changes to the new job. Update your codebase to only enqueue the new job. Deploy this change, where both the new job and the old jobs exist, but the application only enqueues the new job. Once deployed, wait until all currently running instances of the old job complete (provide some docs on how to check this). Once all old job instances are complete, you can safely delete the old job and deploy that change. This process ensures that no job is running with an outdated definition.
+
+- [ ] Automatically retry the serializable transaction for find/create the Run record (resolves #91)
+  Serializable transactions are prone to failure: https://stackoverflow.com/a/21715207/2884386
+
+  Currently, if the transaction fails, the job will fail. We need to build automatic retries into the gem, as this failure will naturally resolve. But, we should also add a limit to the number of retries to prevent infinite loops.
+
+- [ ] Ensure the gem works with GoodJob (resolves #92 and #94)
+  In the current version, GoodJob can't handle messing with the `job_id` and retrying a failed job raises a NoMethodError: "undefined method `utc' for an instance of Float".
+
+- [ ] Ensure users can transactionally enqueue other entities, like ActionMailer or Noticed objects

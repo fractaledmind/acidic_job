@@ -1,38 +1,28 @@
 # frozen_string_literal: true
 
 require_relative "acidic_job/version"
+require_relative "acidic_job/engine"
 require_relative "acidic_job/errors"
-require_relative "acidic_job/logger"
+require_relative "acidic_job/builder"
+require_relative "acidic_job/context"
 require_relative "acidic_job/arguments"
-require_relative "acidic_job/serializer"
-require_relative "acidic_job/configured_job"
-require_relative "acidic_job/workflow_builder"
-require_relative "acidic_job/idempotency_key"
-require_relative "acidic_job/recovery_point"
-require_relative "acidic_job/finished_point"
-require_relative "acidic_job/run"
-require_relative "acidic_job/workflow_step"
+require_relative "acidic_job/log_subscriber"
 require_relative "acidic_job/workflow"
-require_relative "acidic_job/processor"
-require_relative "acidic_job/perform_wrapper"
-require_relative "acidic_job/perform_acidicly"
-require_relative "acidic_job/extensions/action_mailer"
-require_relative "acidic_job/extensions/noticed"
-require_relative "acidic_job/mixin"
-require_relative "acidic_job/base"
-# require_relative "acidic_job/active_kiq"
 
-require "active_job/serializers"
-require_relative "acidic_job/serializers/exception_serializer"
-require_relative "acidic_job/serializers/finished_point_serializer"
-require_relative "acidic_job/serializers/job_serializer"
-require_relative "acidic_job/serializers/range_serializer"
-require_relative "acidic_job/serializers/recovery_point_serializer"
-require_relative "acidic_job/serializers/worker_serializer"
-require_relative "acidic_job/serializers/active_kiq_serializer"
-require_relative "acidic_job/serializers/new_record_serializer"
-
-require_relative "acidic_job/railtie"
+require "active_support"
 
 module AcidicJob
+  extend self
+
+  DEFAULT_LOGGER = ActiveSupport::Logger.new($stdout)
+  FINISHED_RECOVERY_POINT = "FINISHED"
+
+  mattr_accessor :logger, default: DEFAULT_LOGGER
+  mattr_accessor :connects_to
+
+  def instrument(channel, **options, &block)
+    ActiveSupport::Notifications.instrument("#{channel}.acidic_job", **options, &block)
+  end
+
+  ActiveSupport.run_load_hooks(:acidic_job, self)
 end

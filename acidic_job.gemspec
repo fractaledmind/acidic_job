@@ -27,19 +27,20 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "activejob"
-  spec.add_dependency "activerecord"
-  spec.add_dependency "activesupport"
+  ">= 7.1".tap do |rails_version|
+    spec.add_dependency "activejob", rails_version
+    spec.add_dependency "activerecord", rails_version
+    spec.add_dependency "activesupport", rails_version
+    spec.add_dependency "railties", rails_version
+  end
+
+  spec.add_development_dependency "chaotic_job", ">= 0.2.0"
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "minitest"
-  spec.add_development_dependency "net-smtp"
-  spec.add_development_dependency "noticed"
-  spec.add_development_dependency "railties"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rubocop"
   spec.add_development_dependency "rubocop-minitest"
   spec.add_development_dependency "rubocop-rake"
-  spec.add_development_dependency "sidekiq"
   spec.add_development_dependency "simplecov"
   spec.add_development_dependency "sqlite3"
 

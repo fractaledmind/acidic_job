@@ -12,6 +12,7 @@ slides.md
 /test/dummy
 /test/log
 /database.sqlite
-/test/combustion/database.sqlite
+/test/combustion/database.sqlite*
 /test/combustion/log/test.log
+/test/combustion/tmp/*
 /gemfiles/*.lock

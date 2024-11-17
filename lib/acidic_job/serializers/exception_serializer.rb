@@ -1,40 +1,25 @@
 # frozen_string_literal: true
 
 require "active_job/serializers/object_serializer"
+require "zlib"
+require "yaml"
 
 module AcidicJob
   module Serializers
     class ExceptionSerializer < ::ActiveJob::Serializers::ObjectSerializer
       def serialize(exception)
-        compressed_backtrace = {}
-        exception.backtrace&.map do |trace|
-          path, _, location = trace.rpartition("/")
-          next if compressed_backtrace.key?(path)
+        compressed = Zlib::Deflate.deflate(exception.to_yaml)
 
-          compressed_backtrace[path] = location
-        end
-        exception.set_backtrace(compressed_backtrace.map do |path, location|
-          [path, location].join("/")
-        end)
-        exception.cause&.set_backtrace([])
-
-        super({ "yaml" => exception.to_yaml })
+        super("deflated_yaml" => compressed)
       end
 
       def deserialize(hash)
-        if hash.key?("class")
-          exception_class = hash["class"].constantize
-          exception = exception_class.new(hash["message"])
-          exception.set_backtrace(hash["backtrace"].map do |path, location|
-                                    [path, location].join("/")
-                                  end)
-          exception
-        elsif hash.key?("yaml")
-          if YAML.respond_to?(:unsafe_load)
-            YAML.unsafe_load(hash["yaml"])
-          else
-            YAML.load(hash["yaml"]) # rubocop:disable Security/YAMLLoad
-          end
+        uncompressed = Zlib::Inflate.inflate(hash["deflated_yaml"])
+
+        if YAML.respond_to?(:unsafe_load)
+          YAML.unsafe_load(uncompressed)
+        else
+          YAML.load(uncompressed) # rubocop:disable Security/YAMLLoad
         end
       end
 
