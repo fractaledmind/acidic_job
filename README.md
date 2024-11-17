@@ -24,13 +24,13 @@ With AcidicJob, you can write reliable and repeatable multi-step distributed ope
 Install the gem and add to the application's Gemfile by executing:
 
 ```sh
-bundle add acidic_job
+bundle add acidic_job --version "1.0.0.rc1"
 ```
 
 If `bundler` is not being used to manage dependencies, install the gem by executing:
 
 ```sh
-gem install acidic_job
+gem install acidic_job --pre
 ```
 
 After installing the gem, run the installer:
