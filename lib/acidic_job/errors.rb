@@ -28,6 +28,7 @@ module AcidicJob
     end
   end
 
+  # rubocop:disable Lint/MissingSuper
   class ArgumentMismatchError < Error
     def initialize(expected, existing)
       @expected = expected
@@ -97,4 +98,5 @@ module AcidicJob
       "step method cannot expect arguments: #{@step.inspect}"
     end
   end
+  # rubocop:enable Lint/MissingSuper
 end

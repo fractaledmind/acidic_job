@@ -12,7 +12,7 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "redefining workflow error doesn't take two arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 1, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 1, expected 2)") do
       AcidicJob::RedefiningWorkflowError.new("test", "test")
     end
   end
@@ -26,7 +26,7 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "undefined workflow error doesn't take two arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 1, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 1, expected 2)") do
       AcidicJob::UndefinedWorkflowBlockError.new("test", "test")
     end
   end
@@ -40,7 +40,7 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "invalid workflow error doesn't take two arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 1, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 1, expected 2)") do
       AcidicJob::InvalidWorkflowBlockError.new("test", "test")
     end
   end
@@ -54,19 +54,19 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "missing steps error doesn't take two arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 1, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 1, expected 2)") do
       AcidicJob::MissingStepsError.new("test", "test")
     end
   end
 
   test "argument mismatch error doesn't take no arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 0, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 0, expected 2)") do
       AcidicJob::ArgumentMismatchError.new
     end
   end
 
   test "argument mismatch error doesn't take one argument" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 1, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 1, expected 2)") do
       AcidicJob::ArgumentMismatchError.new("test")
     end
   end
@@ -76,13 +76,13 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "definition mismatch error doesn't take no arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 0, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 0, expected 2)") do
       AcidicJob::DefinitionMismatchError.new
     end
   end
 
   test "definition mismatch error doesn't take one argument" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 1, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 1, expected 2)") do
       AcidicJob::DefinitionMismatchError.new("test")
     end
   end
@@ -92,7 +92,7 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "undefined step error doesn't take no arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 0, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 0, expected 2)") do
       AcidicJob::UndefinedStepError.new
     end
   end
@@ -102,13 +102,13 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "undefined step error doesn't take two arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 2, expected 1)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 2, expected 1)") do
       AcidicJob::UndefinedStepError.new("test", "test")
     end
   end
 
   test "succeeded step error doesn't take no arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 0, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 0, expected 2)") do
       AcidicJob::SucceededStepError.new
     end
   end
@@ -118,13 +118,13 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "succeeded step error doesn't take two arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 2, expected 1)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 2, expected 1)") do
       AcidicJob::SucceededStepError.new("test", "test")
     end
   end
 
   test "undefined method error doesn't take no arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 0, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 0, expected 2)") do
       AcidicJob::UndefinedMethodError.new
     end
   end
@@ -134,13 +134,13 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "undefined method error doesn't take two arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 2, expected 1)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 2, expected 1)") do
       AcidicJob::UndefinedMethodError.new("test", "test")
     end
   end
 
   test "invalid method error doesn't take no arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 0, expected 2)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 0, expected 2)") do
       AcidicJob::InvalidMethodError.new
     end
   end
@@ -150,7 +150,7 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "invalid method error doesn't take two arguments" do
-    assert_raises(ArgumentError, 'wrong number of arguments (given 2, expected 1)') do
+    assert_raises(ArgumentError, "wrong number of arguments (given 2, expected 1)") do
       AcidicJob::InvalidMethodError.new("test", "test")
     end
   end
