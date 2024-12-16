@@ -26,7 +26,9 @@ ActiveSupport.on_load :active_job do
 end
 
 # see: https://github.com/rails/rails/pull/48600
-if ActiveRecord.respond_to?(:commit_transaction_on_non_local_return)
+if ActiveRecord.respond_to?(:commit_transaction_on_non_local_return) &&
+   Rails::VERSION::MAJOR >= 7 &&
+   Rails::VERSION::MINOR <= 1
   ActiveRecord.commit_transaction_on_non_local_return = true
 end
 
