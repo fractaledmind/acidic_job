@@ -4,12 +4,12 @@ require "test_helper"
 
 def find_or_initialize_child_job(job_class, parent_job_id)
   enqueued_child_job = queue_adapter.enqueued_jobs.find do |it|
-    it['job_class'] == job_class.name && it['arguments'].last == parent_job_id
+    it["job_class"] == job_class.name && it["arguments"].last == parent_job_id
   end
   return ActiveJob::Base.deserialize(enqueued_child_job) if enqueued_child_job
 
   performed_child_job = queue_adapter.performed_jobs.find do |it|
-    it['job_class'] == job_class.name && it['arguments'].last == parent_job_id
+    it["job_class"] == job_class.name && it["arguments"].last == parent_job_id
   end
   return ActiveJob::Base.deserialize(performed_child_job) if performed_child_job
 
@@ -62,8 +62,8 @@ module Examples
       end
 
       def enqueue_jobs
-        @job_1.arguments.concat [@execution, job_id]
-        @job_2.arguments.concat [@execution, job_id]
+        @job_1.arguments.push @execution, job_id
+        @job_2.arguments.push @execution, job_id
         ActiveJob.perform_all_later(@job_1, @job_2)
       end
 
@@ -99,7 +99,7 @@ module Examples
       assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job::ChildJob1.name }.size
       assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job::ChildJob2.name }.size
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # it takes one halting `await_jobs` step before both child jobs complete
@@ -121,6 +121,7 @@ module Examples
       # context has 3 values: job_ids, and the truthy values of each job_id
       assert_equal 3, AcidicJob::Value.count
       job_ids = AcidicJob::Value.find_by(key: "job_ids").value
+
       job_ids.each do |job_id|
         assert AcidicJob::Value.find_by(key: job_id).value
       end
@@ -144,7 +145,7 @@ module Examples
       assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job::ChildJob1.name }.size
       assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job::ChildJob2.name }.size
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # parent job when re-enqueued by children doesn't do any work, just short-circuits since finished
@@ -166,14 +167,15 @@ module Examples
       # context has 3 values: job_ids, and the truthy values of each job_id
       assert_equal 3, AcidicJob::Value.count
       job_ids = AcidicJob::Value.find_by(key: "job_ids").value
+
       job_ids.each do |job_id|
         assert AcidicJob::Value.find_by(key: job_id).value
       end
     end
 
     test "simulation" do
-      run_simulation(Job.new) do |scenario|
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      run_simulation(Job.new) do |_scenario|
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
 
         # only performs primary IO operations once per job
         assert_equal 3, ChaoticJob.journal_size

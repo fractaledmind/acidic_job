@@ -41,7 +41,7 @@ module Examples
       assert_equal 1, ChaoticJob.journal_size
       assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job.name }.size
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # halts once as condition is false, then continues after 2 seconds
@@ -61,8 +61,8 @@ module Examples
     end
 
     test "simulation" do
-      run_simulation(Job.new) do |scenario|
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      run_simulation(Job.new) do |_scenario|
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
 
         # only performs primary IO operations once
         assert_equal 1, ChaoticJob.journal_size

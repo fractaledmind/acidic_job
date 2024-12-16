@@ -69,7 +69,7 @@ module Examples
       # Now, perform the future scheduled job and check the final state of the execution
       perform_all_jobs_after(14.days)
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # after the halting step, when the future version of the job is performed it completes successfully
@@ -93,6 +93,7 @@ module Examples
       # the most recent job that was performed is the future scheduled job
       assert_equal 1, ChaoticJob.journal_size
       job_that_performed = ChaoticJob.top_journal_entry
+
       assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1, 1
     end
 
@@ -134,7 +135,7 @@ module Examples
       # Now, perform the future scheduled job and check the final state of the execution
       perform_all_jobs_after(14.days)
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # after the halting step, when the future version of the job is performed it completes successfully
@@ -160,6 +161,7 @@ module Examples
       # the most recent job that was performed is the future scheduled job
       assert_equal 1, ChaoticJob.journal_size
       job_that_performed = ChaoticJob.top_journal_entry
+
       assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1
     end
 
@@ -201,7 +203,7 @@ module Examples
       # Now, perform the future scheduled job and check the final state of the execution
       perform_all_jobs_after(14.days)
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # after the halting step, when the future version of the job is performed it completes successfully
@@ -227,20 +229,22 @@ module Examples
       # the most recent job that was performed is the future scheduled job
       assert_equal 1, ChaoticJob.journal_size
       job_that_performed = ChaoticJob.top_journal_entry
+
       assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1
     end
 
     test "simulation" do
-      run_simulation(Job.new) do |scenario|
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      run_simulation(Job.new) do |_scenario|
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
 
-        # typically only job, error, and future are performed, but when error occurs inside `delay` step, two futures are performed
-        # this is safe though because the job is an idempotent workflow
+        # typically only job, error, and future are performed, but when error occurs inside `delay` step,
+        # two futures are performed; this is safe though because the job is an idempotent workflow
         assert_includes 3..4, performed_jobs.size
 
         # only performs primary IO operations once and at the correct time
         assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job.name }.size
         job_that_performed = ChaoticJob.top_journal_entry
+
         assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1, 1
       end
     end

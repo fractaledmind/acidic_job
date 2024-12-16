@@ -50,10 +50,14 @@ module Examples
       # only performs primary IO operations once per job
       assert_equal 1, ChaoticJob.journal_size
       assert_equal 2, performed_jobs.select { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }.size
-      assert_equal 1, performed_jobs.select { |job| job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"] }.size
-      assert_equal 1, performed_jobs.select { |job| job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["params", "args"] }.size
+      assert_equal 1, performed_jobs.select { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
+      }.size
+      assert_equal 1, performed_jobs.select { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
+      }.size
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # simple walkthrough of the execution
@@ -73,14 +77,18 @@ module Examples
     end
 
     test "simulation" do
-      run_simulation(Job.new) do |scenario|
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      run_simulation(Job.new) do |_scenario|
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
 
         # only performs primary IO operations once per job
         assert_equal 1, ChaoticJob.journal_size
         assert_equal 2, performed_jobs.select { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }.size
-        assert_equal 1, performed_jobs.select { |job| job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"] }.size
-        assert_equal 1, performed_jobs.select { |job| job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["params", "args"] }.size
+        assert_equal 1, performed_jobs.select { |job|
+          job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
+        }.size
+        assert_equal 1, performed_jobs.select { |job|
+          job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
+        }.size
       end
     end
   end

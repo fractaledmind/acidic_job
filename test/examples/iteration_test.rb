@@ -21,9 +21,7 @@ module Examples
 
         # do thing with `item` idempotently
         # in this case, that requires checking the log before inserting
-        if ChaoticJob.top_journal_entry != item
-          ChaoticJob.log_to_journal!(item)
-        end
+        ChaoticJob.log_to_journal!(item) if ChaoticJob.top_journal_entry != item
 
         @ctx[:cursor] = cursor + 1
         repeat_step!
@@ -42,7 +40,7 @@ module Examples
       assert_equal 3, ChaoticJob.journal_size
       assert_equal [1, 2, 3], ChaoticJob::Journal.entries
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # iterates over 3 item array before succeeding
@@ -73,7 +71,7 @@ module Examples
         assert_equal 3, ChaoticJob.journal_size
         assert_equal [1, 2, 3], ChaoticJob::Journal.entries
 
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # iterates over 3 item array before succeeding
@@ -96,8 +94,8 @@ module Examples
     end
 
     test "simulation" do
-      run_simulation(Job.new) do |scenario|
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once()
+      run_simulation(Job.new) do |_scenario|
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
 
         # performs primary IO operation once per iteration
         assert_equal 3, ChaoticJob.journal_size
