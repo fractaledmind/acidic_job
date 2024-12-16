@@ -11,13 +11,14 @@ module AcidicJob
 
     attr_reader :execution, :ctx
 
-    def execute_workflow(unique_by:, &block)
+    def execute_workflow(unique_by:, with: [], &block)
+      @plugins = with
       serialized_job = serialize
 
       workflow_definition = AcidicJob.instrument(:define_workflow, **serialized_job) do
         raise RedefiningWorkflowError if defined? @_builder
 
-        @_builder = Builder.new
+        @_builder = Builder.new(@plugins)
 
         raise UndefinedWorkflowBlockError unless block_given?
         raise InvalidWorkflowBlockError if block.arity != 1
