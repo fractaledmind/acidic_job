@@ -130,12 +130,11 @@ module AcidicJob
 
       return next_step if @execution.entries.exists?(step: curr_step, action: :succeeded)
 
-      step_method = performable_step_for(step_definition)
       rescued_error = nil
       begin
         @execution.record!(step: curr_step, action: :started, timestamp: Time.now)
         result = AcidicJob.instrument(:perform_step, **step_definition) do
-          step_method.call
+          perform_step_for(step_definition)
         end
         case result
         when REPEAT_STEP
@@ -168,7 +167,7 @@ module AcidicJob
       end
     end
 
-    def performable_step_for(step_definition)
+    def perform_step_for(step_definition)
       step_name = step_definition.fetch("does")
       step_method = method(step_name)
 
@@ -176,9 +175,7 @@ module AcidicJob
 
       wrapper = step_definition["transactional"] ? @execution.method(:with_lock) : NO_OP_WRAPPER
 
-      proc do
-        catch(:repeat) { wrapper.call { step_method.call } }
-      end
+      catch(:repeat) { wrapper.call { step_method.call } }
     rescue NameError
       raise UndefinedMethodError.new(step_name)
     end
