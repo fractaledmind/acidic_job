@@ -4,10 +4,9 @@ require "active_job"
 
 module AcidicJob
   module Workflow
-    NO_OP_WRAPPER = proc { |&block| block.call }
     REPEAT_STEP = :REPEAT_STEP
     HALT_STEP = :HALT_STEP
-    private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
+    private_constant :REPEAT_STEP, :HALT_STEP
 
     attr_reader :execution, :ctx
 
@@ -173,9 +172,11 @@ module AcidicJob
 
       raise InvalidMethodError.new(step_name) unless step_method.arity.zero?
 
-      wrapper = step_definition["transactional"] ? @execution.method(:with_lock) : NO_OP_WRAPPER
+      plugin_pipeline_callable = plugins.reverse.reduce(step_method) do |callable, plugin|
+        proc { plugin.wrap(step_definition) { callable.call } }
+      end
 
-      catch(:repeat) { wrapper.call { step_method.call } }
+      catch(:repeat) { plugin_pipeline_callable.call }
     rescue NameError
       raise UndefinedMethodError.new(step_name)
     end
