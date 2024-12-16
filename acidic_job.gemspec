@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
     spec.add_dependency "activerecord", rails_version
     spec.add_dependency "activesupport", rails_version
     spec.add_dependency "railties", rails_version
+    spec.add_development_dependency "actionmailer", rails_version
   end
 
   spec.add_development_dependency "chaotic_job", ">= 0.2.0"

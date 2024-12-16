@@ -13,7 +13,7 @@ p({ ruby: RUBY_VERSION, rails: Rails::VERSION::STRING })
 require "combustion"
 require "sqlite3"
 Combustion.path = "test/combustion"
-Combustion.initialize! :active_record, :active_job
+Combustion.initialize! :active_record, :active_job, :action_mailer
 
 require "rails/test_help"
 require "chaotic_job"
