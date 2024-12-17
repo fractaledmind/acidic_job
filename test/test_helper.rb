@@ -75,7 +75,7 @@ class ActiveSupport::TestCase # rubocop:disable Style/ClassAndModuleChildren
   def after_teardown; end
 end
 
-class ActiveJob::TestCase
+class ActiveJob::TestCase # rubocop:disable Style/ClassAndModuleChildren
   # This needs to be set to `nil` to avoid an odd bug in Rails <= 7.1
   # where the queue adapter is given a fresh instance of the test adapter
   # after the `after_teardown` hook is called.
