@@ -60,7 +60,7 @@ module Examples
     end
 
     test "scenario with error before updating cursor" do
-      run_scenario(Job.new, glitch: ["before", "#{__FILE__}:28"]) do
+      run_scenario(Job.new, glitch: ["before", "#{__FILE__}:26"]) do
         perform_all_jobs
 
         # Performed the job and its retry
