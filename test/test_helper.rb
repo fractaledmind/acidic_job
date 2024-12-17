@@ -13,7 +13,7 @@ p({ ruby: RUBY_VERSION, rails: Rails::VERSION::STRING })
 require "combustion"
 require "sqlite3"
 Combustion.path = "test/combustion"
-Combustion.initialize! :active_record, :active_job
+Combustion.initialize! :active_record, :active_job, :action_mailer
 
 require "rails/test_help"
 require "chaotic_job"
@@ -38,6 +38,23 @@ class DefaultsError < StandardError; end
 class DiscardableError < StandardError; end
 class BreakingError < StandardError; end
 
+def assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once(context_on_error = nil)
+  # only one executions
+  assert_equal 1, AcidicJob::Execution.count, context_on_error
+  execution = AcidicJob::Execution.first
+
+  # that is finished
+  assert_equal "FINISHED", execution.recover_to, context_on_error
+
+  # each step only succeeds once
+  logs = AcidicJob::Entry.where(execution: execution).order(timestamp: :asc).pluck(:step, :action)
+  step_logs = logs.each_with_object({}) { |(step, status), hash| (hash[step] ||= []) << status }
+
+  step_logs.each_value do |actions|
+    assert_equal 1, actions.count { |it| it == "succeeded" }, context_on_error
+  end
+end
+
 class ActiveSupport::TestCase # rubocop:disable Style/ClassAndModuleChildren
   # Run tests in parallel with specified workers
   parallelize(workers: :number_of_processors)
@@ -56,4 +73,13 @@ class ActiveSupport::TestCase # rubocop:disable Style/ClassAndModuleChildren
   end
 
   def after_teardown; end
+end
+
+class ActiveJob::TestCase # rubocop:disable Style/ClassAndModuleChildren
+  # This needs to be set to `nil` to avoid an odd bug in Rails <= 7.1
+  # where the queue adapter is given a fresh instance of the test adapter
+  # after the `after_teardown` hook is called.
+  def queue_adapter_for_test
+    nil
+  end
 end
