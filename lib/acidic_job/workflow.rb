@@ -10,7 +10,7 @@ module AcidicJob
 
     attr_reader :execution, :ctx
 
-    def execute_workflow(unique_by:, with: [], &block)
+    def execute_workflow(unique_by:, with: [Plugins::TransactionalStep], &block)
       @plugins = with
       serialized_job = serialize
 
@@ -172,8 +172,9 @@ module AcidicJob
 
       raise InvalidMethodError.new(step_name) unless step_method.arity.zero?
 
-      plugin_pipeline_callable = plugins.reverse.reduce(step_method) do |callable, plugin|
-        proc { plugin.wrap(step_definition) { callable.call } }
+      step_kwargs = step_definition.symbolize_keys
+      plugin_pipeline_callable = @plugins.reverse.reduce(step_method) do |callable, plugin|
+        proc { plugin.wrap(**step_kwargs) { callable.call } }
       end
 
       catch(:repeat) { plugin_pipeline_callable.call }
