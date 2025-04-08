@@ -5,7 +5,7 @@ PATH
       activejob (>= 7.1)
       activerecord (>= 7.1)
       activesupport (>= 7.1)
-      json (= 2.7.0)
+      json (>= 2.7.0)
       railties (>= 7.1)
 
 GEM
