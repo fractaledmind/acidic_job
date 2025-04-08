@@ -94,4 +94,22 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
 
     assert_equal "a7c36d24b42051092df5547146952d4707bf6e04b84774576bad6a37937d018a", execution.idempotency_key
   end
+
+  test "idempotency_key when unique_by is arguments and arguments is an ActiveRecord model raises JSON::GeneratorError" do
+    class AcidicByBlockWithActiveRecordInstance < ActiveJob::Base
+      include AcidicJob::Workflow
+
+      def perform(*)
+        execute_workflow(unique_by: arguments) { |w| w.step :step_1 }
+      end
+
+      def step_1; nil; end
+    end
+
+    user = User.create!(email: "test@example.com", stripe_customer_id: "cus_123")
+    job = AcidicByBlockWithActiveRecordInstance.new(user)
+    assert_raises(JSON::GeneratorError, "User not allowed in JSON") do
+      job.perform_now
+    end
+  end
 end
