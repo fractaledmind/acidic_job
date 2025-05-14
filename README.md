@@ -101,7 +101,8 @@ class RideCreateJob < AcidicJob::Base
 end
 ```
 
-The `unique_by` keyword argument is used to define the unique identifier for a particular execution of the workflow. This helps to ensure that the workflow is idempotent, as retries of the job will correctly resume the pre-existing workflow execution. The `unique_by` argument can be anything that `JSON.dump` can handle.
+> [!IMPORTANT]
+> The `unique_by` keyword argument is used to define the unique identifier for a particular execution of the workflow. This helps to ensure that the workflow is idempotent, as retries of the job will correctly resume the pre-existing workflow execution. The `unique_by` argument can **only** be something that `JSON.generate(..., strict: true)` can handle; that is, it must be made up of only the JSON native types: `Hash`, `Array`, `String`, `Integer`, `Float`, `true`, `false` and `nil`.
 
 The block passed to `execute_workflow` is where you define the steps of the workflow. Each step is defined by calling the `step` method on the yielded workflow builder object. The `step` method takes the name of a method in the job that will be executed as part of the workflow. The `transactional` keyword argument can be used to ensure that the step is executed within a database transaction.
 
