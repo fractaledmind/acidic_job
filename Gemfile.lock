@@ -5,6 +5,7 @@ PATH
       activejob (>= 7.1)
       activerecord (>= 7.1)
       activesupport (>= 7.1)
+      json (>= 2.7.0)
       railties (>= 7.1)
 
 GEM
@@ -78,7 +79,7 @@ GEM
     irb (1.14.1)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.6.3)
+    json (2.10.2)
     logger (1.6.1)
     loofah (2.22.0)
       crass (~> 1.0.2)
