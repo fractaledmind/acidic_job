@@ -98,5 +98,27 @@ module AcidicJob
       "step method cannot expect arguments: #{@step.inspect}"
     end
   end
+
+  class DoublePluginCallError < Error
+    def initialize(plugin, step)
+      @plugin_name = Module === plugin ? plugin.name : plugin.class.name
+      @step = step
+    end
+
+    def message
+      "plugin `#{@plugin_name}` attempted to call step multiple times: #{@step.inspect}"
+    end
+  end
+
+  class MissingPluginCallError < Error
+    def initialize(plugin, step)
+      @plugin_name = Module === plugin ? plugin.name : plugin.class.name
+      @step = step
+    end
+
+    def message
+      "plugin `#{@plugin_name}` failed to call step: #{@step.inspect}"
+    end
+  end
   # rubocop:enable Lint/MissingSuper
 end
