@@ -51,7 +51,7 @@ module Examples
          %w[step_1 started],
          %w[step_1 started],
          %w[step_1 succeeded]],
-        execution.entries.order(timestamp: :asc).pluck(:step, :action)
+        execution.entries.ordered.pluck(:step, :action)
       )
 
       # only one context value for the cursor into the enumerable
@@ -84,7 +84,7 @@ module Examples
            %w[step_1 started],
            %w[step_1 started],
            %w[step_1 succeeded]],
-          execution.entries.order(timestamp: :asc).pluck(:step, :action)
+          execution.entries.ordered.pluck(:step, :action)
         )
 
         # only one context value for the cursor into the enumerable

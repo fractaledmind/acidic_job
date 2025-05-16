@@ -59,7 +59,7 @@ module Examples
          %w[delay succeeded],
          %w[halt started],
          %w[halt halted]],
-        execution.entries.order(timestamp: :asc).pluck(:step, :action)
+        execution.entries.ordered.pluck(:step, :action)
       )
 
       # only one context value for the signal to halt, which is already false
@@ -83,7 +83,7 @@ module Examples
          %w[halt succeeded],
          %w[do_something started],
          %w[do_something succeeded]],
-        execution.entries.order(timestamp: :asc).pluck(:step, :action)
+        execution.entries.ordered.pluck(:step, :action)
       )
 
       # only one context value for the signal to halt that is still false
@@ -125,7 +125,7 @@ module Examples
          %w[halt errored],
          %w[halt started],
          %w[halt halted]],
-        execution.entries.order(timestamp: :asc).pluck(:step, :action)
+        execution.entries.ordered.pluck(:step, :action)
       )
 
       # only one context value for the signal to halt, which is already false
@@ -151,7 +151,7 @@ module Examples
          %w[halt succeeded],
          %w[do_something started],
          %w[do_something succeeded]],
-        execution.entries.order(timestamp: :asc).pluck(:step, :action)
+        execution.entries.ordered.pluck(:step, :action)
       )
 
       # only one context value for the signal to halt that is still false
@@ -193,7 +193,7 @@ module Examples
          %w[delay succeeded],
          %w[halt started],
          %w[halt halted]],
-        execution.entries.order(timestamp: :asc).pluck(:step, :action)
+        execution.entries.ordered.pluck(:step, :action)
       )
 
       # only one context value for the signal to halt, which is already false
@@ -219,7 +219,7 @@ module Examples
          %w[halt succeeded],
          %w[do_something started],
          %w[do_something succeeded]],
-        execution.entries.order(timestamp: :asc).pluck(:step, :action)
+        execution.entries.ordered.pluck(:step, :action)
       )
 
       # only one context value for the signal to halt that is still false

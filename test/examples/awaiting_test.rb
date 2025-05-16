@@ -115,7 +115,7 @@ module Examples
          %w[await_jobs succeeded],
          %w[do_something started],
          %w[do_something succeeded]],
-        execution.entries.order(timestamp: :asc).pluck(:step, :action)
+        execution.entries.ordered.pluck(:step, :action)
       )
 
       # context has 3 values: job_ids, and the truthy values of each job_id
@@ -161,7 +161,7 @@ module Examples
          %w[await_jobs succeeded],
          %w[do_something started],
          %w[do_something succeeded]],
-        execution.entries.order(timestamp: :asc).pluck(:step, :action)
+        execution.entries.ordered.pluck(:step, :action)
       )
 
       # context has 3 values: job_ids, and the truthy values of each job_id
