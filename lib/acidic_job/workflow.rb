@@ -194,6 +194,7 @@ module AcidicJob
 
             result = plugin.around_step(context) do
               raise DoublePluginCallError.new(plugin, step_name) if called
+
               called = true
               callable.call
             end

@@ -101,7 +101,7 @@ module AcidicJob
 
   class DoublePluginCallError < Error
     def initialize(plugin, step)
-      @plugin_name = Module === plugin ? plugin.name : plugin.class.name
+      @plugin_name = Module === plugin ? plugin.name : plugin.class.name # rubocop:disable Style/CaseEquality
       @step = step
     end
 
@@ -112,7 +112,7 @@ module AcidicJob
 
   class MissingPluginCallError < Error
     def initialize(plugin, step)
-      @plugin_name = Module === plugin ? plugin.name : plugin.class.name
+      @plugin_name = Module === plugin ? plugin.name : plugin.class.name # rubocop:disable Style/CaseEquality
       @step = step
     end
 
