@@ -9,8 +9,11 @@ module AcidicJob
         :transactional
       end
 
+      # transactional: true
+      # transactional: false
+      # transactional: { on: Model }
       def validate(input)
-        return true if input in true | false
+        return input if input in true | false
 
         raise ArgumentError.new("argument must be boolean or hash") unless input in Hash
         raise ArgumentError.new("argument hash must have `on` key") unless input in Hash[on:]
@@ -19,12 +22,16 @@ module AcidicJob
         input
       end
 
-      def wrap(transactional:, **, &block)
-        return yield if transactional == false
+      def around_step(context, &block)
+        return yield if context.definition == false
 
-        on = transactional == true ? AcidicJob::Execution : transactional["on"].constantize
+        model = if context.definition == true
+          AcidicJob::Execution
+        else
+          context.definition["on"].constantize
+        end
 
-        on.transaction(&block)
+        model.transaction(&block)
       end
     end
   end
