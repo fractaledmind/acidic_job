@@ -34,7 +34,9 @@ end
 
 ActiveSupport.to_time_preserves_timezone = true if ActiveSupport.respond_to?(:to_time_preserves_timezone)
 
+# rubocop:disable Layout/LineLength
 ActiveJob::Base.logger = ActiveRecord::Base.logger = AcidicJob.logger = Logger.new(ENV["LOG"].present? ? $stdout : IO::NULL)
+# rubocop:enable Layout/LineLength
 
 class DefaultsError < StandardError; end
 class DiscardableError < StandardError; end
