@@ -304,7 +304,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       events << event.dup
 
       next unless event.name == "perform_step.acidic_job"
-      next unless event.payload["does"] == "step_1"
+      next unless event.payload[:does] == "step_1"
       next if already_raised
 
       already_raised = true
@@ -440,7 +440,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
       events << event.dup
 
       next unless event.name == "process_step.acidic_job"
-      next unless event.payload["does"] == "step_1"
+      next unless event.payload[:does] == "step_1"
       next if already_raised
 
       already_raised = true
