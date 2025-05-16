@@ -199,7 +199,7 @@ p({callstack: acidic_job_callstack.size, locations: error_locs.size, permutation
       )
 
       assert_equal [true, true, true], already_raised
-      assert_equal "FINISHED", recover_to
+      assert_equal AcidicJob::FINISHED_RECOVERY_POINT, recover_to
 
       logs = AcidicJob::Entry.where(execution_id: execution_id).order(timestamp: :asc).pluck(:step, :action)
       assert_equal 3, logs.count { |_, action| action == "succeeded" }

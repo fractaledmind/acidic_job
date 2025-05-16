@@ -4,9 +4,9 @@ require "active_job"
 
 module AcidicJob
   module Workflow
-    REPEAT_STEP = :REPEAT_STEP
-    HALT_STEP = :HALT_STEP
-    private_constant :REPEAT_STEP, :HALT_STEP
+    REPEAT_STEP = :__ACIDIC_JOB_REPEAT_STEP_SIGNAL__
+    HALT_STEP = :__ACIDIC_JOB_HALT_STEP_SIGNAL__
+    private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
 
     attr_reader :execution, :ctx
 
@@ -62,11 +62,18 @@ module AcidicJob
               last_run_at: Time.current
             )
           else
+            starting_point = if workflow_definition.key?("steps")
+                               workflow_definition["steps"].keys.first
+                             else
+                               # TODO: add deprecation warning
+                               workflow_definition.keys.first
+                             end
+
             record = Execution.create!(
               idempotency_key: idempotency_key,
               serialized_job: serialized_job,
               definition: workflow_definition,
-              recover_to: workflow_definition.keys.first
+              recover_to: starting_point
             )
           end
 
@@ -84,11 +91,11 @@ module AcidicJob
 
           current_step = @execution.recover_to
 
-          if not @execution.definition.key?(current_step) # rubocop:disable Style/Not
+          if not @execution.defined?(current_step) # rubocop:disable Style/Not
             raise UndefinedStepError.new(current_step)
           end
 
-          step_definition = @execution.definition[current_step]
+          step_definition = @execution.definition_for(current_step)
           AcidicJob.instrument(:process_step, **step_definition) do
             recover_to = catch(:halt) { take_step(step_definition) }
             case recover_to
@@ -114,7 +121,7 @@ module AcidicJob
     def step_retrying?
       step_name = caller_locations.first.label
 
-      if not @execution.definition.key?(step_name) # rubocop:disable Style/IfUnlessModifier, Style/Not
+      if not @execution.defined?(step_name) # rubocop:disable Style/IfUnlessModifier, Style/Not
         raise UndefinedStepError.new(step_name)
       end
 

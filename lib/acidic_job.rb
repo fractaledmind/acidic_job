@@ -16,7 +16,7 @@ module AcidicJob
   extend self
 
   DEFAULT_LOGGER = ActiveSupport::Logger.new($stdout)
-  FINISHED_RECOVERY_POINT = "FINISHED"
+  FINISHED_RECOVERY_POINT = "__ACIDIC_JOB_WORKFLOW_FINISHED__"
 
   mattr_accessor :logger, default: DEFAULT_LOGGER
   mattr_accessor :connects_to

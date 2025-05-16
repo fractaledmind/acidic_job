@@ -131,7 +131,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
@@ -191,7 +191,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
@@ -254,7 +254,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
@@ -322,7 +322,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
@@ -392,7 +392,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 7, AcidicJob::Entry.count
     assert_equal(
@@ -458,7 +458,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(

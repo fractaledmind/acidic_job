@@ -32,9 +32,7 @@ if ActiveRecord.respond_to?(:commit_transaction_on_non_local_return) &&
   ActiveRecord.commit_transaction_on_non_local_return = true
 end
 
-if ActiveSupport.respond_to?(:to_time_preserves_timezone)
-  ActiveSupport.to_time_preserves_timezone = true
-end
+ActiveSupport.to_time_preserves_timezone = true if ActiveSupport.respond_to?(:to_time_preserves_timezone)
 
 ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(ENV["LOG"].present? ? $stdout : IO::NULL)
 
@@ -48,7 +46,7 @@ def assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once(
   execution = AcidicJob::Execution.first
 
   # that is finished
-  assert_equal "FINISHED", execution.recover_to, context_on_error
+  assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to, context_on_error
 
   # each step only succeeds once
   logs = AcidicJob::Entry.where(execution: execution).order(timestamp: :asc).pluck(:step, :action)
