@@ -9,25 +9,23 @@ module AcidicJob
     HALT_STEP = :__ACIDIC_JOB_HALT_STEP_SIGNAL__
     private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
 
-    attr_reader :execution, :ctx
-
     def execute_workflow(unique_by:, &block)
       serialized_job = serialize
 
       workflow_definition = AcidicJob.instrument(:define_workflow, **serialized_job) do
-        raise RedefiningWorkflowError if defined? @_builder
+        raise RedefiningWorkflowError if defined? @__acidic_job_builder__
 
-        @_builder = Builder.new
+        @__acidic_job_builder__ = Builder.new
 
         raise UndefinedWorkflowBlockError unless block_given?
         raise InvalidWorkflowBlockError if block.arity != 1
 
-        block.call @_builder
+        block.call @__acidic_job_builder__
 
-        raise MissingStepsError if @_builder.steps.empty?
+        raise MissingStepsError if @__acidic_job_builder__.steps.empty?
 
         # convert the array of steps into a hash of recovery_points and next steps
-        @_builder.define_workflow
+        @__acidic_job_builder__.define_workflow
       end
 
       AcidicJob.instrument(:initialize_workflow, definition: workflow_definition) do
@@ -40,7 +38,7 @@ module AcidicJob
                            end
         idempotency_key = Digest::SHA256.hexdigest(JSON.fast_generate([self.class.name, unique_by], strict: true))
 
-        @execution = ::ActiveRecord::Base.transaction(**transaction_args) do
+        @__acidic_job_execution__ = ::ActiveRecord::Base.transaction(**transaction_args) do
           record = Execution.find_by(idempotency_key: idempotency_key)
 
           if record.present?
@@ -80,30 +78,30 @@ module AcidicJob
           record
         end
       end
-      @ctx ||= Context.new(@execution)
+      @__acidic_job_context__ ||= Context.new(@__acidic_job_execution__)
 
-      AcidicJob.instrument(:process_workflow, execution: @execution.attributes) do
+      AcidicJob.instrument(:process_workflow, execution: @__acidic_job_execution__.attributes) do
         # if the workflow record is already marked as finished, immediately return its result
-        return true if @execution.finished?
+        return true if @__acidic_job_execution__.finished?
 
         loop do
-          break if @execution.finished?
+          break if @__acidic_job_execution__.finished?
 
-          current_step = @execution.recover_to
+          current_step = @__acidic_job_execution__.recover_to
 
-          if not @execution.defined?(current_step) # rubocop:disable Style/Not
+          if not @__acidic_job_execution__.defined?(current_step) # rubocop:disable Style/Not
             raise UndefinedStepError.new(current_step)
           end
 
-          step_definition = @execution.definition_for(current_step)
+          step_definition = @__acidic_job_execution__.definition_for(current_step)
           AcidicJob.instrument(:process_step, **step_definition) do
             recover_to = catch(:halt) { take_step(step_definition) }
             case recover_to
             when HALT_STEP
-              @execution.record!(step: step_definition.fetch("does"), action: :halted, timestamp: Time.now)
+              @__acidic_job_execution__.record!(step: step_definition.fetch("does"), action: :halted, timestamp: Time.now)
               return true
             else
-              @execution.update!(recover_to: recover_to)
+              @__acidic_job_execution__.update!(recover_to: recover_to)
             end
           end
         end
@@ -121,11 +119,19 @@ module AcidicJob
     def step_retrying?
       step_name = caller_locations.first.label
 
-      if not @execution.defined?(step_name) # rubocop:disable Style/IfUnlessModifier, Style/Not
+      if not @__acidic_job_execution__.defined?(step_name) # rubocop:disable Style/IfUnlessModifier, Style/Not
         raise UndefinedStepError.new(step_name)
       end
 
-      @execution.entries.where(step: step_name, action: "started").count > 1
+      @__acidic_job_execution__.entries.where(step: step_name, action: "started").count > 1
+    end
+
+    def execution
+      @__acidic_job_execution__
+    end
+
+    def ctx
+      @__acidic_job_context__
     end
 
     private
@@ -134,11 +140,11 @@ module AcidicJob
       curr_step = step_definition.fetch("does")
       next_step = step_definition.fetch("then")
 
-      return next_step if @execution.entries.exists?(step: curr_step, action: :succeeded)
+      return next_step if @__acidic_job_execution__.entries.exists?(step: curr_step, action: :succeeded)
 
       rescued_error = nil
       begin
-        @execution.record!(step: curr_step, action: :started, timestamp: Time.now)
+        @__acidic_job_execution__.record!(step: curr_step, action: :started, timestamp: Time.now)
         result = AcidicJob.instrument(:perform_step, **step_definition) do
           perform_step_for(step_definition)
         end
@@ -146,7 +152,7 @@ module AcidicJob
         when REPEAT_STEP
           curr_step
         else
-          @execution.record!(step: curr_step, action: :succeeded, timestamp: Time.now, result: result)
+          @__acidic_job_execution__.record!(step: curr_step, action: :succeeded, timestamp: Time.now, result: result)
           next_step
         end
       rescue StandardError => e
@@ -155,7 +161,7 @@ module AcidicJob
       ensure
         if rescued_error
           begin
-            @execution.record!(
+            @__acidic_job_execution__.record!(
               step: curr_step,
               action: :errored,
               timestamp: Time.now,
@@ -166,7 +172,7 @@ module AcidicJob
             # We're already inside an error condition, so swallow any additional
             # errors from here and just send them to logs.
             logger.error(
-              "Failed to store exception at step #{curr_step} for execution ##{@execution.id} because of #{e}."
+              "Failed to store exception at step #{curr_step} for execution ##{@__acidic_job_execution__.id} because of #{e}."
             )
           end
         end
@@ -183,7 +189,7 @@ module AcidicJob
 
       raise InvalidMethodError.new(step_name) unless step_method.arity.zero?
 
-      wrapper = step_definition["transactional"] ? @execution.method(:with_lock) : NO_OP_WRAPPER
+      wrapper = step_definition["transactional"] ? @__acidic_job_execution__.method(:with_lock) : NO_OP_WRAPPER
 
       catch(:repeat) { wrapper.call { step_method.call } }
     end
