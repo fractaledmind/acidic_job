@@ -55,7 +55,7 @@ def assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once(
   step_logs = logs.each_with_object({}) { |(step, status), hash| (hash[step] ||= []) << status }
 
   step_logs.each_value do |actions|
-    assert_equal 1, actions.count { |it| it == "succeeded" }, context_on_error
+    assert_equal 1, actions.count { |it| it == "succeeded" }, actions
   end
 end
 
