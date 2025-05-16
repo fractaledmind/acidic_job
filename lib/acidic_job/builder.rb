@@ -13,11 +13,9 @@ module AcidicJob
       step = { "does" => method_name.to_s }
 
       @plugins.each do |plugin|
-        step[plugin.keyword.to_s] = if kwargs.key?(plugin.keyword)
-                                      plugin.validate(kwargs[plugin.keyword])
-                                    else
-                                      false
-                                    end
+        next unless kwargs.key?(plugin.keyword)
+
+        step[plugin.keyword.to_s] = plugin.validate(kwargs[plugin.keyword])
       end
 
       @steps << step
