@@ -23,7 +23,7 @@ module AcidicJob
   mattr_accessor :connects_to
 
   def instrument(channel, **options, &block)
-    ActiveSupport::Notifications.instrument("#{channel}.acidic_job", **options, &block)
+    ActiveSupport::Notifications.instrument("#{channel}.acidic_job", **options.deep_symbolize_keys, &block)
   end
 
   ActiveSupport.run_load_hooks(:acidic_job, self)

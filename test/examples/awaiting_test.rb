@@ -62,8 +62,8 @@ module Examples
       end
 
       def enqueue_jobs
-        @job_1.arguments.push @execution, job_id
-        @job_2.arguments.push @execution, job_id
+        @job_1.arguments.push execution, job_id
+        @job_2.arguments.push execution, job_id
         ActiveJob.perform_all_later(@job_1, @job_2)
       end
 
