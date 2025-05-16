@@ -30,7 +30,7 @@ module AcidicJob
         @_builder.define_workflow
       end
 
-      AcidicJob.instrument(:initialize_workflow, "definition" => workflow_definition) do
+      AcidicJob.instrument(:initialize_workflow, definition: workflow_definition) do
         transaction_args = case ::ActiveRecord::Base.connection.adapter_name.downcase.to_sym
                            # SQLite doesn't support `serializable` transactions
                            when :sqlite
