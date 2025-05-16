@@ -39,7 +39,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
   end
 
@@ -87,7 +87,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_3 errored],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
   end
 
@@ -125,7 +125,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     assert_equal(
       [%w[step_1 started],
        %w[step_1 errored]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
   end
 
@@ -167,7 +167,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 errored]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
   end
 
@@ -209,7 +209,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 errored]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
   end
 
@@ -254,7 +254,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_1 succeeded],
        %w[step_2 started],
        %w[step_2 errored]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal 1, TestObject.count
@@ -301,7 +301,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_1 succeeded],
        %w[step_2 started],
        %w[step_2 errored]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal 0, TestObject.count
@@ -354,7 +354,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal 2, TestObject.count
@@ -413,7 +413,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal 1, TestObject.count
@@ -481,7 +481,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal 1, TestObject.count
@@ -530,7 +530,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
   end
 end
