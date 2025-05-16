@@ -17,13 +17,20 @@ module AcidicJob
       # [ { does: "step 1", transactional: true }, { does: "step 2", transactional: false }, ... ]
       @steps << { "does" => FINISHED_RECOVERY_POINT }
 
-      {}.tap do |workflow|
+      definition = {
+        "meta" => {
+          "version" => VERSION
+        },
+        "steps" => {}
+      }
+
+      definition.tap do |workflow|
         @steps.each_cons(2).map do |enter_step, exit_step|
           enter_name = enter_step["does"]
-          workflow[enter_name] = enter_step.merge("then" => exit_step["does"])
+          workflow["steps"][enter_name] = enter_step.merge("then" => exit_step["does"])
         end
       end
-      # { "step 1": { does: "step 1", transactional: true, then: "step 2" }, ...  }
+      # { meta: { ... }, steps: { "step 1": { does: "step 1", transactional: true, then: "step 2" }, ...  } }
     end
   end
 end
