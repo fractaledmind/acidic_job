@@ -6,7 +6,7 @@ module AcidicJob
   module Workflow
     REPEAT_STEP = :__ACIDIC_JOB_REPEAT_STEP_SIGNAL__
     HALT_STEP = :__ACIDIC_JOB_HALT_STEP_SIGNAL__
-    private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
+    private_constant :REPEAT_STEP, :HALT_STEP
 
     attr_reader :execution, :ctx
 
