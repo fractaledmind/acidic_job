@@ -32,6 +32,10 @@ if ActiveRecord.respond_to?(:commit_transaction_on_non_local_return) &&
   ActiveRecord.commit_transaction_on_non_local_return = true
 end
 
+if ActiveSupport.respond_to?(:to_time_preserves_timezone)
+  ActiveSupport.to_time_preserves_timezone = true
+end
+
 ActiveJob::Base.logger = ActiveRecord::Base.logger = Logger.new(ENV["LOG"].present? ? $stdout : IO::NULL)
 
 class DefaultsError < StandardError; end
