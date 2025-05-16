@@ -5,8 +5,8 @@ require "active_job"
 module AcidicJob
   module Workflow
     NO_OP_WRAPPER = proc { |&block| block.call }
-    REPEAT_STEP = :REPEAT_STEP
-    HALT_STEP = :HALT_STEP
+    REPEAT_STEP = :__ACIDIC_JOB_REPEAT_STEP_SIGNAL__
+    HALT_STEP = :__ACIDIC_JOB_HALT_STEP_SIGNAL__
     private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
 
     attr_reader :execution, :ctx
