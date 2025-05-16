@@ -24,7 +24,7 @@ With AcidicJob, you can write reliable and repeatable multi-step distributed ope
 Install the gem and add to the application's Gemfile by executing:
 
 ```sh
-bundle add acidic_job --version "1.0.0.rc1"
+bundle add acidic_job --version "1.0.0.rc3"
 ```
 
 If `bundler` is not being used to manage dependencies, install the gem by executing:
@@ -109,7 +109,7 @@ The block passed to `execute_workflow` is where you define the steps of the work
 The `step` method is the only method available on the yielded workflow builder object, and it simply takes the name of a method available in the job.
 
 > [!IMPORTANT]
-> In order to craft resilient workflows, you need to ensure that each step method wraps a single unit of IO-bound work. You **must not** have a step method that performs multiple IO-bound operations, like writing to your database and calling an external API. Steps should be as granular and self-contained as possible. This allows your own logic to be more durable in case of failures in third-party APIs, network errors, and so on. So, the rule of thumb is to have only one _state mutation_ per step. And this rule of thumb graduates to a hard and fast rule for _foreign state mutations_. You **must** only have **one** foreign state mutation per step, where a foreign state mutation is any operation that writes to a system beyond your own boundaries. This might be creating a charge on Stripe, adding a DNS record, or sending an email.[^1]
+> In order to craft resilient workflows, you need to ensure that each step method wraps a single unit of IO-bound work. You **should not** have a step method that performs multiple IO-bound operations, like writing to your database and calling an external API. Steps should be as granular and self-contained as possible. This allows your own logic to be more durable in case of failures in third-party APIs, network errors, and so on. So, the rule of thumb is to have only one _state mutation_ per step. And this rule of thumb graduates to a hard and fast rule for _foreign state mutations_. You **must** only have **one** foreign state mutation per step, where a foreign state mutation is any operation that writes to a system beyond your own boundaries. This might be creating a charge on Stripe, adding a DNS record, or sending an email.[^1]
 
 [^1]: I first learned this rule from [Brandur Leach](https://twitter.com/brandur) reminds in his post on [Implementing Stripe-like Idempotency Keys in Postgres](https://brandur.org/idempotency-keys).
 

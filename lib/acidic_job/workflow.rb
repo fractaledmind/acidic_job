@@ -8,7 +8,7 @@ module AcidicJob
     HALT_STEP = :__ACIDIC_JOB_HALT_STEP_SIGNAL__
     private_constant :REPEAT_STEP, :HALT_STEP
 
-    def execute_workflow(unique_by:, with: [Plugins::TransactionalStep], &block)
+    def execute_workflow(unique_by:, with: AcidicJob.plugins, &block)
       @__acidic_job_plugins__ = with
       serialized_job = serialize
 

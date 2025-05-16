@@ -21,6 +21,7 @@ module AcidicJob
 
   mattr_accessor :logger, default: DEFAULT_LOGGER
   mattr_accessor :connects_to
+  mattr_accessor :plugins, default: [Plugins::TransactionalStep]
 
   def instrument(channel, **options, &block)
     ActiveSupport::Notifications.instrument("#{channel}.acidic_job", **options.deep_symbolize_keys, &block)
