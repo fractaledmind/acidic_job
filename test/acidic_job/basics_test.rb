@@ -29,7 +29,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job1"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
@@ -71,7 +71,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job2"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 12, AcidicJob::Entry.count
     assert_equal(
@@ -342,7 +342,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job7"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
@@ -401,7 +401,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job8"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
@@ -469,7 +469,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job9"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
@@ -519,7 +519,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
     execution = AcidicJob::Execution.first
 
     assert_equal [self.class.name, "Job10"].join("::"), execution.serialized_job["job_class"]
-    assert_equal "FINISHED", execution.recover_to
+    assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
     assert_equal "0ce3d65c09b390b8a53060eb6184a30d4a7025ca403b9f5aeda769932a9e2c86", execution.idempotency_key
 
     assert_equal 6, AcidicJob::Entry.count
