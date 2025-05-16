@@ -168,15 +168,17 @@ module AcidicJob
 
     def perform_step_for(step_definition)
       step_name = step_definition.fetch("does")
-      step_method = method(step_name)
+      begin
+        step_method = method(step_name)
+      rescue NameError
+        raise UndefinedMethodError.new(step_name)
+      end
 
       raise InvalidMethodError.new(step_name) unless step_method.arity.zero?
 
       wrapper = step_definition["transactional"] ? @execution.method(:with_lock) : NO_OP_WRAPPER
 
       catch(:repeat) { wrapper.call { step_method.call } }
-    rescue NameError
-      raise UndefinedMethodError.new(step_name)
     end
   end
 end
