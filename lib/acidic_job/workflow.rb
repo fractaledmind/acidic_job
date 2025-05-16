@@ -98,7 +98,11 @@ module AcidicJob
             recover_to = catch(:halt) { take_step(step_definition) }
             case recover_to
             when HALT_STEP
-              @__acidic_job_execution__.record!(step: step_definition.fetch("does"), action: :halted, timestamp: Time.now)
+              @__acidic_job_execution__.record!(
+                step: step_definition.fetch("does"),
+                action: :halted,
+                timestamp: Time.now
+              )
               return true
             else
               @__acidic_job_execution__.update!(recover_to: recover_to)
@@ -172,7 +176,7 @@ module AcidicJob
             # We're already inside an error condition, so swallow any additional
             # errors from here and just send them to logs.
             logger.error(
-              "Failed to store exception at step #{curr_step} for execution ##{@__acidic_job_execution__.id} because of #{e}."
+              "Failed to store exception at step #{curr_step} for execution ##{@__acidic_job_execution__.id}: #{e}."
             )
           end
         end
