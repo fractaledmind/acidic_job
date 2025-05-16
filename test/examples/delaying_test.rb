@@ -17,13 +17,13 @@ module Examples
 
       def delay
         enqueue(wait: 14.days)
-        @ctx[:halt] = true
+        ctx[:halt] = true
       end
 
       def halt
-        return unless @ctx[:halt]
+        return unless ctx[:halt]
 
-        @ctx[:halt] = false
+        ctx[:halt] = false
         halt_step!
       end
 

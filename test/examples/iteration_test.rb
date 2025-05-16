@@ -15,7 +15,7 @@ module Examples
       end
 
       def step_1
-        cursor = @ctx[:cursor] || 0
+        cursor = ctx[:cursor] || 0
         item = @enumerable[cursor]
         return if item.nil?
 
@@ -23,7 +23,7 @@ module Examples
         # in this case, that requires checking the log before inserting
         ChaoticJob.log_to_journal!(item) if ChaoticJob.top_journal_entry != item
 
-        @ctx[:cursor] = cursor + 1
+        ctx[:cursor] = cursor + 1
         repeat_step!
       end
     end
