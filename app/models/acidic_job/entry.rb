@@ -8,8 +8,12 @@ module AcidicJob
     scope :for_action, ->(action) { where(action: action) }
     scope :ordered, -> { order(timestamp: :asc) }
 
-    def self.most_recent = order(created_at: :desc).first
+    def self.most_recent
+      order(created_at: :desc).first
+    end
 
-    def is_action?(check) = self.action == check
+    def action?(check)
+      action == check
+    end
   end
 end
