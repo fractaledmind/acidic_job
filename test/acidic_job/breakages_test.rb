@@ -141,7 +141,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
@@ -201,7 +201,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
@@ -266,7 +266,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
@@ -334,7 +334,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
@@ -403,7 +403,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
@@ -468,7 +468,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
        %w[step_2 succeeded],
        %w[step_3 started],
        %w[step_3 succeeded]],
-      execution.entries.order(timestamp: :asc).pluck(:step, :action)
+      execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
