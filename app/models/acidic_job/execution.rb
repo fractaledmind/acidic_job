@@ -29,7 +29,8 @@ module AcidicJob
     end
 
     def finished?
-      recover_to.to_s == FINISHED_RECOVERY_POINT
+      recover_to.to_s == FINISHED_RECOVERY_POINT ||
+        recover_to.to_s == "FINISHED" # old value pre-1.0
     end
 
     def defined?(step)
