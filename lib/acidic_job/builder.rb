@@ -4,12 +4,21 @@ module AcidicJob
   class Builder
     attr_reader :steps
 
-    def initialize
+    def initialize(plugins)
+      @plugins = plugins
       @steps = []
     end
 
-    def step(method_name, transactional: false)
-      @steps << { "does" => method_name.to_s, "transactional" => transactional }
+    def step(method_name, **kwargs)
+      step = { "does" => method_name.to_s }
+
+      @plugins.each do |plugin|
+        next unless kwargs.key?(plugin.keyword)
+
+        step[plugin.keyword.to_s] = plugin.validate(kwargs[plugin.keyword])
+      end
+
+      @steps << step
       @steps
     end
 

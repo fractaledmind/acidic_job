@@ -7,6 +7,7 @@ class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version
       t.datetime    :locked_at, 			null: true
       t.string      :recover_to, 	    null: true
       t.json        :definition, 			null: true,   default: "{}"
+
       t.timestamps
     end
 

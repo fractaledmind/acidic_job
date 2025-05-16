@@ -6,6 +6,8 @@ require_relative "acidic_job/errors"
 require_relative "acidic_job/builder"
 require_relative "acidic_job/context"
 require_relative "acidic_job/arguments"
+require_relative "acidic_job/plugin_context"
+require_relative "acidic_job/plugins/transactional_step"
 require_relative "acidic_job/log_subscriber"
 require_relative "acidic_job/workflow"
 

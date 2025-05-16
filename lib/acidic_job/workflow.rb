@@ -4,18 +4,18 @@ require "active_job"
 
 module AcidicJob
   module Workflow
-    NO_OP_WRAPPER = proc { |&block| block.call }
     REPEAT_STEP = :__ACIDIC_JOB_REPEAT_STEP_SIGNAL__
     HALT_STEP = :__ACIDIC_JOB_HALT_STEP_SIGNAL__
-    private_constant :NO_OP_WRAPPER, :REPEAT_STEP, :HALT_STEP
+    private_constant :REPEAT_STEP, :HALT_STEP
 
-    def execute_workflow(unique_by:, &block)
+    def execute_workflow(unique_by:, with: [Plugins::TransactionalStep], &block)
+      @__acidic_job_plugins__ = with
       serialized_job = serialize
 
       workflow_definition = AcidicJob.instrument(:define_workflow, **serialized_job) do
         raise RedefiningWorkflowError if defined? @__acidic_job_builder__
 
-        @__acidic_job_builder__ = Builder.new
+        @__acidic_job_builder__ = Builder.new(@__acidic_job_plugins__)
 
         raise UndefinedWorkflowBlockError unless block_given?
         raise InvalidWorkflowBlockError if block.arity != 1
@@ -193,9 +193,30 @@ module AcidicJob
 
       raise InvalidMethodError.new(step_name) unless step_method.arity.zero?
 
-      wrapper = step_definition["transactional"] ? @__acidic_job_execution__.method(:with_lock) : NO_OP_WRAPPER
+      plugin_pipeline_callable = @__acidic_job_plugins__.reverse.reduce(step_method) do |callable, plugin|
+        context = PluginContext.new(plugin, self, @__acidic_job_execution__, step_definition)
 
-      catch(:repeat) { wrapper.call { step_method.call } }
+        if context.inactive?
+          callable
+        else
+          proc do
+            called = false
+
+            result = plugin.around_step(context) do
+              raise DoublePluginCallError.new(plugin, step_name) if called
+
+              called = true
+              callable.call
+            end
+
+            raise MissingPluginCallError.new(plugin, step_name) unless called
+
+            result
+          end
+        end
+      end
+
+      catch(:repeat) { plugin_pipeline_callable.call }
     end
   end
 end
