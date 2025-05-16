@@ -183,12 +183,29 @@ module AcidicJob
 
       raise InvalidMethodError.new(step_name) unless step_method.arity.zero?
 
-      step_kwargs = step_definition.symbolize_keys
       plugin_pipeline_callable = @plugins.reverse.reduce(step_method) do |callable, plugin|
-        proc { plugin.wrap(**step_kwargs) { callable.call } }
+        context = PluginContext.new(plugin, self, @execution, step_definition)
+
+        if context.inactive?
+          callable
+        else
+          proc do
+            called = false
+
+            result = plugin.around_step(context) do
+              raise DoublePluginCallError.new(plugin, step_name) if called
+              called = true
+              callable.call
+            end
+
+            raise MissingPluginCallError.new(plugin, step_name) unless called
+
+            result
+          end
+        end
       end
 
-      catch(:repeat) { wrapper.call { step_method.call } }
+      catch(:repeat) { plugin_pipeline_callable.call }
     end
   end
 end
