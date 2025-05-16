@@ -32,6 +32,24 @@ module AcidicJob
       recover_to.to_s == FINISHED_RECOVERY_POINT
     end
 
+    def defined?(step)
+      if definition.key?("steps")
+        definition["steps"].key?(step)
+      else
+        # TODO: add deprecation warning
+        definition.key?(step)
+      end
+    end
+
+    def definition_for(step)
+      if definition.key?("steps")
+        definition["steps"].fetch(step)
+      else
+        # TODO: add deprecation warning
+        definition.fetch(step)
+      end
+    end
+
     def deserialized_job
       serialized_job["job_class"].constantize.new.tap do |job|
         job.deserialize(serialized_job)
