@@ -189,7 +189,7 @@ module AcidicJob
         raise UndefinedMethodError.new(step_name)
       end
 
-      raise InvalidMethodError.new(step_name) unless step_method.arity.zero?
+      # raise InvalidMethodError.new(step_name) unless step_method.arity.zero?
 
       plugin_pipeline_callable = @__acidic_job_plugins__.reverse.reduce(step_method) do |callable, plugin|
         context = PluginContext.new(plugin, self, @__acidic_job_execution__, @__acidic_job_context__, step_definition)
@@ -200,11 +200,16 @@ module AcidicJob
           proc do
             called = false
 
-            result = plugin.around_step(context) do
+            result = plugin.around_step(context) do |*args, **kwargs|
               raise DoublePluginCallError.new(plugin, step_name) if called
 
               called = true
-              callable.call
+
+              if callable.arity.zero?
+                callable.call
+              else
+                callable.call(*args, **kwargs)
+              end
             end
 
             raise MissingPluginCallError.new(plugin, step_name) unless called
