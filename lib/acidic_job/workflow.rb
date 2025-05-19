@@ -105,7 +105,7 @@ module AcidicJob
               )
               return true
             else
-              @__acidic_job_execution__.update!(recover_to: recover_to)
+              @__acidic_job_execution__.update_column(:recover_to, recover_to)
             end
           end
         end
