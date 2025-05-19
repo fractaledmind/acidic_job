@@ -53,6 +53,20 @@ module AcidicJob
       @job.halt_step!
     end
 
+    def repeat_step!
+      @job.repeat_step!
+    end
+
+    def resolve_method(method_name)
+      begin
+        method_obj = @job.method(method_name)
+      rescue NameError
+        raise UndefinedMethodError.new(method_name)
+      end
+
+      method_obj
+    end
+
     def plugin_action(action)
       "#{@plugin.keyword}/#{action}"
     end
