@@ -14,7 +14,7 @@ module AcidicJob
     scope :outstanding, -> {
       where.not(recover_to: FINISHED_RECOVERY_POINT).or(where(recover_to: [nil, ""]))
     }
-    scope :clearable, ->(finished_before: AcidicJob.clear_finished_executions_after.ago) {
+    scope :clearable, -> (finished_before: AcidicJob.clear_finished_executions_after.ago) {
       finished.where(last_run_at: ...finished_before)
     }
 
