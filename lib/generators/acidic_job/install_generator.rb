@@ -19,7 +19,7 @@ module AcidicJob
         )
       end
 
-      protected def migration_version
+      def migration_version
         "[#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}]"
       end
     end
