@@ -11,10 +11,10 @@ module AcidicJob
         AcidicJob::Value.upsert_all(
           hash.map do |key, value|
             {
-execution_id: @execution.id,
-key: key,
-value: value,
-}
+              execution_id: @execution.id,
+              key: key,
+              value: value,
+            }
           end,
           unique_by: %i[execution_id key]
         )
