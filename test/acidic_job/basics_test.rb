@@ -40,7 +40,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -90,7 +90,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_3 errored],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -130,7 +130,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       [
         %w[step_1 started],
         %w[step_1 errored],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -174,7 +174,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 errored],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -218,7 +218,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 errored],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -265,7 +265,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_1 succeeded],
         %w[step_2 started],
         %w[step_2 errored],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -314,7 +314,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_1 succeeded],
         %w[step_2 started],
         %w[step_2 errored],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -369,7 +369,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -430,7 +430,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -500,7 +500,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -551,7 +551,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
   end

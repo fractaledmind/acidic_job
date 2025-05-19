@@ -142,7 +142,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -164,7 +164,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "record_entry.acidic_job",
         "process_step.acidic_job",
         "process_workflow.acidic_job",
-],
+      ],
       events.map(&:name)
     )
   end
@@ -206,7 +206,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -229,7 +229,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "record_entry.acidic_job",
         "process_step.acidic_job",
         "process_workflow.acidic_job",
-],
+      ],
       events.map(&:name)
     )
   end
@@ -275,7 +275,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -302,7 +302,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "record_entry.acidic_job",
         "process_step.acidic_job",
         "process_workflow.acidic_job",
-],
+      ],
       events.map(&:name)
     )
   end
@@ -347,7 +347,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -375,7 +375,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "record_entry.acidic_job",
         "process_step.acidic_job",
         "process_workflow.acidic_job",
-],
+      ],
       events.map(&:name)
     )
   end
@@ -420,7 +420,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -446,7 +446,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "record_entry.acidic_job",
         "process_step.acidic_job",
         "process_workflow.acidic_job",
-],
+      ],
       events.map(&:name)
     )
   end
@@ -489,7 +489,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 succeeded],
         %w[step_3 started],
         %w[step_3 succeeded],
-],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -513,7 +513,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "record_entry.acidic_job",
         "process_step.acidic_job",
         "process_workflow.acidic_job",
-],
+      ],
       events.map(&:name)
     )
   end

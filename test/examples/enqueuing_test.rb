@@ -53,7 +53,7 @@ module Examples
           %w[enqueue_job succeeded],
           %w[do_something started],
           %w[do_something succeeded],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 

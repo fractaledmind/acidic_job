@@ -60,7 +60,7 @@ module Examples
           %w[delay succeeded],
           %w[halt started],
           %w[halt halted],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -86,7 +86,7 @@ module Examples
           %w[halt succeeded],
           %w[do_something started],
           %w[do_something succeeded],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -130,7 +130,7 @@ module Examples
           %w[halt errored],
           %w[halt started],
           %w[halt halted],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -158,7 +158,7 @@ module Examples
           %w[halt succeeded],
           %w[do_something started],
           %w[do_something succeeded],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -202,7 +202,7 @@ module Examples
           %w[delay succeeded],
           %w[halt started],
           %w[halt halted],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -230,7 +230,7 @@ module Examples
           %w[halt succeeded],
           %w[do_something started],
           %w[do_something succeeded],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 

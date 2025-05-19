@@ -52,7 +52,7 @@ module Examples
           %w[step_1 started],
           %w[step_1 started],
           %w[step_1 succeeded],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -87,7 +87,7 @@ module Examples
             %w[step_1 started],
             %w[step_1 started],
             %w[step_1 succeeded],
-],
+          ],
           execution.entries.ordered.pluck(:step, :action)
         )
 

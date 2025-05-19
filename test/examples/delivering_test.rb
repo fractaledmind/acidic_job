@@ -70,7 +70,7 @@ module Examples
           %w[deliver_parameterized_email succeeded],
           %w[do_something started],
           %w[do_something succeeded],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 

@@ -116,7 +116,7 @@ module Examples
           %w[await_jobs succeeded],
           %w[do_something started],
           %w[do_something succeeded],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -164,7 +164,7 @@ module Examples
           %w[await_jobs succeeded],
           %w[do_something started],
           %w[do_something succeeded],
-],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
