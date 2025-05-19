@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "rocket_rides_helper"
+# require "rocket_rides_helper"
 
 # class RocketRides < ActiveSupport::TestCase
 #   class SendRideReceiptJob < AcidicJob::Base

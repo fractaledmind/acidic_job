@@ -48,10 +48,12 @@ module Examples
       # simple walkthrough of the execution
       assert_equal 4, AcidicJob::Entry.count
       assert_equal(
-        [%w[enqueue_job started],
-         %w[enqueue_job succeeded],
-         %w[do_something started],
-         %w[do_something succeeded]],
+        [
+          %w[enqueue_job started],
+          %w[enqueue_job succeeded],
+          %w[do_something started],
+          %w[do_something succeeded],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 

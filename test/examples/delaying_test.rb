@@ -55,10 +55,12 @@ module Examples
       # nothing happened beyond halting on the `halt` step
       assert_equal 4, AcidicJob::Entry.count
       assert_equal(
-        [%w[delay started],
-         %w[delay succeeded],
-         %w[halt started],
-         %w[halt halted]],
+        [
+          %w[delay started],
+          %w[delay succeeded],
+          %w[halt started],
+          %w[halt halted],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -75,14 +77,16 @@ module Examples
       # after the halting step, when the future version of the job is performed it completes successfully
       assert_equal 8, AcidicJob::Entry.count
       assert_equal(
-        [%w[delay started],
-         %w[delay succeeded],
-         %w[halt started],
-         %w[halt halted],
-         %w[halt started],
-         %w[halt succeeded],
-         %w[do_something started],
-         %w[do_something succeeded]],
+        [
+          %w[delay started],
+          %w[delay succeeded],
+          %w[halt started],
+          %w[halt halted],
+          %w[halt started],
+          %w[halt succeeded],
+          %w[do_something started],
+          %w[do_something succeeded],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -119,12 +123,14 @@ module Examples
       # nothing happened beyond erroring then halting on the `halt` step
       assert_equal 6, AcidicJob::Entry.count
       assert_equal(
-        [%w[delay started],
-         %w[delay succeeded],
-         %w[halt started],
-         %w[halt errored],
-         %w[halt started],
-         %w[halt halted]],
+        [
+          %w[delay started],
+          %w[delay succeeded],
+          %w[halt started],
+          %w[halt errored],
+          %w[halt started],
+          %w[halt halted],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -141,16 +147,18 @@ module Examples
       # after the halting step, when the future version of the job is performed it completes successfully
       assert_equal 10, AcidicJob::Entry.count
       assert_equal(
-        [%w[delay started],
-         %w[delay succeeded],
-         %w[halt started],
-         %w[halt errored],
-         %w[halt started],
-         %w[halt halted],
-         %w[halt started],
-         %w[halt succeeded],
-         %w[do_something started],
-         %w[do_something succeeded]],
+        [
+          %w[delay started],
+          %w[delay succeeded],
+          %w[halt started],
+          %w[halt errored],
+          %w[halt started],
+          %w[halt halted],
+          %w[halt started],
+          %w[halt succeeded],
+          %w[do_something started],
+          %w[do_something succeeded],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -187,12 +195,14 @@ module Examples
       # nothing happened beyond erroring then halting on the `halt` step
       assert_equal 6, AcidicJob::Entry.count
       assert_equal(
-        [%w[delay started],
-         %w[delay errored],
-         %w[delay started],
-         %w[delay succeeded],
-         %w[halt started],
-         %w[halt halted]],
+        [
+          %w[delay started],
+          %w[delay errored],
+          %w[delay started],
+          %w[delay succeeded],
+          %w[halt started],
+          %w[halt halted],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -209,16 +219,18 @@ module Examples
       # after the halting step, when the future version of the job is performed it completes successfully
       assert_equal 10, AcidicJob::Entry.count
       assert_equal(
-        [%w[delay started],
-         %w[delay errored],
-         %w[delay started],
-         %w[delay succeeded],
-         %w[halt started],
-         %w[halt halted],
-         %w[halt started],
-         %w[halt succeeded],
-         %w[do_something started],
-         %w[do_something succeeded]],
+        [
+          %w[delay started],
+          %w[delay errored],
+          %w[delay started],
+          %w[delay succeeded],
+          %w[halt started],
+          %w[halt halted],
+          %w[halt started],
+          %w[halt succeeded],
+          %w[do_something started],
+          %w[do_something succeeded],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 

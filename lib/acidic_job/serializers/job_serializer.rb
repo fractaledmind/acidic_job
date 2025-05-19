@@ -15,7 +15,7 @@ module AcidicJob
 
       def deserialize(hash)
         job = ::ActiveJob::Base.deserialize(hash)
-        job.send(:deserialize_arguments_if_needed)
+        job.__send__(:deserialize_arguments_if_needed)
         job
       end
 

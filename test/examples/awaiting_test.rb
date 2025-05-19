@@ -105,16 +105,18 @@ module Examples
       # it takes one halting `await_jobs` step before both child jobs complete
       assert_equal 10, AcidicJob::Entry.count
       assert_equal(
-        [%w[enqueue_jobs started],
-         %w[enqueue_jobs succeeded],
-         %w[setup_context started],
-         %w[setup_context succeeded],
-         %w[await_jobs started],
-         %w[await_jobs halted],
-         %w[await_jobs started],
-         %w[await_jobs succeeded],
-         %w[do_something started],
-         %w[do_something succeeded]],
+        [
+          %w[enqueue_jobs started],
+          %w[enqueue_jobs succeeded],
+          %w[setup_context started],
+          %w[setup_context succeeded],
+          %w[await_jobs started],
+          %w[await_jobs halted],
+          %w[await_jobs started],
+          %w[await_jobs succeeded],
+          %w[do_something started],
+          %w[do_something succeeded],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -151,16 +153,18 @@ module Examples
       # parent job when re-enqueued by children doesn't do any work, just short-circuits since finished
       assert_equal 10, AcidicJob::Entry.count
       assert_equal(
-        [%w[enqueue_jobs started],
-         %w[enqueue_jobs succeeded],
-         %w[setup_context started],
-         %w[setup_context errored],
-         %w[setup_context started],
-         %w[setup_context succeeded],
-         %w[await_jobs started],
-         %w[await_jobs succeeded],
-         %w[do_something started],
-         %w[do_something succeeded]],
+        [
+          %w[enqueue_jobs started],
+          %w[enqueue_jobs succeeded],
+          %w[setup_context started],
+          %w[setup_context errored],
+          %w[setup_context started],
+          %w[setup_context succeeded],
+          %w[await_jobs started],
+          %w[await_jobs succeeded],
+          %w[do_something started],
+          %w[do_something succeeded],
+        ],
         execution.entries.ordered.pluck(:step, :action)
       )
 
