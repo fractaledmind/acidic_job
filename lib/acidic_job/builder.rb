@@ -28,9 +28,9 @@ module AcidicJob
 
       definition = {
         "meta" => {
-          "version" => VERSION
+          "version" => VERSION,
         },
-        "steps" => {}
+        "steps" => {},
       }
 
       definition.tap do |workflow|

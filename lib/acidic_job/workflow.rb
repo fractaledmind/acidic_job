@@ -30,12 +30,12 @@ module AcidicJob
 
       AcidicJob.instrument(:initialize_workflow, definition: workflow_definition) do
         transaction_args = case ::ActiveRecord::Base.connection.adapter_name.downcase.to_sym
-                           # SQLite doesn't support `serializable` transactions
-                           when :sqlite
-                             {}
-                           else
-                             { isolation: :serializable }
-                           end
+          # SQLite doesn't support `serializable` transactions
+          when :sqlite
+            {}
+          else
+            { isolation: :serializable }
+        end
         idempotency_key = Digest::SHA256.hexdigest(JSON.fast_generate([self.class.name, unique_by], strict: true))
 
         @__acidic_job_execution__ = ::ActiveRecord::Base.transaction(**transaction_args) do
@@ -61,11 +61,11 @@ module AcidicJob
             )
           else
             starting_point = if workflow_definition.key?("steps")
-                               workflow_definition["steps"].keys.first
-                             else
-                               # TODO: add deprecation warning
-                               workflow_definition.keys.first
-                             end
+              workflow_definition["steps"].keys.first
+            else
+              # TODO: add deprecation warning
+              workflow_definition.keys.first
+            end
 
             record = Execution.create!(
               idempotency_key: idempotency_key,
@@ -89,7 +89,7 @@ module AcidicJob
 
           current_step = @__acidic_job_execution__.recover_to
 
-          if not @__acidic_job_execution__.defined?(current_step) # rubocop:disable Style/Not
+          if not @__acidic_job_execution__.defined?(current_step)
             raise UndefinedStepError.new(current_step)
           end
 
@@ -123,7 +123,7 @@ module AcidicJob
     def step_retrying?
       step_name = caller_locations.first.label
 
-      if not @__acidic_job_execution__.defined?(step_name) # rubocop:disable Style/IfUnlessModifier, Style/Not
+      if not @__acidic_job_execution__.defined?(step_name)
         raise UndefinedStepError.new(step_name)
       end
 
@@ -138,9 +138,7 @@ module AcidicJob
       @__acidic_job_context__
     end
 
-    private
-
-    def take_step(step_definition)
+    private def take_step(step_definition)
       curr_step = step_definition.fetch("does")
       next_step = step_definition.fetch("then")
 
@@ -159,7 +157,7 @@ module AcidicJob
           @__acidic_job_execution__.record!(step: curr_step, action: :succeeded, timestamp: Time.now, result: result)
           next_step
         end
-      rescue StandardError => e
+      rescue => e
         rescued_error = e
         raise e
       ensure
@@ -172,7 +170,7 @@ module AcidicJob
               exception_class: rescued_error.class.name,
               message: rescued_error.message
             )
-          rescue StandardError => e
+          rescue => e
             # We're already inside an error condition, so swallow any additional
             # errors from here and just send them to logs.
             logger.error(
@@ -183,7 +181,7 @@ module AcidicJob
       end
     end
 
-    def perform_step_for(step_definition)
+    private def perform_step_for(step_definition)
       step_name = step_definition.fetch("does")
       begin
         step_method = method(step_name)

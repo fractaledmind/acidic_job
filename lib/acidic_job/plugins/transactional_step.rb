@@ -26,10 +26,10 @@ module AcidicJob
         return yield if context.definition == false
 
         model = if context.definition == true
-                  AcidicJob::Execution
-                else
-                  context.definition["on"].constantize
-                end
+          AcidicJob::Execution
+        else
+          context.definition["on"].constantize
+        end
 
         model.transaction(&block)
       end

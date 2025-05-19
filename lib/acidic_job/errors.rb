@@ -28,7 +28,6 @@ module AcidicJob
     end
   end
 
-  # rubocop:disable Lint/MissingSuper
   class ArgumentMismatchError < Error
     def initialize(expected, existing)
       @expected = expected
@@ -101,7 +100,7 @@ module AcidicJob
 
   class DoublePluginCallError < Error
     def initialize(plugin, step)
-      @plugin_name = Module === plugin ? plugin.name : plugin.class.name # rubocop:disable Style/CaseEquality
+      @plugin_name = (Module === plugin) ? plugin.name : plugin.class.name
       @step = step
     end
 
@@ -112,7 +111,7 @@ module AcidicJob
 
   class MissingPluginCallError < Error
     def initialize(plugin, step)
-      @plugin_name = Module === plugin ? plugin.name : plugin.class.name # rubocop:disable Style/CaseEquality
+      @plugin_name = (Module === plugin) ? plugin.name : plugin.class.name
       @step = step
     end
 

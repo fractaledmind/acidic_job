@@ -22,25 +22,23 @@ module AcidicJob
       ::DatabaseCleaner.cleaners = @original_cleaners
     end
 
-    private
-
     # Ensure that the system's original DatabaseCleaner configuration is maintained, options included,
     # except that any `transaction` strategies for any ORMs are replaced with a `deletion` strategy.
-    def transaction_free_cleaners_for(original_cleaners)
+    private def transaction_free_cleaners_for(original_cleaners)
       non_transaction_cleaners = original_cleaners.dup.to_h do |(orm, opts), cleaner|
         [[orm, opts], ensure_no_transaction_strategies_for(cleaner)]
       end
       ::DatabaseCleaner::Cleaners.new(non_transaction_cleaners)
     end
 
-    def ensure_no_transaction_strategies_for(cleaner)
+    private def ensure_no_transaction_strategies_for(cleaner)
       return cleaner unless strategy_name_for(cleaner) == "transaction"
 
       cleaner.strategy = deletion_strategy_for(cleaner)
       cleaner
     end
 
-    def strategy_name_for(cleaner)
+    private def strategy_name_for(cleaner)
       cleaner               # <DatabaseCleaner::Cleaner>
         .strategy           # <DatabaseCleaner::ActiveRecord::Truncation>
         .class              # DatabaseCleaner::ActiveRecord::Truncation
@@ -50,19 +48,19 @@ module AcidicJob
         .downcase           # "truncation"
     end
 
-    def deletion_strategy_for(cleaner)
+    private def deletion_strategy_for(cleaner)
       strategy = cleaner.strategy
-      strategy_namespace = strategy                    # <DatabaseCleaner::ActiveRecord::Truncation>
-                           .class                      # DatabaseCleaner::ActiveRecord::Truncation
-                           .name                       # "DatabaseCleaner::ActiveRecord::Truncation"
-                           .rpartition("::")           # ["DatabaseCleaner::ActiveRecord", "::", "Truncation"]
-                           .first                      # "DatabaseCleaner::ActiveRecord"
+      strategy_namespace = strategy # <DatabaseCleaner::ActiveRecord::Truncation>
+        .class                      # DatabaseCleaner::ActiveRecord::Truncation
+        .name                       # "DatabaseCleaner::ActiveRecord::Truncation"
+        .rpartition("::")           # ["DatabaseCleaner::ActiveRecord", "::", "Truncation"]
+        .first                      # "DatabaseCleaner::ActiveRecord"
       deletion_strategy_class_name = [strategy_namespace, "::", "Deletion"].join
       deletion_strategy_class = deletion_strategy_class_name.constantize
       instance_variable_hash = strategy.instance_variables.to_h do |var|
         [
           var.to_s.remove("@"),
-          strategy.instance_variable_get(var)
+          strategy.instance_variable_get(var),
         ]
       end
       options = instance_variable_hash.except("db", "connection_class")

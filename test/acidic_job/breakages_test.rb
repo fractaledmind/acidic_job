@@ -135,32 +135,36 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
-      ["define_workflow.acidic_job",
-       "define_workflow.acidic_job", # <-- retried
-       "initialize_workflow.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job"],
+      [
+        "define_workflow.acidic_job",
+        "define_workflow.acidic_job", # <-- retried
+        "initialize_workflow.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+      ],
       events.map(&:name)
     )
   end
@@ -195,33 +199,37 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
-      ["define_workflow.acidic_job",
-       "initialize_workflow.acidic_job",
-       "define_workflow.acidic_job", # <-- retried
-       "initialize_workflow.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job"],
+      [
+        "define_workflow.acidic_job",
+        "initialize_workflow.acidic_job",
+        "define_workflow.acidic_job", # <-- retried
+        "initialize_workflow.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+      ],
       events.map(&:name)
     )
   end
@@ -258,39 +266,43 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 errored],
-       %w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 errored],
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
-      ["define_workflow.acidic_job",
-       "initialize_workflow.acidic_job",
-       "record_entry.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job",
-       "define_workflow.acidic_job", # <-- retried
-       "initialize_workflow.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job"],
+      [
+        "define_workflow.acidic_job",
+        "initialize_workflow.acidic_job",
+        "record_entry.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+        "define_workflow.acidic_job", # <-- retried
+        "initialize_workflow.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+      ],
       events.map(&:name)
     )
   end
@@ -326,40 +338,44 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 errored],
-       %w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 errored],
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
-      ["define_workflow.acidic_job",
-       "initialize_workflow.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job",
-       "define_workflow.acidic_job", # <-- retried
-       "initialize_workflow.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job"],
+      [
+        "define_workflow.acidic_job",
+        "initialize_workflow.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+        "define_workflow.acidic_job", # <-- retried
+        "initialize_workflow.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+      ],
       events.map(&:name)
     )
   end
@@ -396,37 +412,41 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     assert_equal 7, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_1 errored],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_1 errored],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
-      ["define_workflow.acidic_job",
-       "initialize_workflow.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job",
-       "define_workflow.acidic_job", # <-- retried
-       "initialize_workflow.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job"],
+      [
+        "define_workflow.acidic_job",
+        "initialize_workflow.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+        "define_workflow.acidic_job", # <-- retried
+        "initialize_workflow.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+      ],
       events.map(&:name)
     )
   end
@@ -462,34 +482,38 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+      ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
     assert_equal(
-      ["define_workflow.acidic_job",
-       "initialize_workflow.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job",
-       "define_workflow.acidic_job", # <-- retried
-       "initialize_workflow.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "record_entry.acidic_job",
-       "perform_step.acidic_job",
-       "record_entry.acidic_job",
-       "process_step.acidic_job",
-       "process_workflow.acidic_job"],
+      [
+        "define_workflow.acidic_job",
+        "initialize_workflow.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+        "define_workflow.acidic_job", # <-- retried
+        "initialize_workflow.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "record_entry.acidic_job",
+        "perform_step.acidic_job",
+        "record_entry.acidic_job",
+        "process_step.acidic_job",
+        "process_workflow.acidic_job",
+      ],
       events.map(&:name)
     )
   end
