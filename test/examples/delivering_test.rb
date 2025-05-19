@@ -63,12 +63,14 @@ module Examples
       # simple walkthrough of the execution
       assert_equal 6, AcidicJob::Entry.count
       assert_equal(
-        [%w[deliver_email started],
-         %w[deliver_email succeeded],
-         %w[deliver_parameterized_email started],
-         %w[deliver_parameterized_email succeeded],
-         %w[do_something started],
-         %w[do_something succeeded]],
+        [
+          %w[deliver_email started],
+          %w[deliver_email succeeded],
+          %w[deliver_parameterized_email started],
+          %w[deliver_parameterized_email succeeded],
+          %w[do_something started],
+          %w[do_something succeeded],
+],
         execution.entries.ordered.pluck(:step, :action)
       )
 

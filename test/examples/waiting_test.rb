@@ -47,12 +47,14 @@ module Examples
       # halts once as condition is false, then continues after 2 seconds
       assert_equal 6, AcidicJob::Entry.count
       assert_equal(
-        [%w[wait_until started],
-         %w[wait_until halted],
-         %w[wait_until started],
-         %w[wait_until succeeded],
-         %w[do_something started],
-         %w[do_something succeeded]],
+        [
+          %w[wait_until started],
+          %w[wait_until halted],
+          %w[wait_until started],
+          %w[wait_until succeeded],
+          %w[do_something started],
+          %w[do_something succeeded],
+],
         execution.entries.ordered.pluck(:step, :action)
       )
 

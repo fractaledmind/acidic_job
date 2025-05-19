@@ -12,14 +12,14 @@ module AcidicJob
 
       # Copies the migration template to db/migrate.
       def copy_acidic_job_runs_migration_files
-        migration_template "create_acidic_job_tables_migration.rb.erb",
-                           "db/migrate/create_acidic_job_tables.rb",
-                           migration_version: migration_version
+        migration_template(
+          "create_acidic_job_tables_migration.rb.erb",
+          "db/migrate/create_acidic_job_tables.rb",
+          migration_version: migration_version
+        )
       end
 
-      protected
-
-      def migration_version
+      protected def migration_version
         "[#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}]"
       end
     end

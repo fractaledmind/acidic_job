@@ -27,14 +27,14 @@ end
 
 # see: https://github.com/rails/rails/pull/48600
 if ActiveRecord.respond_to?(:commit_transaction_on_non_local_return) &&
-   Rails::VERSION::MAJOR >= 7 &&
-   Rails::VERSION::MINOR <= 1
+    Rails::VERSION::MAJOR >= 7 &&
+    Rails::VERSION::MINOR <= 1
+
   ActiveRecord.commit_transaction_on_non_local_return = true
 end
 
 ActiveSupport.to_time_preserves_timezone = true if ActiveSupport.respond_to?(:to_time_preserves_timezone)
 
-# rubocop:disable Layout/LineLength
 ActiveJob::Base.logger = ActiveRecord::Base.logger = AcidicJob.logger = Logger.new(ENV["LOG"].present? ? $stdout : IO::NULL)
 # rubocop:enable Layout/LineLength
 
@@ -59,7 +59,7 @@ def assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once(
   end
 end
 
-class ActiveSupport::TestCase # rubocop:disable Style/ClassAndModuleChildren
+class ActiveSupport::TestCase
   # Run tests in parallel with specified workers
   parallelize(workers: :number_of_processors)
 
@@ -79,7 +79,7 @@ class ActiveSupport::TestCase # rubocop:disable Style/ClassAndModuleChildren
   def after_teardown; end
 end
 
-class ActiveJob::TestCase # rubocop:disable Style/ClassAndModuleChildren
+class ActiveJob::TestCase
   # This needs to be set to `nil` to avoid an odd bug in Rails <= 7.1
   # where the queue adapter is given a fresh instance of the test adapter
   # after the `after_teardown` hook is called.

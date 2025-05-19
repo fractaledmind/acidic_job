@@ -28,22 +28,20 @@ module AcidicJob
       debug formatted_event(event, title: "Record entry", **event.payload.slice(:step, :action, :timestamp))
     end
 
-    private
-
-    def formatted_event(event, title:, **attributes)
+    private def formatted_event(event, title:, **attributes)
       "AcidicJob-#{AcidicJob::VERSION} #{title} (#{event.duration.round(1)}ms)  #{formatted_attributes(**attributes)}"
     end
 
-    def formatted_attributes(**attributes)
+    private def formatted_attributes(**attributes)
       attributes.map { |attr, value| "#{attr}: #{value.inspect}" }.join(", ")
     end
 
-    def formatted_error(error)
+    private def formatted_error(error)
       [error.class, error.message].compact.join(" ")
     end
 
     # Use the logger configured for AcidicJob
-    def logger
+    private def logger
       AcidicJob.logger
     end
   end

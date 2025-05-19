@@ -33,12 +33,14 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -57,9 +59,9 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         end
       end
 
-      def step_1; executions > 1 ? ChaoticJob.log_to_journal! : (raise DefaultsError); end
-      def step_2; executions > 2 ? ChaoticJob.log_to_journal! : (raise DefaultsError); end
-      def step_3; executions > 3 ? ChaoticJob.log_to_journal! : (raise DefaultsError); end
+      def step_1; (executions > 1) ? ChaoticJob.log_to_journal! : (raise DefaultsError); end
+      def step_2; (executions > 2) ? ChaoticJob.log_to_journal! : (raise DefaultsError); end
+      def step_3; (executions > 3) ? ChaoticJob.log_to_journal! : (raise DefaultsError); end
     end
 
     Job2.perform_later
@@ -75,18 +77,20 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 12, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 errored],
-       %w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 errored],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 errored],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 errored],
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 errored],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 errored],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -123,8 +127,10 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 2, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 errored]],
+      [
+        %w[step_1 started],
+        %w[step_1 errored],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -161,12 +167,14 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 errored]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 errored],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -203,12 +211,14 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 errored]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 errored],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
   end
@@ -250,10 +260,12 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 4, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 errored]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 errored],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -297,10 +309,12 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 4, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 errored]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 errored],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -346,14 +360,16 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 errored],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 errored],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -405,14 +421,16 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 errored],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 errored],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -473,14 +491,16 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 8, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 errored],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 errored],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
 
@@ -524,12 +544,14 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     assert_equal 6, AcidicJob::Entry.count
     assert_equal(
-      [%w[step_1 started],
-       %w[step_1 succeeded],
-       %w[step_2 started],
-       %w[step_2 succeeded],
-       %w[step_3 started],
-       %w[step_3 succeeded]],
+      [
+        %w[step_1 started],
+        %w[step_1 succeeded],
+        %w[step_2 started],
+        %w[step_2 succeeded],
+        %w[step_3 started],
+        %w[step_3 succeeded],
+],
       execution.entries.ordered.pluck(:step, :action)
     )
   end

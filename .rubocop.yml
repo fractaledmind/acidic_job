@@ -5,3 +5,7 @@ AllCops:
   SuggestExtensions: false
 
 inherit_from: "https://www.goodcop.style/base.yml"
+
+Lint/ConstantDefinitionInBlock:
+  Exclude:
+    - 'test/**/*'

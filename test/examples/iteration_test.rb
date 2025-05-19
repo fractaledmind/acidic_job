@@ -46,11 +46,13 @@ module Examples
       # iterates over 3 item array before succeeding
       assert_equal 5, AcidicJob::Entry.count
       assert_equal(
-        [%w[step_1 started],
-         %w[step_1 started],
-         %w[step_1 started],
-         %w[step_1 started],
-         %w[step_1 succeeded]],
+        [
+          %w[step_1 started],
+          %w[step_1 started],
+          %w[step_1 started],
+          %w[step_1 started],
+          %w[step_1 succeeded],
+],
         execution.entries.ordered.pluck(:step, :action)
       )
 
@@ -77,13 +79,15 @@ module Examples
         # iterates over 3 item array before succeeding
         assert_equal 7, AcidicJob::Entry.count
         assert_equal(
-          [%w[step_1 started],
-           %w[step_1 errored],
-           %w[step_1 started],
-           %w[step_1 started],
-           %w[step_1 started],
-           %w[step_1 started],
-           %w[step_1 succeeded]],
+          [
+            %w[step_1 started],
+            %w[step_1 errored],
+            %w[step_1 started],
+            %w[step_1 started],
+            %w[step_1 started],
+            %w[step_1 started],
+            %w[step_1 succeeded],
+],
           execution.entries.ordered.pluck(:step, :action)
         )
 
