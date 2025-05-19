@@ -8,10 +8,23 @@ module AcidicJob
     validates :idempotency_key, presence: true # uniqueness constraint is enforced at the database level
     validates :serialized_job, presence: true
 
-    scope :finished, -> { where(recover_to: FINISHED_RECOVERY_POINT) }
-    scope :outstanding, lambda {
-                          where.not(recover_to: FINISHED_RECOVERY_POINT).or(where(recover_to: [nil, ""]))
-                        }
+    scope :finished, -> {
+      where(recover_to: FINISHED_RECOVERY_POINT)
+    }
+    scope :outstanding, -> {
+      where.not(recover_to: FINISHED_RECOVERY_POINT).or(where(recover_to: [nil, ""]))
+    }
+    scope :clearable, ->(finished_before: AcidicJob.clear_finished_executions_after.ago) {
+      finished.where(last_run_at: ...finished_before)
+    }
+
+    def self.clear_finished_in_batches(batch_size: 500, finished_before: AcidicJob.clear_finished_executions_after.ago, sleep_between_batches: 0)
+      loop do
+        records_deleted = clearable(finished_before: finished_before).limit(batch_size).delete_all
+        sleep(sleep_between_batches) if sleep_between_batches > 0
+        break if records_deleted == 0
+      end
+    end
 
     def record!(step:, action:, timestamp:, **kwargs)
       AcidicJob.instrument(:record_entry, step: step, action: action, timestamp: timestamp, data: kwargs) do
