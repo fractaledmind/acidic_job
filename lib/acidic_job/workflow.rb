@@ -212,7 +212,7 @@ module AcidicJob
               end
             end
 
-            raise MissingPluginCallError.new(plugin, step_name) unless called
+            # raise MissingPluginCallError.new(plugin, step_name) unless called
 
             result
           end
