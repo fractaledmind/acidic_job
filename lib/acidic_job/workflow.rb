@@ -192,7 +192,7 @@ module AcidicJob
       raise InvalidMethodError.new(step_name) unless step_method.arity.zero?
 
       plugin_pipeline_callable = @__acidic_job_plugins__.reverse.reduce(step_method) do |callable, plugin|
-        context = PluginContext.new(plugin, self, @__acidic_job_execution__, step_definition)
+        context = PluginContext.new(plugin, self, @__acidic_job_execution__, @__acidic_job_context__, step_definition)
 
         if context.inactive?
           callable
