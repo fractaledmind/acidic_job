@@ -2,8 +2,8 @@
 
 module AcidicJob
   class Execution < Record
-    has_many :entries, class_name: "AcidicJob::Entry"
-    has_many :values, class_name: "AcidicJob::Value"
+    has_many :entries, class_name: "AcidicJob::Entry", dependent: :destroy
+    has_many :values, class_name: "AcidicJob::Value", dependent: :destroy
 
     validates :idempotency_key, presence: true # uniqueness constraint is enforced at the database level
     validates :serialized_job, presence: true
