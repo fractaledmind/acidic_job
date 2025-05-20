@@ -4,11 +4,20 @@ module AcidicJob
   class PluginContext
     PLUGIN_INACTIVE = :__ACIDIC_JOB_PLUGIN_INACTIVE__
 
-    def initialize(plugin, job, execution, step_definition)
+    def initialize(plugin, job, execution, context, step_definition)
       @plugin = plugin
       @job = job
       @execution = execution
+      @context = context
       @step_definition = step_definition
+    end
+
+    def set(hash)
+      @context.set(hash)
+    end
+
+    def get(*keys)
+      @context.get(*keys)
     end
 
     def definition
@@ -42,6 +51,20 @@ module AcidicJob
 
     def halt_step!
       @job.halt_step!
+    end
+
+    def repeat_step!
+      @job.repeat_step!
+    end
+
+    def resolve_method(method_name)
+      begin
+        method_obj = @job.method(method_name)
+      rescue NameError
+        raise UndefinedMethodError.new(method_name)
+      end
+
+      method_obj
     end
 
     def plugin_action(action)

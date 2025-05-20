@@ -12,7 +12,7 @@ class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version
     end
 
     create_table :acidic_job_entries do |t|
-      t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }
+      t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions, on_delete: :cascade }
       t.string     :step,      null: false
       t.string     :action,    null: false
       t.datetime   :timestamp, null: false
@@ -23,7 +23,7 @@ class <%= migration_class_name %> < ActiveRecord::Migration<%= migration_version
     add_index :acidic_job_entries, [:execution_id, :step, :action]
 
     create_table :acidic_job_values do |t|
-      t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions }
+      t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions, on_delete: :cascade }
       t.string     :key,       null: false
       t.text       :value,     null: false
 
