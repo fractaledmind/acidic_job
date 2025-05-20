@@ -5,6 +5,8 @@ module AcidicJob
     has_many :entries, class_name: "AcidicJob::Entry", dependent: :destroy
     has_many :values, class_name: "AcidicJob::Value", dependent: :destroy
 
+    serialize :definition, coder: AcidicJob::Serializer
+
     validates :idempotency_key, presence: true # uniqueness constraint is enforced at the database level
     validates :serialized_job, presence: true
 
@@ -26,13 +28,13 @@ module AcidicJob
       end
     end
 
-    def record!(step:, action:, timestamp:, **kwargs)
+    def record!(step:, action:, timestamp: Time.current, **kwargs)
       AcidicJob.instrument(:record_entry, step: step, action: action, timestamp: timestamp, data: kwargs) do
         entries.insert!({
           step: step,
           action: action,
           timestamp: timestamp,
-          data: kwargs.stringify_keys!,
+          data: kwargs.except(:ignored),
         })
       end
     end
@@ -44,7 +46,6 @@ module AcidicJob
     def finished?
       recover_to.to_s == FINISHED_RECOVERY_POINT ||
         recover_to.to_s == "FINISHED" # old value pre-1.0, remove at v1.0
-      # rubocop:enable Style/MultipleComparison
     end
 
     def defined?(step)
