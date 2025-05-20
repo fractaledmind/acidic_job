@@ -28,12 +28,12 @@ module AcidicJob
 
     def record!(step:, action:, timestamp:, **kwargs)
       AcidicJob.instrument(:record_entry, step: step, action: action, timestamp: timestamp, data: kwargs) do
-        entries.create!(
+        entries.insert!({
           step: step,
           action: action,
           timestamp: timestamp,
-          data: kwargs.stringify_keys!
-        )
+          data: kwargs.stringify_keys!,
+        })
       end
     end
 
