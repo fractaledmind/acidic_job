@@ -25,8 +25,8 @@ ActiveRecord::Schema.define do
 
   create_table :acidic_job_values do |t|
     t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions, on_delete: :cascade }
-    t.string     :key,       null: false
-    t.json       :value,     null: false, default: "{}"
+    t.string :key, null: false
+    t.text :value, null: false
 
     t.timestamps
   end
