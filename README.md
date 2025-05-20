@@ -188,7 +188,7 @@ class Job < ActiveJob::Base
 
 ### Orchestrating steps
 
-In addition to the workflow definition setup, `AcidicJob` also provides a couple of methods to precisely control the workflow step execution. From within any step method, you can call either `repeat_step!` or `halt_step!`.
+In addition to the workflow definition setup, `AcidicJob` also provides a couple of methods to precisely control the workflow step execution. From within any step method, you can call either `repeat_step!` or `halt_workflow!`.
 
 `repeat_step!` will cause the current step to be re-executed on the next iteration of the workflow. This is useful when you need to traverse a collection of items and perform the same operation on each item. For example, if you need to send an email to each user in a collection, you could do something like this:
 
@@ -218,7 +218,7 @@ end
 
 This example demonstrates how you can leverage the basic building blocks provided by `AcidicJob` to orchestrate complex workflows. In this case, the `notify_users` step sends an email to each user in the collection, one at a time, and resiliently handles errors by storing a cursor in the `ctx` object to keep track of the current user being processed. If any error occurs while traversing the `@users` collection, the job will be retried, and the `notify_users` step will be re-executed from the last successful cursor position.
 
-The `halt_step!` method, on the other hand, stops not just the execution of the current step but the job as a whole. This is useful when you either need to conditionally stop the workflow based on some criteria or need to delay the job for some amount of time before being restarted. For example, if you need to send a follow-up email to a user 14 days after they sign up, you could do something like this:
+The `halt_workflow!` method, on the other hand, stops not just the execution of the current step but the job as a whole. This is useful when you either need to conditionally stop the workflow based on some criteria or need to delay the job for some amount of time before being restarted. For example, if you need to send a follow-up email to a user 14 days after they sign up, you could do something like this:
 
 ```ruby
 class Job < ActiveJob::Base
@@ -240,7 +240,7 @@ class Job < ActiveJob::Base
   def send_welcome_email
     if ctx[:halt]
       ctx[:halt] = false
-      halt_step!
+      halt_workflow!
     end
     UserMailer.with(user: @user).welcome_email.deliver_later
   end
@@ -252,7 +252,7 @@ In this example, the `delay` step creates a new instance of the job and enqueues
 
 ### Overview
 
-`AcidicJob` is a library that provides a small yet powerful set of tools to build cohesive and resilient workflows in your Active Jobs. All of the tools are made available by `include`ing the `AcidicJob::Workflow` module. The primary and most important tool is the `execute_workflow` method, which you call within your `perform` method. Then, if you need to store any contextual data, you use the `ctx` objects setters and getters. Finally, within any step methods, you can call `repeat_step!` or `halt_step!` to control the execution of the workflow. If you need, you can also access the `execution` Active Record object to get information about the current execution of the workflow. With these lightweight tools, you can build complex workflows that are resilient to failures and can handle a wide range of use cases.
+`AcidicJob` is a library that provides a small yet powerful set of tools to build cohesive and resilient workflows in your Active Jobs. All of the tools are made available by `include`ing the `AcidicJob::Workflow` module. The primary and most important tool is the `execute_workflow` method, which you call within your `perform` method. Then, if you need to store any contextual data, you use the `ctx` objects setters and getters. Finally, within any step methods, you can call `repeat_step!` or `halt_workflow!` to control the execution of the workflow. If you need, you can also access the `execution` Active Record object to get information about the current execution of the workflow. With these lightweight tools, you can build complex workflows that are resilient to failures and can handle a wide range of use cases.
 
 
 ## Testing

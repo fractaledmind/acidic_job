@@ -21,7 +21,7 @@ module Examples
 
         enqueue(wait: 2.seconds)
 
-        halt_step!
+        halt_workflow!
       end
 
       def do_something

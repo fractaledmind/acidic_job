@@ -115,8 +115,13 @@ module AcidicJob
       throw :repeat, REPEAT_STEP
     end
 
-    def halt_step!
+    def halt_workflow!
       throw :halt, HALT_STEP
+    end
+
+    def halt_step!
+      # TODO add deprecation warning
+      halt_workflow!
     end
 
     def step_retrying?
