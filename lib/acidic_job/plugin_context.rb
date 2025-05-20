@@ -49,8 +49,8 @@ module AcidicJob
       @job.enqueue(...)
     end
 
-    def halt_step!
-      @job.halt_step!
+    def halt_workflow!
+      @job.halt_workflow!
     end
 
     def repeat_step!

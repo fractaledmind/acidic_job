@@ -73,7 +73,7 @@ module Examples
 
       def await_jobs
         ctx[:job_ids].each do |job_id|
-          halt_step! unless ctx[job_id]
+          halt_workflow! unless ctx[job_id]
         end
       end
 

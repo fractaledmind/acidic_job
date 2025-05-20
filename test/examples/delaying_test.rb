@@ -24,7 +24,7 @@ module Examples
         return unless ctx[:halt]
 
         ctx[:halt] = false
-        halt_step!
+        halt_workflow!
       end
 
       def do_something
@@ -101,7 +101,7 @@ module Examples
       assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, 14.days.from_now.to_i, 1, 1
     end
 
-    test "scenario with error before halt_step!" do
+    test "scenario with error before halt_workflow!" do
       run_scenario(Job.new, glitch: ["before", "#{__FILE__}:27"]) do
         perform_all_jobs_within(1.minute)
       end
