@@ -20,8 +20,9 @@ module AcidicJob
       data = Arguments.__send__ :serialize_argument, obj
 
       JSON.fast_generate data, strict: true
-    rescue ActiveJob::SerializationError
-      raise UnserializableValue
+    rescue ActiveJob::SerializationError => e
+      e.message << " (`#{obj.inspect}`)"
+      raise e
     end
   end
 end
