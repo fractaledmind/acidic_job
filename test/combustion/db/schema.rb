@@ -2,22 +2,22 @@
 
 ActiveRecord::Schema.define do
   create_table :acidic_job_executions, force: true do |t|
-    t.string      :idempotency_key, null: false,  index: { unique: true }
-    t.json        :serialized_job, 	null: false,  default: "{}"
+    t.string      :idempotency_key, null: false, index: { unique: true }
+    t.json        :serialized_job, 	null: false
     t.datetime    :last_run_at,	null: true
     t.datetime    :locked_at,	null: true
     t.string      :recover_to, null: true
-    t.json        :definition,	null: true, default: "{}"
+    t.text        :definition,	null: true
 
     t.timestamps
   end
 
   create_table :acidic_job_entries do |t|
     t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions, on_delete: :cascade }
-    t.string     :step,      null: false
-    t.string     :action,    null: false
-    t.datetime   :timestamp, null: false
-    t.json       :data,      null: true, default: "{}"
+    t.string :step, null: false
+    t.string :action, null: false
+    t.datetime :timestamp, null: false
+    t.text :data,	null: true
 
     t.timestamps
   end
@@ -25,8 +25,8 @@ ActiveRecord::Schema.define do
 
   create_table :acidic_job_values do |t|
     t.references :execution, null: false, foreign_key: { to_table: :acidic_job_executions, on_delete: :cascade }
-    t.string     :key,       null: false
-    t.text       :value,     null: false
+    t.string :key, null: false
+    t.text :value, null: false
 
     t.timestamps
   end

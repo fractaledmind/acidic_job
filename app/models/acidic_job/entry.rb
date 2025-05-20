@@ -4,6 +4,8 @@ module AcidicJob
   class Entry < Record
     belongs_to :execution, class_name: "AcidicJob::Execution"
 
+    serialize :data, coder: AcidicJob::Serializer
+
     scope :for_step, -> (step) { where(step: step) }
     scope :for_action, -> (action) { where(action: action) }
     scope :ordered, -> { order(timestamp: :asc) }

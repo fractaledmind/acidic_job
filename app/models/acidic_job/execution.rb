@@ -5,6 +5,8 @@ module AcidicJob
     has_many :entries, class_name: "AcidicJob::Entry", dependent: :destroy
     has_many :values, class_name: "AcidicJob::Value", dependent: :destroy
 
+    serialize :definition, coder: AcidicJob::Serializer
+
     validates :idempotency_key, presence: true # uniqueness constraint is enforced at the database level
     validates :serialized_job, presence: true
 
