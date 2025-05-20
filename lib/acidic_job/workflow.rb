@@ -101,7 +101,6 @@ module AcidicJob
               @__acidic_job_execution__.record!(
                 step: step_definition.fetch("does"),
                 action: :halted,
-                timestamp: Time.now
               )
               return true
             else
@@ -146,7 +145,7 @@ module AcidicJob
 
       rescued_error = nil
       begin
-        @__acidic_job_execution__.record!(step: curr_step, action: :started, timestamp: Time.now)
+        @__acidic_job_execution__.record!(step: curr_step, action: :started)
         result = AcidicJob.instrument(:perform_step, **step_definition) do
           perform_step_for(step_definition)
         end
@@ -166,7 +165,6 @@ module AcidicJob
             @__acidic_job_execution__.record!(
               step: curr_step,
               action: :errored,
-              timestamp: Time.now,
               exception_class: rescued_error.class.name,
               message: rescued_error.message
             )
