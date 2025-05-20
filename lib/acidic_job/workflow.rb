@@ -153,7 +153,13 @@ module AcidicJob
         when REPEAT_STEP
           curr_step
         else
-          @__acidic_job_execution__.record!(step: curr_step, action: :succeeded, timestamp: Time.now, result: result)
+          @__acidic_job_execution__.record!(
+            step: curr_step,
+            action: :succeeded,
+            ignored: {
+              result: result,
+            }
+          )
           next_step
         end
       rescue => e

@@ -34,7 +34,7 @@ module AcidicJob
           step: step,
           action: action,
           timestamp: timestamp,
-          data: kwargs.stringify_keys!,
+          data: kwargs.except(:ignored),
         })
       end
     end
@@ -46,7 +46,6 @@ module AcidicJob
     def finished?
       recover_to.to_s == FINISHED_RECOVERY_POINT ||
         recover_to.to_s == "FINISHED" # old value pre-1.0, remove at v1.0
-      # rubocop:enable Style/MultipleComparison
     end
 
     def defined?(step)
