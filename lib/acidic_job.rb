@@ -9,6 +9,7 @@ require_relative "acidic_job/arguments"
 require_relative "acidic_job/plugin_context"
 require_relative "acidic_job/plugins/transactional_step"
 require_relative "acidic_job/log_subscriber"
+require_relative "acidic_job/serializer"
 require_relative "acidic_job/workflow"
 
 require "active_support"
