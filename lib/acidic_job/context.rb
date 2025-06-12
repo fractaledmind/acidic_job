@@ -8,16 +8,31 @@ module AcidicJob
 
     def set(hash)
       AcidicJob.instrument(:set_context, **hash) do
-        AcidicJob::Value.upsert_all(
-          hash.map do |key, value|
-            {
-              execution_id: @execution.id,
-              key: key,
-              value: value,
-            }
-          end,
-          unique_by: %i[execution_id key]
-        )
+        records = hash.map do |key, value|
+          {
+            execution_id: @execution.id,
+            key: key,
+            value: value,
+          }
+        end
+
+        case AcidicJob::Value.connection.adapter_name.downcase.to_sym
+        when :postgresql, :sqlite
+          AcidicJob::Value.upsert_all(records, unique_by: [:execution_id, :key])
+        when :mysql2, :mysql, :trilogy
+          AcidicJob::Value.upsert_all(records)
+        else
+          # Fallback for other adapters - try with unique_by first, fall back without
+          begin
+            AcidicJob::Value.upsert_all(records, unique_by: [:execution_id, :key])
+          rescue ArgumentError => e
+            if e.message.include?('does not support :unique_by')
+              AcidicJob::Value.upsert_all(records)
+            else
+              raise
+            end
+          end
+        end
       end
     end
 
