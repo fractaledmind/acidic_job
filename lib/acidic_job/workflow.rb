@@ -36,7 +36,7 @@ module AcidicJob
           else
             { isolation: :serializable }
         end
-        idempotency_key = Digest::SHA256.hexdigest(JSON.fast_generate([self.class.name, unique_by], strict: true))
+        idempotency_key = Digest::SHA256.hexdigest(JSON.generate([self.class.name, unique_by], strict: true))
 
         @__acidic_job_execution__ = ::ActiveRecord::Base.transaction(**transaction_args) do
           record = Execution.find_by(idempotency_key: idempotency_key)
