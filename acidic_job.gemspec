@@ -20,9 +20,7 @@ Gem::Specification.new do |spec|
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
-  spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    `git ls-files -z`.split("\x0").reject { |f| f.match(%r{\A(?:test|spec|features)/}) }
-  end
+  spec.files = Dir["README.md", "LICENSE", "lib/**/*", "app/**/*"]
   spec.bindir = "exe"
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
@@ -36,7 +34,7 @@ Gem::Specification.new do |spec|
     spec.add_development_dependency "actionmailer", rails_version
   end
 
-  spec.add_development_dependency "chaotic_job"
+  spec.add_development_dependency "chaotic_job", "0.3.0"
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "rake"

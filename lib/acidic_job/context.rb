@@ -26,7 +26,7 @@ module AcidicJob
           begin
             AcidicJob::Value.upsert_all(records, unique_by: [:execution_id, :key])
           rescue ArgumentError => e
-            if e.message.include?('does not support :unique_by')
+            if e.message.include?("does not support :unique_by")
               AcidicJob::Value.upsert_all(records)
             else
               raise
