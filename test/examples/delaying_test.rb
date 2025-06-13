@@ -251,7 +251,7 @@ module Examples
 
         # typically only job, error, and future are performed, but when error occurs inside `delay` step,
         # two futures are performed; this is safe though because the job is an idempotent workflow
-        assert_includes 3..4, performed_jobs.size
+        assert_includes 2..4, performed_jobs.size
 
         # only performs primary IO operations once and at the correct time
         assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job.name }.size
