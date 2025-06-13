@@ -42,7 +42,15 @@ module AcidicJob
       end
     end
 
-    # TODO: deprecate these methods
+    def fetch(key, default = nil)
+      result = get(key).first
+      return result if result
+
+      fallback = default || yield(key)
+      set(key => fallback)
+      fallback
+    end
+
     def []=(key, value)
       set(key => value)
     end
