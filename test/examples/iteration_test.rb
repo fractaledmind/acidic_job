@@ -20,8 +20,8 @@ module Examples
         return if item.nil?
 
         # do thing with `item` idempotently
-        # in this case, that requires checking the log before inserting
-        ChaoticJob.log_to_journal!(item) if ChaoticJob.top_journal_entry != item
+        # idempotent because journal logging is idempotent via Set
+        ChaoticJob.log_to_journal!(item)
 
         ctx[:cursor] = cursor + 1
         repeat_step!
@@ -62,7 +62,7 @@ module Examples
     end
 
     test "scenario with error before updating cursor" do
-      run_scenario(Job.new, glitch: ["before", "#{__FILE__}:26"]) do
+      run_scenario(Job.new, glitch: glitch_before_line("#{__FILE__}:26")) do
         perform_all_jobs
 
         # Performed the job and its retry
