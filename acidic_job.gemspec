@@ -34,7 +34,7 @@ Gem::Specification.new do |spec|
     spec.add_development_dependency "actionmailer", rails_version
   end
 
-  spec.add_development_dependency "chaotic_job", "0.3.0"
+  spec.add_development_dependency "chaotic_job", ">= 0.10.1"
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "rake"
