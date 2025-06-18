@@ -61,7 +61,7 @@ GEM
     benchmark (0.4.0)
     bigdecimal (3.1.9)
     builder (3.3.0)
-    chaotic_job (0.11.1)
+    chaotic_job (0.11.2)
     combustion (1.5.0)
       activesupport (>= 3.0.0)
       railties (>= 3.0.0)
@@ -197,7 +197,7 @@ PLATFORMS
 DEPENDENCIES
   acidic_job!
   actionmailer (>= 7.1)
-  chaotic_job (>= 0.11.1)
+  chaotic_job (>= 0.11.2)
   combustion
   minitest
   rake
