@@ -59,7 +59,7 @@ class ActiveSupport::TestCase
     AcidicJob::Value.delete_all
     AcidicJob::Entry.delete_all
     AcidicJob::Execution.delete_all
-    # TestObject.delete_all
+    Thing.delete_all
     performed_jobs.clear if defined?(performed_jobs)
     enqueued_jobs.clear if defined?(enqueued_jobs)
   end
