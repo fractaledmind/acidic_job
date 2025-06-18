@@ -119,7 +119,7 @@ module Examples
         assert_equal 0, enqueued_jobs.size
 
         # job is finished successfully
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # nothing happened beyond halting on the `delayed` step
@@ -229,7 +229,7 @@ module Examples
         assert_equal 0, enqueued_jobs.size
 
         # job is finished successfully
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # nothing happened beyond halting on the `delayed` step
@@ -339,7 +339,7 @@ module Examples
         assert_equal 0, enqueued_jobs.size
 
         # job is finished successfully
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # nothing happened beyond halting on the `delayed` step
@@ -407,7 +407,7 @@ module Examples
         assert_operator performed_jobs.size, :>, first_run_performances
 
         # job is finished successfully
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # the most recent job that was performed is the future scheduled job

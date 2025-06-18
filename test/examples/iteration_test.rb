@@ -40,7 +40,7 @@ module Examples
       assert_equal 3, ChaoticJob.journal_size
       assert_equal [1, 2, 3], ChaoticJob::Journal.entries
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # iterates over 3 item array before succeeding
@@ -73,7 +73,7 @@ module Examples
         assert_equal 3, ChaoticJob.journal_size
         assert_equal [1, 2, 3], ChaoticJob::Journal.entries
 
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # iterates over 3 item array before succeeding
@@ -98,7 +98,7 @@ module Examples
     end
 
     test_simulation(Job.new) do |_scenario|
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
 
       # performs primary IO operation once per iteration
       assert_equal 3, ChaoticJob.journal_size

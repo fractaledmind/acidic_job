@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module AcidicJob
-  class Entry < Record
+  class Entry < ApplicationRecord
     belongs_to :execution, class_name: "AcidicJob::Execution"
 
     serialize :data, coder: AcidicJob::Serializer

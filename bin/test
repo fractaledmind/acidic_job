@@ -1,0 +1,102 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'optparse'
+
+DATABASES = %w[sqlite mysql postgres].freeze
+
+def usage
+  puts <<~USAGE
+    AcidicJob Test Runner
+
+    Usage:
+      bin/test [OPTIONS] [TEST_FILES]
+
+    Examples:
+      bin/test                                    # All tests against all databases
+      bin/test --db mysql                         # All tests against MySQL only
+      bin/test --db all                           # All tests against all databases (explicit)
+      bin/test test/jobs/delaying_job_test.rb     # One test against all databases
+      bin/test --db postgres test/jobs/*.rb       # Multiple tests against PostgreSQL
+      bin/test --db mysql test/jobs/test.rb:25    # Specific test line against MySQL
+
+    Options:
+      -d, --db DATABASE    Run tests against specific database (sqlite, mysql, postgres, all)
+      -l, --list          List available rake tasks
+      -h, --help          Show this help message
+
+    Notes:
+      - Docker containers are automatically started for MySQL/PostgreSQL
+      - Test schema is automatically synced before running tests
+      - Without --db flag, tests run against all databases
+  USAGE
+end
+
+def run_rake_task(task, test_files = nil)
+  cmd = ["bundle", "exec", "rake", task]
+  if test_files && !test_files.empty?
+    ENV['TEST'] = test_files.join(' ')
+  end
+
+  puts "Running: #{cmd.join(' ')}"
+  puts "TEST=#{ENV['TEST']}" if ENV['TEST']
+  puts
+
+  exec(*cmd)
+end
+
+# Parse command line arguments
+options = {}
+parser = OptionParser.new do |opts|
+  opts.on('-d', '--db DATABASE', 'Database to test against (sqlite, mysql, postgres, all)') do |db|
+    unless DATABASES.include?(db) || db == 'all'
+      puts "Error: Invalid database '#{db}'. Valid options: #{DATABASES.join(', ')}, all"
+      exit 1
+    end
+    options[:database] = db
+  end
+
+  opts.on('-l', '--list', 'List available test tasks') do
+    system('bundle', 'exec', 'rake', '-T', '| grep test')
+    exit 0
+  end
+
+  opts.on('-h', '--help', 'Show help') do
+    usage
+    exit 0
+  end
+end
+
+begin
+  parser.parse!
+rescue OptionParser::InvalidOption => e
+  puts "Error: #{e.message}"
+  puts
+  usage
+  exit 1
+end
+
+# Remaining arguments are test files
+test_files = ARGV
+
+# Determine which rake task to run
+database = options[:database] || 'all'
+
+case database
+when 'all'
+  if test_files.empty?
+    run_rake_task('test:all')
+  else
+    run_rake_task('test:all', test_files)
+  end
+when *DATABASES
+  if test_files.empty?
+    run_rake_task("test:#{database}")
+  else
+    run_rake_task("test:#{database}", test_files)
+  end
+else
+  puts "Error: Unknown database option '#{database}'"
+  usage
+  exit 1
+end

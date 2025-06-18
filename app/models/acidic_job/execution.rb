@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module AcidicJob
-  class Execution < Record
+  class Execution < ApplicationRecord
     has_many :entries, class_name: "AcidicJob::Entry", dependent: :destroy
     has_many :values, class_name: "AcidicJob::Value", dependent: :destroy
 

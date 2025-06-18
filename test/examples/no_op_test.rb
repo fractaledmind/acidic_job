@@ -29,7 +29,7 @@ module Examples
       assert_equal 0, enqueued_jobs.size
 
       # job is finished successfully
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # nothing happened beyond halting on the `delayed` step
@@ -47,7 +47,7 @@ module Examples
     end
 
     test_simulation(Job.new) do |_scenario|
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
 
       # only performs primary IO operations once per job
       assert_equal 1, ChaoticJob.journal_size, ChaoticJob.journal_entries

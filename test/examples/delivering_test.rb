@@ -2,20 +2,6 @@
 
 require "test_helper"
 
-class TestMailer < ActionMailer::Base
-  # self.delivery_job = MailDeliveryJob
-
-  def hello_world
-    @message = "Hello, world"
-    recipient = params.fetch(:recipient, "user@example.com")
-
-    mail from: "test@example.com", to: recipient do |format|
-      format.html { render inline: "<h1><%= @message %></h1>" }
-      format.text { render inline: "<%= @message %>" }
-    end
-  end
-end
-
 module Examples
   class DeliveringTest < ActiveJob::TestCase
     class Job < ActiveJob::Base
@@ -67,7 +53,7 @@ module Examples
       # only performs primary IO operations once per job
       assert_equal 1, ChaoticJob.journal_size
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # simple walkthrough of the execution
@@ -120,7 +106,7 @@ module Examples
       # only performs primary IO operations once per job
       assert_equal 1, ChaoticJob.journal_size
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
 
       # simple walkthrough of the execution
@@ -156,7 +142,7 @@ module Examples
     end
 
     test_simulation(Job.new) do |_scenario|
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
 
       # Performed the job, the retry, and the mail deliveries
       assert_equal 4, performed_jobs.size

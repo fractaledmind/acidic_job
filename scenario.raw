@@ -1,0 +1,1689 @@
+#<ChaoticJob::Scenario:0x000000011f7d6a48 
+  @job=#<Examples::DelayingTest::Job:0x000000011fa35aa0 
+    @arguments=[], 
+    @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform", 
+    @queue_name="default",
+    @scheduled_at=nil,
+    @priority=nil,
+    @executions=0,
+    @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+    @timezone="UTC",
+    @provider_job_id=nil,
+    @serialized_arguments=[],
+    @locale="en",
+    @enqueued_at=2025-06-17 16:28:54.995142 UTC,
+    @successfully_enqueued=true,
+    @_halted_callback_hook_called=nil
+  >,
+  @glitch=#<ChaoticJob::Glitch:0x000000011f7d6bd8 
+    @event=:call,
+    @key="Examples::DelayingTest::Job#perform",
+    @args=[],
+    @retval=nil,
+    @kwargs={},
+    @block=#<Proc:0x000000011fcd8e10 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:20>,
+    @executed=true
+  >,
+  @raise=ChaoticJob::RetryableError,
+  @capture=nil,
+  @events=[
+    [
+      "enqueue.active_job", 
+      2025-06-17 18:28:54.996818 +0200, 
+      2025-06-17 18:28:54.996871 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :job=>#<Examples::DelayingTest::Job:0x000000011fa35aa0 
+          @arguments=[],
+          @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+          @queue_name="default",
+          @scheduled_at=nil,
+          @priority=nil,
+          @executions=0,
+          @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+          @timezone="UTC",
+          @provider_job_id=nil,
+          @serialized_arguments=[],
+          @locale="en",
+          @enqueued_at=2025-06-17 16:28:54.995142 UTC,
+          @successfully_enqueued=true,
+          @_halted_callback_hook_called=nil
+        >, 
+        :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 
+          @enqueued_jobs=[],
+          @performed_jobs=[
+            {
+              "job_class"=>"Examples::DelayingTest::Job", 
+              "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+              "provider_job_id"=>nil, 
+              "queue_name"=>"default",
+              "priority"=>nil, 
+              "arguments"=>[], 
+              "executions"=>0, 
+              "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+              "locale"=>"en",
+              "timezone"=>"UTC",
+              "enqueued_at"=>"2025-06-17T16:28:54.996850000Z",
+              "scheduled_at"=>nil,
+              :job=>Examples::DelayingTest::Job,
+              :args=>[],
+              :queue=>"default",
+              :priority=>nil
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job",
+              "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform",
+              "provider_job_id"=>nil, 
+              "queue_name"=>"default",
+              "priority"=>nil, 
+              "arguments"=>[], 
+              "executions"=>1, 
+              "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+              "locale"=>"en",
+              "timezone"=>"UTC",
+              "enqueued_at"=>"2025-06-17T16:28:54.997316000Z",
+              "scheduled_at"=>"2025-06-17T16:28:55.997233000Z",
+              :job=>Examples::DelayingTest::Job,
+              :args=>[],
+              :queue=>"default",
+              :priority=>nil,
+              :at=>1750177735.997233
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job",
+              "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform",
+              "provider_job_id"=>nil, 
+              "queue_name"=>"default",
+              "priority"=>nil, 
+              "arguments"=>[], 
+              "executions"=>2, 
+              "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+              "locale"=>"en",
+              "timezone"=>"UTC",
+              "enqueued_at"=>"2025-06-17T16:28:55.001569000Z",
+              "scheduled_at"=>"2025-07-01T16:28:55.001491000Z",
+              :job=>Examples::DelayingTest::Job,
+              :args=>[],
+              :queue=>"default",
+              :priority=>nil,
+              :at=>1751387335.0014908
+            }
+          ]
+        >
+      }
+    ], 
+    [
+      "perform_start.active_job", 
+      2025-06-17 18:28:54.997032 +0200, 
+      2025-06-17 18:28:54.99704 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :job=>#<Examples::DelayingTest::Job:0x000000011f9f3cb8 
+          @arguments=[],
+          @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+          @queue_name="default",
+          @scheduled_at=2025-06-17 16:28:55.997233000 UTC +00:00,
+          @priority=nil,
+          @executions=1,
+          @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+          @timezone="UTC",
+          @provider_job_id=nil,
+          @serialized_arguments=nil,
+          @locale="en",
+          @enqueued_at=2025-06-17 16:28:54.99685 UTC,
+          @_halted_callback_hook_called=nil,
+          @successfully_enqueued=true
+        >, 
+        :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 
+          @enqueued_jobs=[],
+          @performed_jobs=[
+            {
+              "job_class"=>"Examples::DelayingTest::Job",
+              "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>0, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.996850000Z", "scheduled_at"=>nil, :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>1, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997316000Z", "scheduled_at"=>"2025-06-17T16:28:55.997233000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1750177735.997233
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:55.001569000Z", "scheduled_at"=>"2025-07-01T16:28:55.001491000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1751387335.0014908
+            }
+          ]
+        >
+      }
+    ], 
+    [
+      "enqueue_at.active_job", 
+      2025-06-17 18:28:54.997295 +0200, 
+      2025-06-17 18:28:54.99733 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :job=>#<Examples::DelayingTest::Job:0x000000011f9f3cb8 
+          @arguments=[],
+          @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+          @queue_name="default",
+          @scheduled_at=2025-06-17 16:28:55.997233000 UTC +00:00,
+          @priority=nil,
+          @executions=1,
+          @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+          @timezone="UTC",
+          @provider_job_id=nil,
+          @serialized_arguments=nil,
+          @locale="en",
+          @enqueued_at=2025-06-17 16:28:54.99685 UTC,
+          @_halted_callback_hook_called=nil,
+          @successfully_enqueued=true
+        >, 
+        :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 
+          @enqueued_jobs=[],
+          @performed_jobs=[
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>0, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.996850000Z", "scheduled_at"=>nil, :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>1, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997316000Z", "scheduled_at"=>"2025-06-17T16:28:55.997233000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1750177735.997233
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:55.001569000Z", "scheduled_at"=>"2025-07-01T16:28:55.001491000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1751387335.0014908
+            }
+          ]
+        >, 
+        :aborted=>nil
+      }
+    ], 
+    [
+      "enqueue_retry.active_job", 
+      2025-06-17 18:28:54.997215 +0200, 
+      2025-06-17 18:28:54.997347 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :error=>#<ChaoticJob::RetryableError: ChaoticJob::RetryableError>, 
+        :wait=>1.0, 
+        :job=>#<Examples::DelayingTest::Job:0x000000011f9f3cb8 
+          @arguments=[],
+          @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+          @queue_name="default",
+          @scheduled_at=2025-06-17 16:28:55.997233000 UTC +00:00,
+          @priority=nil,
+          @executions=1,
+          @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+          @timezone="UTC",
+          @provider_job_id=nil,
+          @serialized_arguments=nil,
+          @locale="en",
+          @enqueued_at=2025-06-17 16:28:54.99685 UTC,
+          @_halted_callback_hook_called=nil,
+          @successfully_enqueued=true
+        >, 
+        :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 
+          @enqueued_jobs=[],
+          @performed_jobs=[
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>0, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.996850000Z", "scheduled_at"=>nil, :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>1, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997316000Z", "scheduled_at"=>"2025-06-17T16:28:55.997233000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1750177735.997233
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:55.001569000Z", "scheduled_at"=>"2025-07-01T16:28:55.001491000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1751387335.0014908
+            }
+          ]
+        >, 
+        :aborted=>nil
+      }
+    ], 
+    [
+      "perform.active_job", 
+      2025-06-17 18:28:54.996986 +0200, 
+      2025-06-17 18:28:54.997365 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :job=>#<Examples::DelayingTest::Job:0x000000011f9f3cb8 
+          @arguments=[],
+          @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+          @queue_name="default",
+          @scheduled_at=2025-06-17 16:28:55.997233000 UTC +00:00,
+          @priority=nil,
+          @executions=1,
+          @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+          @timezone="UTC",
+          @provider_job_id=nil,
+          @serialized_arguments=nil,
+          @locale="en",
+          @enqueued_at=2025-06-17 16:28:54.99685 UTC,
+          @_halted_callback_hook_called=nil,
+          @successfully_enqueued=true
+        >, 
+        :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 
+          @enqueued_jobs=[],
+          @performed_jobs=[
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>0, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.996850000Z", "scheduled_at"=>nil, :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>1, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997316000Z", "scheduled_at"=>"2025-06-17T16:28:55.997233000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1750177735.997233
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:55.001569000Z", "scheduled_at"=>"2025-07-01T16:28:55.001491000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1751387335.0014908
+            }
+          ]
+        >, 
+        :db_runtime=>0.0, 
+        :aborted=>nil
+      }
+    ],
+    [
+      "perform_start.active_job", 
+      2025-06-17 18:28:54.997474 +0200, 
+      2025-06-17 18:28:54.997482 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :job=>#<Examples::DelayingTest::Job:0x000000011f999f60 
+          @arguments=[],
+          @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+          @queue_name="default",
+          @scheduled_at=2025-07-01 16:28:55.001491000 UTC +00:00,
+          @priority=nil,
+          @executions=2,
+          @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+          @timezone="UTC",
+          @provider_job_id=nil,
+          @serialized_arguments=nil,
+          @locale="en",
+          @enqueued_at=2025-06-17 16:28:54.997316 UTC,
+          @_halted_callback_hook_called=nil,
+          @__acidic_job_plugins__=[AcidicJob::Plugins::TransactionalStep],
+          @__acidic_job_builder__=#<AcidicJob::Builder:0x0000000124f69620 
+            @plugins=[AcidicJob::Plugins::TransactionalStep],
+            @steps=[
+              {"does"=>"delay"},
+              {"does"=>"halt"},
+              {"does"=>"do_something"},
+              {"does"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+            ]
+          >,
+          @__acidic_job_execution__=#<AcidicJob::Execution 
+            id: 3, 
+            idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+            serialized_job: {
+              "job_class"=>"Examples::DelayingTest::Job", 
+              "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+              "provider_job_id"=>nil, 
+              "queue_name"=>"default", 
+              "priority"=>nil, 
+              "arguments"=>[], 
+              "executions"=>2, 
+              "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+              "locale"=>"en", 
+              "timezone"=>"UTC", 
+              "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+              "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+            }, 
+            last_run_at: nil, 
+            locked_at: nil, 
+            recover_to: "halt", 
+            definition: {
+              "meta"=>{"version"=>"1.0.0.rc5"}, 
+              "steps"=>{
+                "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+                "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+                "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+              }
+            }, 
+            created_at: "2025-06-17 16:28:54.998513000 +0000", 
+            updated_at: "2025-06-17 16:28:54.998513000 +0000"
+          >,
+          @__acidic_job_context__=#<AcidicJob::Context:0x0000000124f60d68 
+            @execution=#<AcidicJob::Execution 
+              id: 3, 
+              idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+              serialized_job: {
+                "job_class"=>"Examples::DelayingTest::Job", 
+                "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+                "provider_job_id"=>nil, 
+                "queue_name"=>"default",
+                "priority"=>nil,
+                "arguments"=>[],
+                "executions"=>2,
+                "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1},
+                "locale"=>"en",
+                "timezone"=>"UTC",
+                "enqueued_at"=>"2025-06-17T16:28:54.997527000Z",
+                "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+              }, 
+              last_run_at: nil, 
+              locked_at: nil, 
+              recover_to: "halt", 
+              definition: {
+                "meta"=>{"version"=>"1.0.0.rc5"},
+                "steps"=>{
+                  "delay"=>{"does"=>"delay", "then"=>"halt"},
+                  "halt"=>{"does"=>"halt", "then"=>"do_something"},
+                  "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+                }
+              }, 
+              created_at: "2025-06-17 16:28:54.998513000 +0000", 
+              updated_at: "2025-06-17 16:28:54.998513000 +0000"
+            >
+          >,
+          @successfully_enqueued=true
+        >, 
+        :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 
+          @enqueued_jobs=[],
+          @performed_jobs=[
+            {
+              "job_class"=>"Examples::DelayingTest::Job",
+              "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform",
+              "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>0, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.996850000Z", "scheduled_at"=>nil, :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>1, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997316000Z", "scheduled_at"=>"2025-06-17T16:28:55.997233000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1750177735.997233
+            },
+            {
+              "job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:55.001569000Z", "scheduled_at"=>"2025-07-01T16:28:55.001491000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1751387335.0014908
+            }
+          ]
+        >
+      }
+    ], 
+    [
+      "define_workflow.acidic_job", 
+      2025-06-17 18:28:54.997587 +0200,
+      2025-06-17 18:28:54.997609 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :job_class=>"Examples::DelayingTest::Job", 
+        :job_id=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+        :provider_job_id=>nil, 
+        :queue_name=>"default", 
+        :priority=>nil, 
+        :arguments=>[], 
+        :executions=>2, 
+        :exception_executions=>{:"[ChaoticJob::RetryableError]"=>1}, 
+        :locale=>"en", 
+        :timezone=>"UTC", 
+        :enqueued_at=>"2025-06-17T16:28:54.997527000Z", 
+        :scheduled_at=>"2025-06-17T16:28:55.997232913Z"
+      }
+    ], 
+    [
+      "sql.active_record", 2025-06-17 18:28:54.997991 +0200,
+      2025-06-17 18:28:54.998041 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :sql=>"BEGIN immediate TRANSACTION", 
+        :name=>"TRANSACTION", 
+        :binds=>[], 
+        :type_casted_binds=>[], 
+        :async=>false, 
+        :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 
+          env_name="test" 
+          role=:writing
+        >, 
+        :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 
+          @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f991b80 
+            @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 
+              env_name="test" 
+              role=:writing
+            >,
+            @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x0000000124f687e8 
+              @state=:fully_committed,
+              @children=nil
+            >,
+            @callbacks=nil,
+            @records=[
+              #<AcidicJob::Execution 
+                id: 3, 
+                idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+                serialized_job: {
+                  "job_class"=>"Examples::DelayingTest::Job", 
+                  "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+                  "provider_job_id"=>nil, 
+                  "queue_name"=>"default", 
+                  "priority"=>nil, 
+                  "arguments"=>[], 
+                  "executions"=>2, 
+                  "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+                  "locale"=>"en", 
+                  "timezone"=>"UTC", 
+                  "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+                  "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+                }, 
+                last_run_at: nil, 
+                locked_at: nil, 
+                recover_to: "halt", 
+                definition: {
+                  "meta"=>{"version"=>"1.0.0.rc5"}, 
+                  "steps"=>{
+                    "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+                    "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+                    "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+                  }
+                }, 
+                created_at: "2025-06-17 16:28:54.998513000 +0000", 
+                updated_at: "2025-06-17 16:28:54.998513000 +0000"
+              >
+            ],
+            @isolation_level=nil,
+            @materialized=true,
+            @joinable=true,
+            @run_commit_callbacks=true,
+            @lazy_enrollment_records=nil,
+            @dirty=true,
+            @user_transaction=#<ActiveRecord::Transaction:0x0000000124f68798 ...>,
+            @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x0000000124e36ff0 
+              @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x0000000124dff000 
+                @name="transaction.active_record",
+                @id="75c2c2588157bf761e03",
+                @payload={
+                  :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 
+                    env_name="test" 
+                    role=:writing
+                  >, 
+                  :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>, 
+                  :outcome=>:commit
+                },
+                @groups=[
+                  #<ActiveSupport::Notifications::Fanout::TimedGroup:0x0000000124f66ec0 
+                    @listeners=[
+                      #<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>
+                    ],
+                    @start_time=2025-06-17 18:28:54.99812 +0200
+                  >
+                ],
+                @state=:finished
+              >,
+              @started=false,
+              @payload={
+                :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 
+                  env_name="test" 
+                  role=:writing
+                >, 
+                :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>, 
+                :outcome=>:commit
+              },
+              @base_payload={
+                :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, 
+                :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>
+              }
+            >,
+            @written=true
+          >,
+          @uuid=nil
+        >, 
+        :row_count=>0
+      }
+    ], 
+    [
+      "start_transaction.active_record", 
+      2025-06-17 18:28:54.998102 +0200,
+      2025-06-17 18:28:54.998104 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, 
+        :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 
+          @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f991b80 
+            @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>,
+            @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x0000000124f687e8 
+              @state=:fully_committed,
+              @children=nil
+            >,
+            @callbacks=nil,
+            @records=[
+              #<AcidicJob::Execution 
+                id: 3, 
+                idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+                serialized_job: {
+                  "job_class"=>"Examples::DelayingTest::Job", 
+                  "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+                  "provider_job_id"=>nil, 
+                  "queue_name"=>"default", 
+                  "priority"=>nil, 
+                  "arguments"=>[], 
+                  "executions"=>2, 
+                  "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+                  "locale"=>"en", 
+                  "timezone"=>"UTC", 
+                  "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+                  "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+                }, 
+                last_run_at: nil, 
+                locked_at: nil, 
+                recover_to: "halt", 
+                definition: {
+                  "meta"=>{"version"=>"1.0.0.rc5"}, 
+                  "steps"=>{
+                    "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+                    "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+                    "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+                  }
+                }, 
+                created_at: "2025-06-17 16:28:54.998513000 +0000", 
+                updated_at: "2025-06-17 16:28:54.998513000 +0000"
+              >
+            ],
+            @isolation_level=nil,
+            @materialized=true,
+            @joinable=true,
+            @run_commit_callbacks=true,
+            @lazy_enrollment_records=nil,
+            @dirty=true,
+            @user_transaction=#<ActiveRecord::Transaction:0x0000000124f68798 ...>,
+            @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x0000000124e36ff0 
+              @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x0000000124dff000 
+                @name="transaction.active_record",
+                @id="75c2c2588157bf761e03",
+                @payload={
+                  :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, 
+                  :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>, 
+                  :outcome=>:commit
+                },
+                @groups=[
+                  #<ActiveSupport::Notifications::Fanout::TimedGroup:0x0000000124f66ec0 
+                    @listeners=[
+                      #<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>
+                    ],
+                    @start_time=2025-06-17 18:28:54.99812 +0200
+                  >
+                ],
+                @state=:finished
+              >,
+              @started=false,
+              @payload={
+                :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, 
+                :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>, 
+                :outcome=>:commit
+              },
+              @base_payload={...}
+            >,
+            @written=true
+          >,
+          @uuid=nil
+        >
+      }
+    ], 
+    [
+      "sql.active_record", 
+      2025-06-17 18:28:54.997949 +0200,
+      2025-06-17 18:28:54.998179 +0200, 
+      "75c2c2588157bf761e03", 
+      {
+        :sql=>"SELECT \"acidic_job_executions\".* FROM \"acidic_job_executions\" WHERE \"acidic_job_executions\".\"idempotency_key\" = ? LIMIT ?", 
+        :name=>"AcidicJob::Execution Load", 
+        :binds=>[
+          #<ActiveRecord::Relation::QueryAttribute:0x0000000124e35a60 @name="idempotency_key",
+  @value_before_type_cast="e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b",
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value="e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b",
+  @value_for_database="e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b">, #<ActiveModel::Attribute::WithCastValue:0x000000011fbbb550 @name="LIMIT",
+  @value_before_type_cast=1,
+  @type=#<ActiveModel::Type::Value:0x0000000124f4afe0 @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value=1,
+  @value_for_database=1>], :type_casted_binds=>["e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b", 1], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f991b80 @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>,
+  @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x0000000124f687e8 @state=:fully_committed,
+  @children=nil>,
+  @callbacks=nil,
+  @records=[#<AcidicJob::Execution 
+    id: 3, 
+    idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+    serialized_job: {
+      "job_class"=>"Examples::DelayingTest::Job", 
+      "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+      "provider_job_id"=>nil, 
+      "queue_name"=>"default", 
+      "priority"=>nil, 
+      "arguments"=>[], 
+      "executions"=>2, 
+      "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+      "locale"=>"en", 
+      "timezone"=>"UTC", 
+      "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+      "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+    }, 
+    last_run_at: nil, 
+    locked_at: nil, 
+    recover_to: "halt", 
+    definition: {
+      "meta"=>{"version"=>"1.0.0.rc5"}, 
+      "steps"=>{
+        "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+        "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+        "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+      }
+    }, 
+    created_at: "2025-06-17 16:28:54.998513000 +0000", 
+    updated_at: "2025-06-17 16:28:54.998513000 +0000"
+  >],
+  @isolation_level=nil,
+  @materialized=true,
+  @joinable=true,
+  @run_commit_callbacks=true,
+  @lazy_enrollment_records=nil,
+  @dirty=true,
+  @user_transaction=#<ActiveRecord::Transaction:0x0000000124f68798 ...>,
+  @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x0000000124e36ff0 @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x0000000124dff000 @name="transaction.active_record",
+  @id="75c2c2588157bf761e03",
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>, :outcome=>:commit},
+  @groups=[#<ActiveSupport::Notifications::Fanout::TimedGroup:0x0000000124f66ec0 @listeners=[#<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>],
+  @start_time=2025-06-17 18:28:54.99812 +0200>],
+  @state=:finished>,
+  @started=false,
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>, :outcome=>:commit},
+  @base_payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>}>,
+  @written=true>,
+  @uuid=nil>, :row_count=>0}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:54.999251 +0200,
+    2025-06-17 18:28:54.999339 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"INSERT INTO \"acidic_job_executions\" (\"idempotency_key\", \"serialized_job\", \"recover_to\", \"definition\", \"created_at\", \"updated_at\") VALUES (?, ?, ?, ?, ?, ?) RETURNING \"id\"", :name=>"AcidicJob::Execution Create", :binds=>[#<ActiveModel::Attribute::FromUser:0x0000000124dfa460 @name="idempotency_key",
+  @value_before_type_cast="e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b",
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=#<ActiveModel::Attribute::FromDatabase:0x0000000124dfc030 @name="idempotency_key",
+  @value_before_type_cast=nil,
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil>,
+  @value="e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b",
+  @value_for_database="e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b">, #<ActiveModel::Attribute::FromUser:0x0000000124df9e70 @name="serialized_job",
+  @value_before_type_cast={"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"},
+  @type=#<ActiveRecord::Type::Json:0x000000011faf2308 @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=#<ActiveModel::Attribute::FromDatabase:0x0000000124dfbef0 @name="serialized_job",
+  @value_before_type_cast=nil,
+  @type=#<ActiveRecord::Type::Json:0x000000011faf2308 @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil>,
+  @value={"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"},
+  @value_for_database="{\"job_class\":\"Examples::DelayingTest::Job\",\"job_id\":\"13aa0f01-call-Examples::DelayingTest::Job#perform\",\"provider_job_id\":null,\"queue_name\":\"default\",\"priority\":null,\"arguments\":[],\"executions\":2,\"exception_executions\":{\"[ChaoticJob::RetryableError]\":1},\"locale\":\"en\",\"timezone\":\"UTC\",\"enqueued_at\":\"2025-06-17T16:28:54.997527000Z\",\"scheduled_at\":\"2025-06-17T16:28:55.997232913Z\"}">, #<ActiveModel::Attribute::FromUser:0x0000000124dfa190 @name="recover_to",
+  @value_before_type_cast="delay",
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=#<ActiveModel::Attribute::FromDatabase:0x0000000124dfba90 @name="recover_to",
+  @value_before_type_cast=nil,
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil>,
+  @value="delay",
+  @value_for_database="delay">, #<ActiveModel::Attribute::FromUser:0x0000000124df9a60 @name="definition",
+  @value_before_type_cast={"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}},
+  @type=#<ActiveRecord::Type::Serialized:0x0000000124f20600 @subtype=#<ActiveRecord::Type::Text:0x000000011fbbfb00 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @coder=AcidicJob::Serializer,
+  @delegate_dc_obj=#<ActiveRecord::Type::Text:0x000000011fbbfb00 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>>,
+  @original_attribute=#<ActiveModel::Attribute::FromDatabase:0x0000000124dfb900 @name="definition",
+  @value_before_type_cast=nil,
+  @type=#<ActiveRecord::Type::Serialized:0x0000000124f20600 @subtype=#<ActiveRecord::Type::Text:0x000000011fbbfb00 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @coder=AcidicJob::Serializer,
+  @delegate_dc_obj=#<ActiveRecord::Type::Text:0x000000011fbbfb00 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>>,
+  @original_attribute=nil>,
+  @value={"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}},
+  @value_for_database="{\"meta\":{\"version\":\"1.0.0.rc5\",\"_aj_symbol_keys\":[]},\"steps\":{\"delay\":{\"does\":\"delay\",\"then\":\"halt\",\"_aj_symbol_keys\":[]},\"halt\":{\"does\":\"halt\",\"then\":\"do_something\",\"_aj_symbol_keys\":[]},\"do_something\":{\"does\":\"do_something\",\"then\":\"__ACIDIC_JOB_WORKFLOW_FINISHED__\",\"_aj_symbol_keys\":[]},\"_aj_symbol_keys\":[]},\"_aj_symbol_keys\":[]}">, #<ActiveModel::Attribute::FromUser:0x0000000124df2df0 @name="created_at",
+  @value_before_type_cast=2025-06-17 16:28:54.998513 UTC,
+  @type=#<ActiveRecord::Type::DateTime:0x0000000124f22388 @precision=6,
+  @scale=nil,
+  @limit=nil,
+  @timezone=nil>,
+  @original_attribute=#<ActiveModel::Attribute::FromDatabase:0x0000000124dfb770 @name="created_at",
+  @value_before_type_cast=nil,
+  @type=#<ActiveRecord::Type::DateTime:0x0000000124f22388 @precision=6,
+  @scale=nil,
+  @limit=nil,
+  @timezone=nil>,
+  @original_attribute=nil,
+  @value=nil>,
+  @value=2025-06-17 16:28:54.998513000 UTC +00:00,
+  @value_for_database=2025-06-17 16:28:54.998513000 UTC +00:00>, #<ActiveModel::Attribute::FromUser:0x0000000124df24e0 @name="updated_at",
+  @value_before_type_cast=2025-06-17 16:28:54.998513 UTC,
+  @type=#<ActiveRecord::Type::DateTime:0x0000000124f22388 @precision=6,
+  @scale=nil,
+  @limit=nil,
+  @timezone=nil>,
+  @original_attribute=#<ActiveModel::Attribute::FromDatabase:0x0000000124dfb5e0 @name="updated_at",
+  @value_before_type_cast=nil,
+  @type=#<ActiveRecord::Type::DateTime:0x0000000124f22388 @precision=6,
+  @scale=nil,
+  @limit=nil,
+  @timezone=nil>,
+  @original_attribute=nil,
+  @value=nil>,
+  @value=2025-06-17 16:28:54.998513000 UTC +00:00,
+  @value_for_database=2025-06-17 16:28:54.998513000 UTC +00:00>], :type_casted_binds=>["e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b", "{\"job_class\":\"Examples::DelayingTest::Job\",\"job_id\":\"13aa0f01-call-Examples::DelayingTest::Job#perform\",\"provider_job_id\":null,\"queue_name\":\"default\",\"priority\":null,\"arguments\":[],\"executions\":2,\"exception_executions\":{\"[ChaoticJob::RetryableError]\":1},\"locale\":\"en\",\"timezone\":\"UTC\",\"enqueued_at\":\"2025-06-17T16:28:54.997527000Z\",\"scheduled_at\":\"2025-06-17T16:28:55.997232913Z\"}", "delay", "{\"meta\":{\"version\":\"1.0.0.rc5\",\"_aj_symbol_keys\":[]},\"steps\":{\"delay\":{\"does\":\"delay\",\"then\":\"halt\",\"_aj_symbol_keys\":[]},\"halt\":{\"does\":\"halt\",\"then\":\"do_something\",\"_aj_symbol_keys\":[]},\"do_something\":{\"does\":\"do_something\",\"then\":\"__ACIDIC_JOB_WORKFLOW_FINISHED__\",\"_aj_symbol_keys\":[]},\"_aj_symbol_keys\":[]},\"_aj_symbol_keys\":[]}", "2025-06-17 16:28:54.998513", "2025-06-17 16:28:54.998513"], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f991b80 @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>,
+  @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x0000000124f687e8 @state=:fully_committed,
+  @children=nil>,
+  @callbacks=nil,
+  @records=[#<AcidicJob::Execution 
+    id: 3, 
+    idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+    serialized_job: {
+      "job_class"=>"Examples::DelayingTest::Job", 
+      "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+      "provider_job_id"=>nil, 
+      "queue_name"=>"default", 
+      "priority"=>nil, 
+      "arguments"=>[], 
+      "executions"=>2, 
+      "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+      "locale"=>"en", 
+      "timezone"=>"UTC", 
+      "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+      "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+    }, 
+    last_run_at: nil, 
+    locked_at: nil, 
+    recover_to: "halt", 
+    definition: {
+      "meta"=>{"version"=>"1.0.0.rc5"}, 
+      "steps"=>{
+        "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+        "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+        "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+      }
+    }, 
+    created_at: "2025-06-17 16:28:54.998513000 +0000", 
+    updated_at: "2025-06-17 16:28:54.998513000 +0000"
+  >],
+  @isolation_level=nil,
+  @materialized=true,
+  @joinable=true,
+  @run_commit_callbacks=true,
+  @lazy_enrollment_records=nil,
+  @dirty=true,
+  @user_transaction=#<ActiveRecord::Transaction:0x0000000124f68798 ...>,
+  @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x0000000124e36ff0 @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x0000000124dff000 @name="transaction.active_record",
+  @id="75c2c2588157bf761e03",
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>, :outcome=>:commit},
+  @groups=[#<ActiveSupport::Notifications::Fanout::TimedGroup:0x0000000124f66ec0 @listeners=[#<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>],
+  @start_time=2025-06-17 18:28:54.99812 +0200>],
+  @state=:finished>,
+  @started=false,
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>, :outcome=>:commit},
+  @base_payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>}>,
+  @written=true>,
+  @uuid=nil>, :row_count=>1}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:54.99959 +0200,
+    2025-06-17 18:28:54.999676 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"COMMIT TRANSACTION", :name=>"TRANSACTION", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>0}], ["transaction.active_record", 2025-06-17 18:28:54.99812 +0200,
+    2025-06-17 18:28:54.999706 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f991b80 @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>,
+  @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x0000000124f687e8 @state=:fully_committed,
+  @children=nil>,
+  @callbacks=nil,
+  @records=[#<AcidicJob::Execution 
+    id: 3, 
+    idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+    serialized_job: {
+      "job_class"=>"Examples::DelayingTest::Job", 
+      "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+      "provider_job_id"=>nil, 
+      "queue_name"=>"default", 
+      "priority"=>nil, 
+      "arguments"=>[], 
+      "executions"=>2, 
+      "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+      "locale"=>"en", 
+      "timezone"=>"UTC", 
+      "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+      "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+    }, 
+    last_run_at: nil, 
+    locked_at: nil, 
+    recover_to: "halt", 
+    definition: {
+      "meta"=>{"version"=>"1.0.0.rc5"}, 
+      "steps"=>{
+        "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+        "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+        "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+      }
+    }, 
+    created_at: "2025-06-17 16:28:54.998513000 +0000", 
+    updated_at: "2025-06-17 16:28:54.998513000 +0000"
+  >],
+  @isolation_level=nil,
+  @materialized=true,
+  @joinable=true,
+  @run_commit_callbacks=true,
+  @lazy_enrollment_records=nil,
+  @dirty=true,
+  @user_transaction=#<ActiveRecord::Transaction:0x0000000124f68798 ...>,
+  @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x0000000124e36ff0 @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x0000000124dff000 @name="transaction.active_record",
+  @id="75c2c2588157bf761e03",
+  @payload={...},
+  @groups=[#<ActiveSupport::Notifications::Fanout::TimedGroup:0x0000000124f66ec0 @listeners=[#<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>],
+  @start_time=2025-06-17 18:28:54.99812 +0200>],
+  @state=:finished>,
+  @started=false,
+  @payload={...},
+  @base_payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x0000000124f68798 ...>}>,
+  @written=true>,
+  @uuid=nil>, :outcome=>:commit}], ["initialize_workflow.acidic_job", 2025-06-17 18:28:54.99767 +0200,
+  2025-06-17 18:28:54.999736 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :definition=>{:meta=>{:version=>"1.0.0.rc5"}, :steps=>{:delay=>{:does=>"delay", :then=>"halt"}, :halt=>{:does=>"halt", :then=>"do_something"}, :do_something=>{:does=>"do_something", :then=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.000596 +0200,
+    2025-06-17 18:28:55.000664 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"SELECT 1 AS one FROM \"acidic_job_entries\" WHERE \"acidic_job_entries\".\"execution_id\" = ? AND \"acidic_job_entries\".\"step\" = ? AND \"acidic_job_entries\".\"action\" = ? LIMIT ?", :name=>"AcidicJob::Entry Exists?", :binds=>[#<ActiveRecord::Relation::QueryAttribute:0x000000011fa5f3c8 @name="execution_id",
+  @value_before_type_cast=3,
+  @type=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer:0x000000011fc30698 @precision=nil,
+  @scale=nil,
+  @limit=nil,
+  @range=-9223372036854775808...9223372036854775808>,
+  @original_attribute=nil,
+  @value=3,
+  @_unboundable=nil,
+  @value_for_database=3>, #<ActiveRecord::Relation::QueryAttribute:0x000000011fa58b68 @name="step",
+  @value_before_type_cast="delay",
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value="delay",
+  @_unboundable=nil,
+  @value_for_database="delay">, #<ActiveRecord::Relation::QueryAttribute:0x000000011fa57448 @name="action",
+  @value_before_type_cast=:succeeded,
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value=:succeeded,
+  @_unboundable=nil,
+  @value_for_database="succeeded">, #<ActiveModel::Attribute::WithCastValue:0x000000011fa52e98 @name="LIMIT",
+  @value_before_type_cast=1,
+  @type=#<ActiveModel::Type::Value:0x0000000124f4afe0 @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value=1,
+  @value_for_database=1>], :type_casted_binds=>[3, "delay", "succeeded", 1], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>0}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.001267 +0200,
+    2025-06-17 18:28:55.00138 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"INSERT INTO \"acidic_job_entries\" (\"step\",\"action\",\"timestamp\",\"data\",\"execution_id\",\"created_at\",\"updated_at\") VALUES ('delay', 'started', '2025-06-17 16:28:55.000724', '{\"_aj_symbol_keys\":[]}', 3, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')) RETURNING \"id\"", :name=>"AcidicJob::Entry Insert", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>1}], ["record_entry.acidic_job", 2025-06-17 18:28:55.00076 +0200,
+    2025-06-17 18:28:55.00141 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :step=>"delay", :action=>:started, :timestamp=>2025-06-17 16:28:55.000724000 UTC +00:00, :data=>{}}], 
+  [
+    "enqueue_at.active_job", 2025-06-17 18:28:55.001545 +0200,
+    2025-06-17 18:28:55.001584 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :job=>#<Examples::DelayingTest::Job:0x000000011f999f60 @arguments=[],
+  @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+  @queue_name="default",
+  @scheduled_at=2025-07-01 16:28:55.001491000 UTC +00:00,
+  @priority=nil,
+  @executions=2,
+  @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+  @timezone="UTC",
+  @provider_job_id=nil,
+  @serialized_arguments=nil,
+  @locale="en",
+  @enqueued_at=2025-06-17 16:28:54.997316 UTC,
+  @_halted_callback_hook_called=nil,
+  @__acidic_job_plugins__=[AcidicJob::Plugins::TransactionalStep],
+  @__acidic_job_builder__=#<AcidicJob::Builder:0x0000000124f69620 @plugins=[AcidicJob::Plugins::TransactionalStep],
+  @steps=[{"does"=>"delay"},
+  {"does"=>"halt"},
+  {"does"=>"do_something"},
+  {"does"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}]>,
+  @__acidic_job_execution__=#<AcidicJob::Execution 
+    id: 3, 
+    idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+    serialized_job: {
+      "job_class"=>"Examples::DelayingTest::Job", 
+      "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+      "provider_job_id"=>nil, 
+      "queue_name"=>"default", 
+      "priority"=>nil, 
+      "arguments"=>[], 
+      "executions"=>2, 
+      "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+      "locale"=>"en", 
+      "timezone"=>"UTC", 
+      "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+      "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+    }, 
+    last_run_at: nil, 
+    locked_at: nil, 
+    recover_to: "halt", 
+    definition: {
+      "meta"=>{"version"=>"1.0.0.rc5"}, 
+      "steps"=>{
+        "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+        "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+        "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+      }
+    }, 
+    created_at: "2025-06-17 16:28:54.998513000 +0000", 
+    updated_at: "2025-06-17 16:28:54.998513000 +0000"
+  >,
+  @__acidic_job_context__=#<AcidicJob::Context:0x0000000124f60d68 @execution=#<AcidicJob::Execution 
+    id: 3, 
+    idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+    serialized_job: {
+      "job_class"=>"Examples::DelayingTest::Job", 
+      "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+      "provider_job_id"=>nil, 
+      "queue_name"=>"default", 
+      "priority"=>nil, 
+      "arguments"=>[], 
+      "executions"=>2, 
+      "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+      "locale"=>"en", 
+      "timezone"=>"UTC", 
+      "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+      "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+    }, 
+    last_run_at: nil, 
+    locked_at: nil, 
+    recover_to: "halt", 
+    definition: {
+      "meta"=>{"version"=>"1.0.0.rc5"}, 
+      "steps"=>{
+        "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+        "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+        "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+      }
+    }, 
+    created_at: "2025-06-17 16:28:54.998513000 +0000", 
+    updated_at: "2025-06-17 16:28:54.998513000 +0000"
+  >>,
+  @successfully_enqueued=true>, :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 @enqueued_jobs=[],
+  @performed_jobs=[{"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>0, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.996850000Z", "scheduled_at"=>nil, :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil},
+  {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>1, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997316000Z", "scheduled_at"=>"2025-06-17T16:28:55.997233000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1750177735.997233},
+  {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:55.001569000Z", "scheduled_at"=>"2025-07-01T16:28:55.001491000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1751387335.0014908}]>, :aborted=>nil}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.00222 +0200,
+    2025-06-17 18:28:55.002341 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"INSERT INTO \"acidic_job_values\" (\"execution_id\",\"key\",\"value\",\"created_at\",\"updated_at\") VALUES (3, '{\"_aj_serialized\":\"ActiveJob::Serializers::SymbolSerializer\",\"value\":\"wait_until\"}', '{\"_aj_serialized\":\"ActiveJob::Serializers::TimeWithZoneSerializer\",\"value\":\"2025-07-01T16:28:55.001491000Z\",\"time_zone\":\"Etc/UTC\"}', STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')) ON CONFLICT (\"execution_id\",\"key\") DO UPDATE SET updated_at=(CASE WHEN (\"value\" IS excluded.\"value\") THEN \"acidic_job_values\".updated_at ELSE STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW') END),\"value\"=excluded.\"value\" RETURNING \"id\"", :name=>"AcidicJob::Value Upsert", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>1}], ["set_context.acidic_job", 2025-06-17 18:28:55.001662 +0200,
+    2025-06-17 18:28:55.002371 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :wait_until=>2025-07-01 16:28:55.001491000 UTC +00:00}], ["perform_step.acidic_job", 2025-06-17 18:28:55.001466 +0200,
+    2025-06-17 18:28:55.002375 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :does=>"delay", :then=>"halt"}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.002882 +0200,
+    2025-06-17 18:28:55.002985 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"INSERT INTO \"acidic_job_entries\" (\"step\",\"action\",\"timestamp\",\"data\",\"execution_id\",\"created_at\",\"updated_at\") VALUES ('delay', 'succeeded', '2025-06-17 16:28:55.002397', '{\"_aj_symbol_keys\":[]}', 3, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')) RETURNING \"id\"", :name=>"AcidicJob::Entry Insert", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>1}], ["record_entry.acidic_job", 2025-06-17 18:28:55.002424 +0200,
+    2025-06-17 18:28:55.003015 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :step=>"delay", :action=>:succeeded, :timestamp=>2025-06-17 16:28:55.002397000 UTC +00:00, :data=>{:ignored=>{:result=>2025-07-01 16:28:55.001491000 UTC +00:00}}}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.003257 +0200,
+    2025-06-17 18:28:55.003312 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"UPDATE \"acidic_job_executions\" SET \"recover_to\" = ? WHERE \"acidic_job_executions\".\"id\" = ?", :name=>"AcidicJob::Execution Update", :binds=>[#<ActiveModel::Attribute::WithCastValue:0x000000011f9d4bb0 @name="recover_to",
+  @value_before_type_cast="halt",
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value="halt",
+  @value_for_database="halt">, #<ActiveRecord::Relation::QueryAttribute:0x000000011f9d3940 @name="id",
+  @value_before_type_cast=3,
+  @type=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer:0x000000011fc30698 @precision=nil,
+  @scale=nil,
+  @limit=nil,
+  @range=-9223372036854775808...9223372036854775808>,
+  @original_attribute=nil,
+  @value=3,
+  @_unboundable=nil,
+  @value_for_database=3>], :type_casted_binds=>["halt", 3], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>0}], ["process_step.acidic_job", 2025-06-17 18:28:54.999975 +0200,
+  2025-06-17 18:28:55.003349 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :does=>"delay", :then=>"halt"}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.00381 +0200,
+    2025-06-17 18:28:55.003868 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"SELECT 1 AS one FROM \"acidic_job_entries\" WHERE \"acidic_job_entries\".\"execution_id\" = ? AND \"acidic_job_entries\".\"step\" = ? AND \"acidic_job_entries\".\"action\" = ? LIMIT ?", :name=>"AcidicJob::Entry Exists?", :binds=>[#<ActiveRecord::Relation::QueryAttribute:0x000000011fa5f3c8 @name="execution_id",
+  @value_before_type_cast=3,
+  @type=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer:0x000000011fc30698 @precision=nil,
+  @scale=nil,
+  @limit=nil,
+  @range=-9223372036854775808...9223372036854775808>,
+  @original_attribute=nil,
+  @value=3,
+  @_unboundable=nil,
+  @value_for_database=3>, #<ActiveRecord::Relation::QueryAttribute:0x000000011f83fb10 @name="step",
+  @value_before_type_cast="halt",
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value="halt",
+  @_unboundable=nil,
+  @value_for_database="halt">, #<ActiveRecord::Relation::QueryAttribute:0x000000011f83dc70 @name="action",
+  @value_before_type_cast=:succeeded,
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value=:succeeded,
+  @_unboundable=nil,
+  @value_for_database="succeeded">, #<ActiveModel::Attribute::WithCastValue:0x000000011f838220 @name="LIMIT",
+  @value_before_type_cast=1,
+  @type=#<ActiveModel::Type::Value:0x0000000124f4afe0 @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value=1,
+  @value_for_database=1>], :type_casted_binds=>[3, "halt", "succeeded", 1], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>0}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.004449 +0200,
+    2025-06-17 18:28:55.004549 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"INSERT INTO \"acidic_job_entries\" (\"step\",\"action\",\"timestamp\",\"data\",\"execution_id\",\"created_at\",\"updated_at\") VALUES ('halt', 'started', '2025-06-17 16:28:55.003923', '{\"_aj_symbol_keys\":[]}', 3, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')) RETURNING \"id\"", :name=>"AcidicJob::Entry Insert", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>1}], ["record_entry.acidic_job", 2025-06-17 18:28:55.00395 +0200,
+    2025-06-17 18:28:55.004577 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :step=>"halt", :action=>:started, :timestamp=>2025-06-17 16:28:55.003923000 UTC +00:00, :data=>{}}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.007701 +0200,
+    2025-06-17 18:28:55.007768 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"SELECT \"acidic_job_values\".\"value\" FROM \"acidic_job_values\" WHERE \"acidic_job_values\".\"execution_id\" = ? AND \"acidic_job_values\".\"key\" = ?", :name=>"AcidicJob::Value Pluck", :binds=>[#<ActiveRecord::Relation::QueryAttribute:0x0000000124f86a40 @name="execution_id",
+  @value_before_type_cast=3,
+  @type=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer:0x000000011fc30698 @precision=nil,
+  @scale=nil,
+  @limit=nil,
+  @range=-9223372036854775808...9223372036854775808>,
+  @original_attribute=nil,
+  @value=3,
+  @_unboundable=nil,
+  @value_for_database=3>, #<ActiveRecord::Relation::QueryAttribute:0x0000000124f83b10 @name="key",
+  @value_before_type_cast=:wait_until,
+  @type=#<ActiveRecord::Type::Serialized:0x0000000124dbf838 @subtype=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @coder=AcidicJob::Serializer,
+  @delegate_dc_obj=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>>,
+  @original_attribute=nil,
+  @value=:wait_until,
+  @value_for_database="{\"_aj_serialized\":\"ActiveJob::Serializers::SymbolSerializer\",\"value\":\"wait_until\"}",
+  @_unboundable=nil>], :type_casted_binds=>[3, "{\"_aj_serialized\":\"ActiveJob::Serializers::SymbolSerializer\",\"value\":\"wait_until\"}"], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>1}], ["get_context.acidic_job", 2025-06-17 18:28:55.004663 +0200,
+  2025-06-17 18:28:55.007895 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :keys=>[:wait_until]}], ["perform_step.acidic_job", 2025-06-17 18:28:55.004626 +0200,
+  2025-06-17 18:28:55.007937 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :does=>"halt", :then=>"do_something"}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.008566 +0200,
+    2025-06-17 18:28:55.008712 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"INSERT INTO \"acidic_job_entries\" (\"step\",\"action\",\"timestamp\",\"data\",\"execution_id\",\"created_at\",\"updated_at\") VALUES ('halt', 'halted', '2025-06-17 16:28:55.007965', '{\"_aj_symbol_keys\":[]}', 3, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')) RETURNING \"id\"", :name=>"AcidicJob::Entry Insert", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>1}], ["record_entry.acidic_job", 2025-06-17 18:28:55.007997 +0200,
+    2025-06-17 18:28:55.008744 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :step=>"halt", :action=>:halted, :timestamp=>2025-06-17 16:28:55.007965000 UTC +00:00, :data=>{}}], ["process_step.acidic_job", 2025-06-17 18:28:55.003402 +0200,
+    2025-06-17 18:28:55.008775 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :does=>"halt", :then=>"do_something"}], ["process_workflow.acidic_job", 2025-06-17 18:28:54.999922 +0200,
+    2025-06-17 18:28:55.008792 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :execution=>{:id=>3, :idempotency_key=>"e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b", :serialized_job=>{:job_class=>"Examples::DelayingTest::Job", :job_id=>"13aa0f01-call-Examples::DelayingTest::Job#perform", :provider_job_id=>nil, :queue_name=>"default", :priority=>nil, :arguments=>[], :executions=>2, :exception_executions=>{:"[ChaoticJob::RetryableError]"=>1}, :locale=>"en", :timezone=>"UTC", :enqueued_at=>"2025-06-17T16:28:54.997527000Z", :scheduled_at=>"2025-06-17T16:28:55.997232913Z"}, :last_run_at=>nil, :locked_at=>nil, :recover_to=>"delay", :definition=>{:meta=>{:version=>"1.0.0.rc5"}, :steps=>{:delay=>{:does=>"delay", :then=>"halt"}, :halt=>{:does=>"halt", :then=>"do_something"}, :do_something=>{:does=>"do_something", :then=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, :created_at=>2025-06-17 16:28:54.998513000 UTC +00:00, :updated_at=>2025-06-17 16:28:54.998513000 UTC +00:00}}], ["perform.active_job", 2025-06-17 18:28:54.997441 +0200,
+    2025-06-17 18:28:55.008826 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :job=>#<Examples::DelayingTest::Job:0x000000011f999f60 @arguments=[],
+  @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+  @queue_name="default",
+  @scheduled_at=2025-07-01 16:28:55.001491000 UTC +00:00,
+  @priority=nil,
+  @executions=2,
+  @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+  @timezone="UTC",
+  @provider_job_id=nil,
+  @serialized_arguments=nil,
+  @locale="en",
+  @enqueued_at=2025-06-17 16:28:54.997316 UTC,
+  @_halted_callback_hook_called=nil,
+  @__acidic_job_plugins__=[AcidicJob::Plugins::TransactionalStep],
+  @__acidic_job_builder__=#<AcidicJob::Builder:0x0000000124f69620 @plugins=[AcidicJob::Plugins::TransactionalStep],
+  @steps=[{"does"=>"delay"},
+  {"does"=>"halt"},
+  {"does"=>"do_something"},
+  {"does"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}]>,
+  @__acidic_job_execution__=#<AcidicJob::Execution 
+    id: 3, 
+    idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+    serialized_job: {
+      "job_class"=>"Examples::DelayingTest::Job", 
+      "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+      "provider_job_id"=>nil, 
+      "queue_name"=>"default", 
+      "priority"=>nil, 
+      "arguments"=>[], 
+      "executions"=>2, 
+      "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+      "locale"=>"en", 
+      "timezone"=>"UTC", 
+      "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+      "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+    }, 
+    last_run_at: nil, 
+    locked_at: nil, 
+    recover_to: "halt", 
+    definition: {
+      "meta"=>{"version"=>"1.0.0.rc5"}, 
+      "steps"=>{
+        "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+        "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+        "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+      }
+    }, 
+    created_at: "2025-06-17 16:28:54.998513000 +0000", 
+    updated_at: "2025-06-17 16:28:54.998513000 +0000"
+  >,
+  @__acidic_job_context__=#<AcidicJob::Context:0x0000000124f60d68 @execution=#<AcidicJob::Execution 
+    id: 3, 
+    idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", 
+    serialized_job: {
+      "job_class"=>"Examples::DelayingTest::Job", 
+      "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", 
+      "provider_job_id"=>nil, 
+      "queue_name"=>"default", 
+      "priority"=>nil, 
+      "arguments"=>[], 
+      "executions"=>2, 
+      "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, 
+      "locale"=>"en", 
+      "timezone"=>"UTC", 
+      "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", 
+      "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"
+    }, 
+    last_run_at: nil, 
+    locked_at: nil, 
+    recover_to: "halt", 
+    definition: {
+      "meta"=>{"version"=>"1.0.0.rc5"}, 
+      "steps"=>{
+        "delay"=>{"does"=>"delay", "then"=>"halt"}, 
+        "halt"=>{"does"=>"halt", "then"=>"do_something"}, 
+        "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}
+      }
+    }, 
+    created_at: "2025-06-17 16:28:54.998513000 +0000", 
+    updated_at: "2025-06-17 16:28:54.998513000 +0000"
+  >>,
+  @successfully_enqueued=true>, :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 @enqueued_jobs=[],
+  @performed_jobs=[{"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>0, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.996850000Z", "scheduled_at"=>nil, :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil},
+  {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>1, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997316000Z", "scheduled_at"=>"2025-06-17T16:28:55.997233000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1750177735.997233},
+  {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:55.001569000Z", "scheduled_at"=>"2025-07-01T16:28:55.001491000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1751387335.0014908}]>, :db_runtime=>1.183000160381198, :aborted=>nil}],
+  [
+    "perform_start.active_job", 2025-06-17 18:28:55.00896 +0200,
+    2025-06-17 18:28:55.008968 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :job=>#<Examples::DelayingTest::Job:0x000000011f9f6238 @arguments=[],
+  @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+  @queue_name="default",
+  @scheduled_at=2025-07-01 16:28:55 6253/4194304 UTC,
+  @priority=nil,
+  @executions=3,
+  @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+  @timezone="UTC",
+  @provider_job_id=nil,
+  @serialized_arguments=nil,
+  @locale="en",
+  @enqueued_at=2025-06-17 16:28:55.001569 UTC,
+  @_halted_callback_hook_called=nil,
+  @__acidic_job_plugins__=[AcidicJob::Plugins::TransactionalStep],
+  @__acidic_job_builder__=#<AcidicJob::Builder:0x000000011fa19648 @plugins=[AcidicJob::Plugins::TransactionalStep],
+  @steps=[{"does"=>"delay"},
+  {"does"=>"halt"},
+  {"does"=>"do_something"},
+  {"does"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}]>,
+  @__acidic_job_execution__=#<AcidicJob::Execution serialized_job: {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"}, last_run_at: "2025-06-17 16:28:55.009768000 +0000", id: 3, idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", locked_at: nil, recover_to: "halt", definition: {"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, created_at: "2025-06-17 16:28:54.998513000 +0000", updated_at: "2025-06-17 16:28:55.010097000 +0000">,
+  @__acidic_job_context__=#<AcidicJob::Context:0x000000011fcfa6f0 @execution=#<AcidicJob::Execution serialized_job: {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"}, last_run_at: "2025-06-17 16:28:55.009768000 +0000", id: 3, idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", locked_at: nil, recover_to: "halt", definition: {"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, created_at: "2025-06-17 16:28:54.998513000 +0000", updated_at: "2025-06-17 16:28:55.010097000 +0000">>>, :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 @enqueued_jobs=[],
+  @performed_jobs=[{"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>0, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.996850000Z", "scheduled_at"=>nil, :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil},
+  {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>1, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997316000Z", "scheduled_at"=>"2025-06-17T16:28:55.997233000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1750177735.997233},
+  {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:55.001569000Z", "scheduled_at"=>"2025-07-01T16:28:55.001491000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1751387335.0014908}]>}], ["define_workflow.acidic_job", 2025-06-17 18:28:55.009066 +0200,
+  2025-06-17 18:28:55.009086 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :job_class=>"Examples::DelayingTest::Job", :job_id=>"13aa0f01-call-Examples::DelayingTest::Job#perform", :provider_job_id=>nil, :queue_name=>"default", :priority=>nil, :arguments=>[], :executions=>3, :exception_executions=>{:"[ChaoticJob::RetryableError]"=>1}, :locale=>"en", :timezone=>"UTC", :enqueued_at=>"2025-06-17T16:28:55.009021000Z", :scheduled_at=>"2025-07-01T16:28:55.001490831Z"}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.00936 +0200,
+    2025-06-17 18:28:55.009395 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"BEGIN immediate TRANSACTION", :name=>"TRANSACTION", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f99b040 @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>,
+  @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x000000011fa17e88 @state=:fully_committed,
+  @children=nil>,
+  @callbacks=nil,
+  @records=[#<AcidicJob::Execution serialized_job: {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"}, last_run_at: "2025-06-17 16:28:55.009768000 +0000", id: 3, idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", locked_at: nil, recover_to: "halt", definition: {"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, created_at: "2025-06-17 16:28:54.998513000 +0000", updated_at: "2025-06-17 16:28:55.010097000 +0000">],
+  @isolation_level=nil,
+  @materialized=true,
+  @joinable=true,
+  @run_commit_callbacks=true,
+  @lazy_enrollment_records=nil,
+  @dirty=true,
+  @user_transaction=#<ActiveRecord::Transaction:0x000000011fa17e38 ...>,
+  @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x000000011ef59028 @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x000000011fc3cd58 @name="transaction.active_record",
+  @id="75c2c2588157bf761e03",
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>, :outcome=>:commit},
+  @groups=[#<ActiveSupport::Notifications::Fanout::TimedGroup:0x000000011fa14058 @listeners=[#<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>],
+  @start_time=2025-06-17 18:28:55.009547 +0200>],
+  @state=:finished>,
+  @started=false,
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>, :outcome=>:commit},
+  @base_payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>}>,
+  @written=true>,
+  @uuid=nil>, :row_count=>0}], ["start_transaction.active_record", 2025-06-17 18:28:55.009535 +0200,
+  2025-06-17 18:28:55.009538 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f99b040 @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>,
+  @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x000000011fa17e88 @state=:fully_committed,
+  @children=nil>,
+  @callbacks=nil,
+  @records=[#<AcidicJob::Execution serialized_job: {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"}, last_run_at: "2025-06-17 16:28:55.009768000 +0000", id: 3, idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", locked_at: nil, recover_to: "halt", definition: {"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, created_at: "2025-06-17 16:28:54.998513000 +0000", updated_at: "2025-06-17 16:28:55.010097000 +0000">],
+  @isolation_level=nil,
+  @materialized=true,
+  @joinable=true,
+  @run_commit_callbacks=true,
+  @lazy_enrollment_records=nil,
+  @dirty=true,
+  @user_transaction=#<ActiveRecord::Transaction:0x000000011fa17e38 ...>,
+  @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x000000011ef59028 @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x000000011fc3cd58 @name="transaction.active_record",
+  @id="75c2c2588157bf761e03",
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>, :outcome=>:commit},
+  @groups=[#<ActiveSupport::Notifications::Fanout::TimedGroup:0x000000011fa14058 @listeners=[#<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>],
+  @start_time=2025-06-17 18:28:55.009547 +0200>],
+  @state=:finished>,
+  @started=false,
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>, :outcome=>:commit},
+  @base_payload={...}>,
+  @written=true>,
+  @uuid=nil>}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.009318 +0200,
+    2025-06-17 18:28:55.0096 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"SELECT \"acidic_job_executions\".* FROM \"acidic_job_executions\" WHERE \"acidic_job_executions\".\"idempotency_key\" = ? LIMIT ?", :name=>"AcidicJob::Execution Load", :binds=>[#<ActiveRecord::Relation::QueryAttribute:0x000000011ef1f1e8 @name="idempotency_key",
+  @value_before_type_cast="e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b",
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value="e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b",
+  @value_for_database="e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b">, #<ActiveModel::Attribute::WithCastValue:0x000000011fbbb550 @name="LIMIT",
+  @value_before_type_cast=1,
+  @type=#<ActiveModel::Type::Value:0x0000000124f4afe0 @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value=1,
+  @value_for_database=1>], :type_casted_binds=>["e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b", 1], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f99b040 @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>,
+  @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x000000011fa17e88 @state=:fully_committed,
+  @children=nil>,
+  @callbacks=nil,
+  @records=[#<AcidicJob::Execution serialized_job: {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"}, last_run_at: "2025-06-17 16:28:55.009768000 +0000", id: 3, idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", locked_at: nil, recover_to: "halt", definition: {"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, created_at: "2025-06-17 16:28:54.998513000 +0000", updated_at: "2025-06-17 16:28:55.010097000 +0000">],
+  @isolation_level=nil,
+  @materialized=true,
+  @joinable=true,
+  @run_commit_callbacks=true,
+  @lazy_enrollment_records=nil,
+  @dirty=true,
+  @user_transaction=#<ActiveRecord::Transaction:0x000000011fa17e38 ...>,
+  @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x000000011ef59028 @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x000000011fc3cd58 @name="transaction.active_record",
+  @id="75c2c2588157bf761e03",
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>, :outcome=>:commit},
+  @groups=[#<ActiveSupport::Notifications::Fanout::TimedGroup:0x000000011fa14058 @listeners=[#<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>],
+  @start_time=2025-06-17 18:28:55.009547 +0200>],
+  @state=:finished>,
+  @started=false,
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>, :outcome=>:commit},
+  @base_payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>}>,
+  @written=true>,
+  @uuid=nil>, :row_count=>1}], ["instantiation.active_record", 2025-06-17 18:28:55.009671 +0200,
+  2025-06-17 18:28:55.009709 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :record_count=>1, :class_name=>"AcidicJob::Execution"}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.010618 +0200,
+    2025-06-17 18:28:55.010666 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"UPDATE \"acidic_job_executions\" SET \"last_run_at\" = ?, \"updated_at\" = ? WHERE \"acidic_job_executions\".\"id\" = ?", :name=>"AcidicJob::Execution Update", :binds=>[#<ActiveModel::Attribute::FromUser:0x000000011fc314f8 @name="last_run_at",
+  @value_before_type_cast=2025-06-17 16:28:55.009768000 UTC +00:00,
+  @type=#<ActiveRecord::Type::DateTime:0x0000000124f22388 @precision=6,
+  @scale=nil,
+  @limit=nil,
+  @timezone=nil>,
+  @original_attribute=#<ActiveModel::Attribute::FromDatabase:0x000000011fc31958 @name="last_run_at",
+  @value_before_type_cast=nil,
+  @type=#<ActiveRecord::Type::DateTime:0x0000000124f22388 @precision=6,
+  @scale=nil,
+  @limit=nil,
+  @timezone=nil>,
+  @original_attribute=nil>,
+  @value=2025-06-17 16:28:55.009768000 UTC +00:00,
+  @value_for_database=2025-06-17 16:28:55.009768000 UTC +00:00>, #<ActiveModel::Attribute::FromUser:0x000000011fbb2450 @name="updated_at",
+  @value_before_type_cast=2025-06-17 16:28:55.010097 UTC,
+  @type=#<ActiveRecord::Type::DateTime:0x0000000124f22388 @precision=6,
+  @scale=nil,
+  @limit=nil,
+  @timezone=nil>,
+  @original_attribute=#<ActiveModel::Attribute::FromDatabase:0x000000011fbb83a0 @name="updated_at",
+  @value_before_type_cast="2025-06-17 16:28:54.998513",
+  @type=#<ActiveRecord::Type::DateTime:0x0000000124f22388 @precision=6,
+  @scale=nil,
+  @limit=nil,
+  @timezone=nil>,
+  @original_attribute=nil>,
+  @value=2025-06-17 16:28:55.010097000 UTC +00:00,
+  @value_for_database=2025-06-17 16:28:55.010097000 UTC +00:00>, #<ActiveRecord::Relation::QueryAttribute:0x000000011fadffa0 @name="id",
+  @value_before_type_cast=3,
+  @type=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer:0x000000011fc30698 @precision=nil,
+  @scale=nil,
+  @limit=nil,
+  @range=-9223372036854775808...9223372036854775808>,
+  @original_attribute=nil,
+  @value=3,
+  @_unboundable=nil,
+  @value_for_database=3>], :type_casted_binds=>["2025-06-17 16:28:55.009768", "2025-06-17 16:28:55.010097", 3], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f99b040 @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>,
+  @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x000000011fa17e88 @state=:fully_committed,
+  @children=nil>,
+  @callbacks=nil,
+  @records=[#<AcidicJob::Execution serialized_job: {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"}, last_run_at: "2025-06-17 16:28:55.009768000 +0000", id: 3, idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", locked_at: nil, recover_to: "halt", definition: {"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, created_at: "2025-06-17 16:28:54.998513000 +0000", updated_at: "2025-06-17 16:28:55.010097000 +0000">],
+  @isolation_level=nil,
+  @materialized=true,
+  @joinable=true,
+  @run_commit_callbacks=true,
+  @lazy_enrollment_records=nil,
+  @dirty=true,
+  @user_transaction=#<ActiveRecord::Transaction:0x000000011fa17e38 ...>,
+  @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x000000011ef59028 @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x000000011fc3cd58 @name="transaction.active_record",
+  @id="75c2c2588157bf761e03",
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>, :outcome=>:commit},
+  @groups=[#<ActiveSupport::Notifications::Fanout::TimedGroup:0x000000011fa14058 @listeners=[#<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>],
+  @start_time=2025-06-17 18:28:55.009547 +0200>],
+  @state=:finished>,
+  @started=false,
+  @payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>, :outcome=>:commit},
+  @base_payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>}>,
+  @written=true>,
+  @uuid=nil>, :row_count=>0}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.010842 +0200,
+    2025-06-17 18:28:55.01089 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"COMMIT TRANSACTION", :name=>"TRANSACTION", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>0}], ["transaction.active_record", 2025-06-17 18:28:55.009547 +0200,
+    2025-06-17 18:28:55.01092 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 @internal_transaction=#<ActiveRecord::ConnectionAdapters::RealTransaction:0x000000011f99b040 @connection=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>,
+  @state=#<ActiveRecord::ConnectionAdapters::TransactionState:0x000000011fa17e88 @state=:fully_committed,
+  @children=nil>,
+  @callbacks=nil,
+  @records=[#<AcidicJob::Execution serialized_job: {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"}, last_run_at: "2025-06-17 16:28:55.009768000 +0000", id: 3, idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", locked_at: nil, recover_to: "halt", definition: {"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, created_at: "2025-06-17 16:28:54.998513000 +0000", updated_at: "2025-06-17 16:28:55.010097000 +0000">],
+  @isolation_level=nil,
+  @materialized=true,
+  @joinable=true,
+  @run_commit_callbacks=true,
+  @lazy_enrollment_records=nil,
+  @dirty=true,
+  @user_transaction=#<ActiveRecord::Transaction:0x000000011fa17e38 ...>,
+  @instrumenter=#<ActiveRecord::ConnectionAdapters::TransactionInstrumenter:0x000000011ef59028 @handle=#<ActiveSupport::Notifications::Fanout::Handle:0x000000011fc3cd58 @name="transaction.active_record",
+  @id="75c2c2588157bf761e03",
+  @payload={...},
+  @groups=[#<ActiveSupport::Notifications::Fanout::TimedGroup:0x000000011fa14058 @listeners=[#<Proc:0x000000011fcd8cf8 /Users/fractaled/.asdf/installs/ruby/3.3.4/lib/ruby/gems/3.3.0/gems/chaotic_job-0.9.1/lib/chaotic_job/scenario.rb:22 (lambda)>],
+  @start_time=2025-06-17 18:28:55.009547 +0200>],
+  @state=:finished>,
+  @started=false,
+  @payload={...},
+  @base_payload={:connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>#<ActiveRecord::Transaction:0x000000011fa17e38 ...>}>,
+  @written=true>,
+  @uuid=nil>, :outcome=>:commit}], ["initialize_workflow.acidic_job", 2025-06-17 18:28:55.00913 +0200,
+  2025-06-17 18:28:55.010953 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :definition=>{:meta=>{:version=>"1.0.0.rc5"}, :steps=>{:delay=>{:does=>"delay", :then=>"halt"}, :halt=>{:does=>"halt", :then=>"do_something"}, :do_something=>{:does=>"do_something", :then=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.011804 +0200,
+    2025-06-17 18:28:55.011869 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"SELECT 1 AS one FROM \"acidic_job_entries\" WHERE \"acidic_job_entries\".\"execution_id\" = ? AND \"acidic_job_entries\".\"step\" = ? AND \"acidic_job_entries\".\"action\" = ? LIMIT ?", :name=>"AcidicJob::Entry Exists?", :binds=>[#<ActiveRecord::Relation::QueryAttribute:0x0000000124f87ad0 @name="execution_id",
+  @value_before_type_cast=3,
+  @type=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer:0x000000011fc30698 @precision=nil,
+  @scale=nil,
+  @limit=nil,
+  @range=-9223372036854775808...9223372036854775808>,
+  @original_attribute=nil,
+  @value=3,
+  @_unboundable=nil,
+  @value_for_database=3>, #<ActiveRecord::Relation::QueryAttribute:0x0000000124f84ce0 @name="step",
+  @value_before_type_cast="halt",
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value="halt",
+  @_unboundable=nil,
+  @value_for_database="halt">, #<ActiveRecord::Relation::QueryAttribute:0x0000000124f83fc0 @name="action",
+  @value_before_type_cast=:succeeded,
+  @type=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value=:succeeded,
+  @_unboundable=nil,
+  @value_for_database="succeeded">, #<ActiveModel::Attribute::WithCastValue:0x0000000124f817c0 @name="LIMIT",
+  @value_before_type_cast=1,
+  @type=#<ActiveModel::Type::Value:0x0000000124f4afe0 @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @original_attribute=nil,
+  @value=1,
+  @value_for_database=1>], :type_casted_binds=>[3, "halt", "succeeded", 1], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>0}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.012507 +0200,
+    2025-06-17 18:28:55.012618 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"INSERT INTO \"acidic_job_entries\" (\"step\",\"action\",\"timestamp\",\"data\",\"execution_id\",\"created_at\",\"updated_at\") VALUES ('halt', 'started', '2025-06-17 16:28:55.011925', '{\"_aj_symbol_keys\":[]}', 3, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')) RETURNING \"id\"", :name=>"AcidicJob::Entry Insert", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>1}], ["record_entry.acidic_job", 2025-06-17 18:28:55.011952 +0200,
+    2025-06-17 18:28:55.01265 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :step=>"halt", :action=>:started, :timestamp=>2025-06-17 16:28:55.011925000 UTC +00:00, :data=>{}}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.013238 +0200,
+    2025-06-17 18:28:55.013281 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"SELECT \"acidic_job_values\".\"value\" FROM \"acidic_job_values\" WHERE \"acidic_job_values\".\"execution_id\" = ? AND \"acidic_job_values\".\"key\" = ?", :name=>"AcidicJob::Value Pluck", :binds=>[#<ActiveRecord::Relation::QueryAttribute:0x0000000124df55a0 @name="execution_id",
+  @value_before_type_cast=3,
+  @type=#<ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer:0x000000011fc30698 @precision=nil,
+  @scale=nil,
+  @limit=nil,
+  @range=-9223372036854775808...9223372036854775808>,
+  @original_attribute=nil,
+  @value=3,
+  @_unboundable=nil,
+  @value_for_database=3>, #<ActiveRecord::Relation::QueryAttribute:0x0000000124df17c0 @name="key",
+  @value_before_type_cast=:wait_until,
+  @type=#<ActiveRecord::Type::Serialized:0x0000000124dbf838 @subtype=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>,
+  @coder=AcidicJob::Serializer,
+  @delegate_dc_obj=#<ActiveModel::Type::String:0x000000011fc30468 @true="t",
+  @false="f",
+  @precision=nil,
+  @scale=nil,
+  @limit=nil>>,
+  @original_attribute=nil,
+  @value=:wait_until,
+  @value_for_database="{\"_aj_serialized\":\"ActiveJob::Serializers::SymbolSerializer\",\"value\":\"wait_until\"}",
+  @_unboundable=nil>], :type_casted_binds=>[3, "{\"_aj_serialized\":\"ActiveJob::Serializers::SymbolSerializer\",\"value\":\"wait_until\"}"], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>1}], ["get_context.acidic_job", 2025-06-17 18:28:55.012723 +0200,
+  2025-06-17 18:28:55.013365 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :keys=>[:wait_until]}], ["perform_step.acidic_job", 2025-06-17 18:28:55.012694 +0200,
+  2025-06-17 18:28:55.013373 +0200, 
+  "75c2c2588157bf761e03", 
+  {
+    :does=>"halt", :then=>"do_something"}
+  ], 
+  [
+    "sql.active_record", 2025-06-17 18:28:55.013887 +0200,
+    2025-06-17 18:28:55.01402 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :sql=>"INSERT INTO \"acidic_job_entries\" (\"step\",\"action\",\"timestamp\",\"data\",\"execution_id\",\"created_at\",\"updated_at\") VALUES ('halt', 'halted', '2025-06-17 16:28:55.013395', '{\"_aj_symbol_keys\":[]}', 3, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'), STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')) RETURNING \"id\"", :name=>"AcidicJob::Entry Insert", :binds=>[], :type_casted_binds=>[], :async=>false, :connection=>#<ActiveRecord::ConnectionAdapters::SQLite3Adapter:0x00000000004678 env_name="test" role=:writing>, :transaction=>nil, :row_count=>1}], ["record_entry.acidic_job", 2025-06-17 18:28:55.013421 +0200,
+    2025-06-17 18:28:55.014049 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :step=>"halt", :action=>:halted, :timestamp=>2025-06-17 16:28:55.013395000 UTC +00:00, :data=>{}}], ["process_step.acidic_job", 2025-06-17 18:28:55.011222 +0200,
+    2025-06-17 18:28:55.014076 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :does=>"halt", :then=>"do_something"}], ["process_workflow.acidic_job", 2025-06-17 18:28:55.011176 +0200,
+    2025-06-17 18:28:55.014093 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :execution=>{:serialized_job=>{:job_class=>"Examples::DelayingTest::Job", :job_id=>"13aa0f01-call-Examples::DelayingTest::Job#perform", :provider_job_id=>nil, :queue_name=>"default", :priority=>nil, :arguments=>[], :executions=>2, :exception_executions=>{:"[ChaoticJob::RetryableError]"=>1}, :locale=>"en", :timezone=>"UTC", :enqueued_at=>"2025-06-17T16:28:54.997527000Z", :scheduled_at=>"2025-06-17T16:28:55.997232913Z"}, :last_run_at=>2025-06-17 16:28:55.009768000 UTC +00:00, :id=>3, :idempotency_key=>"e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c64b85386445461b", :locked_at=>nil, :recover_to=>"halt", :definition=>{:meta=>{:version=>"1.0.0.rc5"}, :steps=>{:delay=>{:does=>"delay", :then=>"halt"}, :halt=>{:does=>"halt", :then=>"do_something"}, :do_something=>{:does=>"do_something", :then=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, :created_at=>2025-06-17 16:28:54.998513000 UTC +00:00, :updated_at=>2025-06-17 16:28:55.010097000 UTC +00:00}}], ["perform.active_job", 2025-06-17 18:28:55.008924 +0200,
+    2025-06-17 18:28:55.014125 +0200, 
+    "75c2c2588157bf761e03", 
+    {
+      :job=>#<Examples::DelayingTest::Job:0x000000011f9f6238 @arguments=[],
+  @job_id="13aa0f01-call-Examples::DelayingTest::Job#perform",
+  @queue_name="default",
+  @scheduled_at=2025-07-01 16:28:55 6253/4194304 UTC,
+  @priority=nil,
+  @executions=3,
+  @exception_executions={"[ChaoticJob::RetryableError]"=>1},
+  @timezone="UTC",
+  @provider_job_id=nil,
+  @serialized_arguments=nil,
+  @locale="en",
+  @enqueued_at=2025-06-17 16:28:55.001569 UTC,
+  @_halted_callback_hook_called=nil,
+  @__acidic_job_plugins__=[AcidicJob::Plugins::TransactionalStep],
+  @__acidic_job_builder__=#<AcidicJob::Builder:0x000000011fa19648 @plugins=[AcidicJob::Plugins::TransactionalStep],
+  @steps=[{"does"=>"delay"},
+  {"does"=>"halt"},
+  {"does"=>"do_something"},
+  {"does"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}]>,
+  @__acidic_job_execution__=#<AcidicJob::Execution serialized_job: {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"}, last_run_at: "2025-06-17 16:28:55.009768000 +0000", id: 3, idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", locked_at: nil, recover_to: "halt", definition: {"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, created_at: "2025-06-17 16:28:54.998513000 +0000", updated_at: "2025-06-17 16:28:55.010097000 +0000">,
+  @__acidic_job_context__=#<AcidicJob::Context:0x000000011fcfa6f0 @execution=#<AcidicJob::Execution serialized_job: {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997527000Z", "scheduled_at"=>"2025-06-17T16:28:55.997232913Z"}, last_run_at: "2025-06-17 16:28:55.009768000 +0000", id: 3, idempotency_key: "e31993011325e318c9e5f9ff659d6240770159ad05ec22c1c6...", locked_at: nil, recover_to: "halt", definition: {"meta"=>{"version"=>"1.0.0.rc5"}, "steps"=>{"delay"=>{"does"=>"delay", "then"=>"halt"}, "halt"=>{"does"=>"halt", "then"=>"do_something"}, "do_something"=>{"does"=>"do_something", "then"=>"__ACIDIC_JOB_WORKFLOW_FINISHED__"}}}, created_at: "2025-06-17 16:28:54.998513000 +0000", updated_at: "2025-06-17 16:28:55.010097000 +0000">>>, :adapter=>#<ActiveJob::QueueAdapters::TestAdapter:0x0000000124d75dc8 @enqueued_jobs=[],
+  @performed_jobs=[{"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>0, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.996850000Z", "scheduled_at"=>nil, :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil},
+  {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>1, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:54.997316000Z", "scheduled_at"=>"2025-06-17T16:28:55.997233000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1750177735.997233},
+  {"job_class"=>"Examples::DelayingTest::Job", "job_id"=>"13aa0f01-call-Examples::DelayingTest::Job#perform", "provider_job_id"=>nil, "queue_name"=>"default", "priority"=>nil, "arguments"=>[], "executions"=>2, "exception_executions"=>{"[ChaoticJob::RetryableError]"=>1}, "locale"=>"en", "timezone"=>"UTC", "enqueued_at"=>"2025-06-17T16:28:55.001569000Z", "scheduled_at"=>"2025-07-01T16:28:55.001491000Z", :job=>Examples::DelayingTest::Job, :args=>[], :queue=>"default", :priority=>nil, :at=>1751387335.0014908}]>, :db_runtime=>0.6879998836666346, :aborted=>nil}]]>

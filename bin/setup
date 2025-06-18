@@ -1,8 +1,21 @@
 #!/usr/bin/env bash
-set -euo pipefail
-IFS=$'\n\t'
-set -vx
+set -eu
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
-bundle install
+if [ -z "$TARGET_DB" ]; then
+  echo "TARGET_DB environment variable is not set"
+  exit 1
+fi
 
-# Do any other automated setup that you need to do here
+if [[ "$TARGET_DB" == "mysql" || "$TARGET_DB" == "postgresql" ]]; then
+  if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+  else
+    DOCKER_COMPOSE_CMD="docker-compose"
+  fi
+
+  $DOCKER_COMPOSE_CMD up -d --remove-orphans
+  $DOCKER_COMPOSE_CMD ps
+fi
+
+bundle

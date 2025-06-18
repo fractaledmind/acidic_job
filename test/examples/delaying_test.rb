@@ -79,7 +79,7 @@ module Examples
         assert_equal 2, performed_jobs.size
         assert_equal 0, enqueued_jobs.size
 
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # after the halting step, when the future version of the job is performed it completes successfully
@@ -149,7 +149,7 @@ module Examples
       Time.stub :now, future.to_time do
         perform_all_jobs
 
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # after the halting step, when the future version of the job is performed it completes successfully
@@ -221,7 +221,7 @@ module Examples
       Time.stub :now, future.to_time do
         perform_all_jobs
 
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # after the halting step, when the future version of the job is performed it completes successfully
@@ -293,7 +293,7 @@ module Examples
       Time.stub :now, future.to_time do
         perform_all_jobs
 
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
 
         # after the double halts, finally progresses thru `halt` step after job runs in the future
@@ -342,7 +342,7 @@ module Examples
       Time.stub :now, future.to_time do
         perform_all_jobs
 
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
 
         # the most recent job that was performed is the future scheduled job
         assert_equal 1, ChaoticJob.journal_size
