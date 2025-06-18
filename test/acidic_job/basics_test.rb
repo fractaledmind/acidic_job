@@ -238,7 +238,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        TestObject.create!
+        Thing.create!
         raise StandardError
       end
 
@@ -269,7 +269,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 1, TestObject.count
+    assert_equal 1, Thing.count
   end
 
   test "workflow with database IO then error in transactional step leaves no database record" do
@@ -287,7 +287,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        TestObject.create!
+        Thing.create!
         raise StandardError
       end
 
@@ -318,7 +318,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 0, TestObject.count
+    assert_equal 0, Thing.count
   end
 
   test "workflow with database IO then error on attempt 1 but then success leaves behind two database records" do
@@ -338,7 +338,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        TestObject.create!
+        Thing.create!
         raise DefaultsError if executions == 1
 
         ChaoticJob.log_to_journal!
@@ -373,7 +373,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 2, TestObject.count
+    assert_equal 2, Thing.count
   end
 
   test "workflow with database IO then error on attempt 1 but then success needs idempotency check" do
@@ -393,7 +393,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        TestObject.create! if !TestObject.exists?
+        Thing.create! if !Thing.exists?
         raise DefaultsError if executions == 1
 
         ChaoticJob.log_to_journal!
@@ -434,7 +434,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 1, TestObject.count
+    assert_equal 1, Thing.count
 
     test_object_queries = queries.grep(/FROM "test_objects" | INTO "test_objects"/)
 
@@ -461,9 +461,9 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        return if executions > 1 && TestObject.exists?
+        return if executions > 1 && Thing.exists?
 
-        TestObject.create!
+        Thing.create!
         raise DefaultsError if executions == 1
 
         ChaoticJob.log_to_journal!
@@ -504,7 +504,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 1, TestObject.count
+    assert_equal 1, Thing.count
 
     test_object_queries = queries.grep(/FROM "test_objects" | INTO "test_objects"/)
 

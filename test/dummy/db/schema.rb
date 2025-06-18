@@ -45,6 +45,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_22_154837) do
     t.index ["execution_id"], name: "index_acidic_job_values_on_execution_id"
   end
 
+  create_table :things, force: true
+
   add_foreign_key "acidic_job_entries", "acidic_job_executions", column: "execution_id", on_delete: :cascade
   add_foreign_key "acidic_job_values", "acidic_job_executions", column: "execution_id", on_delete: :cascade
 end
