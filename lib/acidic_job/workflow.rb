@@ -31,12 +31,12 @@ module AcidicJob
       AcidicJob.instrument(:initialize_workflow, definition: workflow_definition) do
         transaction_args = case ::ActiveRecord::Base.connection.adapter_name.downcase.to_sym
           # SQLite doesn't support `serializable` transactions
-          when :sqlite
+        when :sqlite
             {}
-          else
+        else
             { isolation: :serializable }
         end
-        idempotency_key = Digest::SHA256.hexdigest(JSON.generate([self.class.name, unique_by], strict: true))
+        idempotency_key = Digest::SHA256.hexdigest(JSON.generate([ self.class.name, unique_by ], strict: true))
 
         @__acidic_job_execution__ = ::ActiveRecord::Base.transaction(**transaction_args) do
           record = Execution.find_by(idempotency_key: idempotency_key)
@@ -162,7 +162,7 @@ module AcidicJob
             step: curr_step,
             action: :succeeded,
             ignored: {
-              result: result,
+              result: result
             }
           )
           next_step

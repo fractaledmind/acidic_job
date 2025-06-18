@@ -1,0 +1,12 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem "activejob", "~> 7.1.0"
+gem "activerecord", "~> 7.1.0"
+gem "activesupport", "~> 7.1.0"
+gem "actionmailer", "~> 7.1.0"
+gem "railties", "~> 7.1.0"
+gem "sqlite3", ">= 2.0.0"
+
+gemspec path: "../"

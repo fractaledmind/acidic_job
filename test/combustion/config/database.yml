@@ -1,6 +1,0 @@
-test:
-  adapter: sqlite3
-  database: database.sqlite
-  flags: <%= SQLite3::Constants::Open::READWRITE |
-             SQLite3::Constants::Open::CREATE |
-             SQLite3::Constants::Open::SHAREDCACHE %>

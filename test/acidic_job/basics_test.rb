@@ -28,7 +28,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job1"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job1" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
@@ -39,7 +39,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -72,7 +72,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job2"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job2" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 12, AcidicJob::Entry.count
@@ -89,7 +89,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_3 started],
         %w[step_3 errored],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -122,14 +122,14 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job3"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job3" ].join("::"), execution.serialized_job["job_class"]
     assert_equal "step_1", execution.recover_to
 
     assert_equal 2, AcidicJob::Entry.count
     assert_equal(
       [
         %w[step_1 started],
-        %w[step_1 errored],
+        %w[step_1 errored]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -162,7 +162,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "ThreeStepDiscardOnThreeJob"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "ThreeStepDiscardOnThreeJob" ].join("::"), execution.serialized_job["job_class"]
     assert_equal "step_3", execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
@@ -173,7 +173,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 errored],
+        %w[step_3 errored]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -206,7 +206,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job4"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job4" ].join("::"), execution.serialized_job["job_class"]
     assert_equal "step_3", execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
@@ -217,7 +217,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 errored],
+        %w[step_3 errored]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -238,7 +238,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        TestObject.create!
+        Thing.create!
         raise StandardError
       end
 
@@ -255,7 +255,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job5"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job5" ].join("::"), execution.serialized_job["job_class"]
     assert_equal "step_2", execution.recover_to
 
     assert_equal 4, AcidicJob::Entry.count
@@ -264,12 +264,12 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_1 started],
         %w[step_1 succeeded],
         %w[step_2 started],
-        %w[step_2 errored],
+        %w[step_2 errored]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 1, TestObject.count
+    assert_equal 1, Thing.count
   end
 
   test "workflow with database IO then error in transactional step leaves no database record" do
@@ -287,7 +287,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        TestObject.create!
+        Thing.create!
         raise StandardError
       end
 
@@ -304,7 +304,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job6"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job6" ].join("::"), execution.serialized_job["job_class"]
     assert_equal "step_2", execution.recover_to
 
     assert_equal 4, AcidicJob::Entry.count
@@ -313,12 +313,12 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_1 started],
         %w[step_1 succeeded],
         %w[step_2 started],
-        %w[step_2 errored],
+        %w[step_2 errored]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 0, TestObject.count
+    assert_equal 0, Thing.count
   end
 
   test "workflow with database IO then error on attempt 1 but then success leaves behind two database records" do
@@ -338,7 +338,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        TestObject.create!
+        Thing.create!
         raise DefaultsError if executions == 1
 
         ChaoticJob.log_to_journal!
@@ -355,7 +355,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job7"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job7" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
@@ -368,12 +368,12 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 2, TestObject.count
+    assert_equal 2, Thing.count
   end
 
   test "workflow with database IO then error on attempt 1 but then success needs idempotency check" do
@@ -393,7 +393,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        TestObject.create! if !TestObject.exists?
+        Thing.create! if !Thing.exists?
         raise DefaultsError if executions == 1
 
         ChaoticJob.log_to_journal!
@@ -416,7 +416,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job8"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job8" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
@@ -429,19 +429,19 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 1, TestObject.count
+    assert_equal 1, Thing.count
 
-    test_object_queries = queries.grep(/FROM "test_objects" | INTO "test_objects"/)
+    test_object_queries = queries.grep(/FROM ["`]things["`] | INTO ["`]things["`]/)
 
     assert_equal 3, test_object_queries.count
-    assert_match 'SELECT 1 AS one FROM "test_objects" LIMIT ?', test_object_queries[0]
-    assert_match(/INSERT INTO "test_objects" DEFAULT VALUES/, test_object_queries[1])
-    assert_match 'SELECT 1 AS one FROM "test_objects" LIMIT ?', test_object_queries[2]
+    assert_match(/SELECT 1 AS one FROM ["`]things["`] LIMIT ?/, test_object_queries[0])
+    assert_match(/INSERT INTO ["`]things["`]/, test_object_queries[1])
+    assert_match(/SELECT 1 AS one FROM ["`]things["`] LIMIT ?/, test_object_queries[2])
   end
 
   test "workflow with db IO then error on attempt 1 but then success needs idempotency check that can be selective" do
@@ -461,9 +461,9 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
       def step_1; ChaoticJob.log_to_journal!; end
 
       def step_2
-        return if executions > 1 && TestObject.exists?
+        return if executions > 1 && Thing.exists?
 
-        TestObject.create!
+        Thing.create!
         raise DefaultsError if executions == 1
 
         ChaoticJob.log_to_journal!
@@ -486,7 +486,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job9"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job9" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
@@ -499,18 +499,18 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
 
-    assert_equal 1, TestObject.count
+    assert_equal 1, Thing.count
 
-    test_object_queries = queries.grep(/FROM "test_objects" | INTO "test_objects"/)
+    test_object_queries = queries.grep(/FROM ["`]things["`] | INTO ["`]things["`]/)
 
     assert_equal 2, test_object_queries.count
-    assert_match(/INSERT INTO "test_objects" DEFAULT VALUES/, test_object_queries[0])
-    assert_match 'SELECT 1 AS one FROM "test_objects" LIMIT ?', test_object_queries[1]
+    assert_match(/INSERT INTO ["`]things["`]/, test_object_queries[0])
+    assert_match(/SELECT 1 AS one FROM ["`]things["`] LIMIT ?/, test_object_queries[1])
   end
 
   test "workflow with custom idempotency key" do
@@ -538,7 +538,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job10"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job10" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
     assert_equal "0ce3d65c09b390b8a53060eb6184a30d4a7025ca403b9f5aeda769932a9e2c86", execution.idempotency_key
 
@@ -550,7 +550,7 @@ class AcidicJob::BasicsTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )

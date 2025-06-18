@@ -87,7 +87,7 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
       def step_1; nil; end
     end
 
-    job = AcidicByBlockWithArgValue.new([1, "string", { a: 1, b: 2 }, [3, 4, 5]])
+    job = AcidicByBlockWithArgValue.new([ 1, "string", { a: 1, b: 2 }, [ 3, 4, 5 ] ])
     job.perform_now
 
     execution = AcidicJob::Execution.first
@@ -106,9 +106,9 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
       def step_1; nil; end
     end
 
-    user = User.create!(email: "test@example.com", stripe_customer_id: "cus_123")
-    job = AcidicByBlockWithActiveRecordInstance.new(user)
-    assert_raises(JSON::GeneratorError, "User not allowed in JSON") do
+    thing = Thing.create!
+    job = AcidicByBlockWithActiveRecordInstance.new(thing)
+    assert_raises(JSON::GeneratorError, "Thing not allowed in JSON") do
       job.perform_now
     end
   end

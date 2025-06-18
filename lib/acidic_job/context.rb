@@ -12,19 +12,19 @@ module AcidicJob
           {
             execution_id: @execution.id,
             key: key,
-            value: value,
+            value: value
           }
         end
 
         case AcidicJob::Value.connection.adapter_name.downcase.to_sym
         when :postgresql, :sqlite
-          AcidicJob::Value.upsert_all(records, unique_by: [:execution_id, :key])
+          AcidicJob::Value.upsert_all(records, unique_by: [ :execution_id, :key ])
         when :mysql2, :mysql, :trilogy
           AcidicJob::Value.upsert_all(records)
         else
           # Fallback for other adapters - try with unique_by first, fall back without
           begin
-            AcidicJob::Value.upsert_all(records, unique_by: [:execution_id, :key])
+            AcidicJob::Value.upsert_all(records, unique_by: [ :execution_id, :key ])
           rescue ArgumentError => e
             if e.message.include?("does not support :unique_by")
               AcidicJob::Value.upsert_all(records)

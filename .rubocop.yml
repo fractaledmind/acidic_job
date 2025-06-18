@@ -1,11 +1,8 @@
+# yaml-language-server: $schema=https://www.rubyschema.org/rubocop.json
+inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+
 AllCops:
   TargetRubyVersion: 2.7
   NewCops: enable
   DisabledByDefault: true
   SuggestExtensions: false
-
-inherit_from: "https://www.goodcop.style/base.yml"
-
-Lint/ConstantDefinitionInBlock:
-  Exclude:
-    - 'test/**/*'

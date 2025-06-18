@@ -22,7 +22,7 @@ module AcidicJob
 
   mattr_accessor :logger, default: DEFAULT_LOGGER
   mattr_accessor :connects_to
-  mattr_accessor :plugins, default: [Plugins::TransactionalStep]
+  mattr_accessor :plugins, default: [ Plugins::TransactionalStep ]
   mattr_accessor :clear_finished_executions_after, default: 1.week
 
   def instrument(channel, **options, &block)
