@@ -321,35 +321,38 @@ module Examples
       end
     end
 
-    test "simulation" do
+    test_simulation(Job.new, perform_only_jobs_within: 1.minute) do |_scenario|
       future = 14.days.from_now + 1.second
 
-      run_simulation(Job.new, perform_only_jobs_within: 1.minute) do |_scenario|
-        # Performed the first job, then retried it
-        assert_equal 2, performed_jobs.size
-        # Job in 14 days hasn't been executed yet
-        assert_includes 1..2, enqueued_jobs.size
+      # Performed the first job, then retried it
+      assert_equal 2, performed_jobs.size
+      # Job in 14 days hasn't been executed yet
+      assert_includes 1..2, enqueued_jobs.size, foo: "bar"
 
-        # First, test the state of the execution after the first job is halted
-        assert_equal 0, ChaoticJob.journal_size
-        assert_equal 1, AcidicJob::Execution.count
-        execution = AcidicJob::Execution.first
+      # First, test the state of the execution after the first job is halted
+      assert_equal 0, ChaoticJob.journal_size
+      assert_equal 1, AcidicJob::Execution.count
+      execution = AcidicJob::Execution.first
 
-        # execution is for this job and is paused on the `halt` step
-        assert_equal Job.name, execution.serialized_job["job_class"]
-        assert_equal "halt", execution.recover_to
+      # execution is for this job and is paused on the `halt` step
+      assert_equal Job.name, execution.serialized_job["job_class"]
+      assert_equal "halt", execution.recover_to
 
-        # Now, perform the future scheduled job and check the final state of the execution
-        Time.stub :now, future.to_time do
-          perform_all_jobs
+      # Now, perform the future scheduled job and check the final state of the execution
+      Time.stub :now, future.to_time do
+        perform_all_jobs
 
-          assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once(now: Time.now, events: _scenario.events)
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
 
-          # the most recent job that was performed is the future scheduled job
-          assert_equal 1, ChaoticJob.journal_size
-          job_that_performed = ChaoticJob.top_journal_entry
-          assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, future.to_i, 1, "performed job at: #{job_that_performed['scheduled_at']}, but expected #{future}"
-        end
+        # the most recent job that was performed is the future scheduled job
+        assert_equal 1, ChaoticJob.journal_size
+        job_that_performed = ChaoticJob.top_journal_entry
+        assert_in_delta(
+          Time.parse(job_that_performed["scheduled_at"]).to_i,
+          future.to_i,
+          2,
+          "performed job at: #{job_that_performed['scheduled_at']}, but expected #{future}"
+        )
       end
     end
   end

@@ -370,57 +370,55 @@ module Examples
       end
     end
 
-    test "simulation" do
-      run_simulation(Job.new, perform_only_jobs_within: 1.minute) do |_scenario|
-        # first run
-        begin
-          first_run_performances = performed_jobs.size
-          assert_operator first_run_performances, :>, 0
-          # execution is for this job and is paused on the `check` step
-          execution = AcidicJob::Execution.first
-          assert_equal Job.name, execution.serialized_job["job_class"]
-          assert_equal "check", execution.recover_to
+    test_simulation(Job.new, perform_only_jobs_within: 1.minute) do |_scenario|
+      # first run
+      begin
+        first_run_performances = performed_jobs.size
+        assert_operator first_run_performances, :>, 0
+        # execution is for this job and is paused on the `check` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
 
-          # no step methods have executed
-          assert_equal 0, ChaoticJob.journal_size
-        end
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
 
-        # First retry
-        Time.stub :now, 2.days.from_now.to_time do
-          perform_all_jobs_within(1.minute)
+      # First retry
+      Time.stub :now, 2.days.from_now.to_time do
+        perform_all_jobs_within(1.minute)
 
-          assert_operator performed_jobs.size, :>, first_run_performances
+        assert_operator performed_jobs.size, :>, first_run_performances
 
-          # execution is for this job and is still paused on the `check` step
-          execution = AcidicJob::Execution.first
-          assert_equal Job.name, execution.serialized_job["job_class"]
-          assert_equal "check", execution.recover_to
+        # execution is for this job and is still paused on the `check` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
 
-          # no step methods have executed
-          assert_equal 0, ChaoticJob.journal_size
-        end
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
 
-        future = 4.days.from_now
-        Time.stub :now, future.to_time do
-          ChaoticJob.switch_on!
-          perform_all_jobs
+      future = 4.days.from_now
+      Time.stub :now, future.to_time do
+        ChaoticJob.switch_on!
+        perform_all_jobs
 
-          assert_operator performed_jobs.size, :>, first_run_performances
+        assert_operator performed_jobs.size, :>, first_run_performances
 
-          # job is finished successfully
-          assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
-          execution = AcidicJob::Execution.first
+        # job is finished successfully
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        execution = AcidicJob::Execution.first
 
-          # the most recent job that was performed is the future scheduled job
-          assert_includes 1..2, ChaoticJob.journal_size, ChaoticJob.journal_entries
-          job_that_performed = ChaoticJob.top_journal_entry
-          assert_in_delta(
-            Time.parse(job_that_performed["scheduled_at"]).to_i,
-            future.to_i,
-            1,
-            "performed job at: #{job_that_performed['scheduled_at']}, but expected #{future}"
-          )
-        end
+        # the most recent job that was performed is the future scheduled job
+        assert_includes 1..2, ChaoticJob.journal_size, ChaoticJob.journal_entries
+        job_that_performed = ChaoticJob.top_journal_entry
+        assert_in_delta(
+          Time.parse(job_that_performed["scheduled_at"]).to_i,
+          future.to_i,
+          1,
+          "performed job at: #{job_that_performed['scheduled_at']}, but expected #{future}"
+        )
       end
     end
   end

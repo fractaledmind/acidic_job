@@ -155,25 +155,23 @@ module Examples
       )
     end
 
-    test "simulation" do
-      run_simulation(Job.new) do |_scenario|
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+    test_simulation(Job.new) do |_scenario|
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
 
-        # Performed the job, the retry, and the mail deliveries
-        assert_equal 4, performed_jobs.size
-        assert_equal 0, enqueued_jobs.size
-        assert_equal 2, performed_jobs.count { |job| job["job_class"] == Job.name }
-        assert_equal 2, performed_jobs.count { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }
-        assert_equal 1, performed_jobs.count { |job|
-          job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
-        }
-        assert_equal 1, performed_jobs.count { |job|
-          job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
-        }
+      # Performed the job, the retry, and the mail deliveries
+      assert_equal 4, performed_jobs.size
+      assert_equal 0, enqueued_jobs.size
+      assert_equal 2, performed_jobs.count { |job| job["job_class"] == Job.name }
+      assert_equal 2, performed_jobs.count { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }
+      assert_equal 1, performed_jobs.count { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
+      }
+      assert_equal 1, performed_jobs.count { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
+      }
 
-        # only performs primary IO operations once per job
-        assert_equal 1, ChaoticJob.journal_size
-      end
+      # only performs primary IO operations once per job
+      assert_equal 1, ChaoticJob.journal_size
     end
   end
 end

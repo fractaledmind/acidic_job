@@ -182,21 +182,17 @@ module Examples
       end
     end
 
-    test "simulation" do
-      assert true
+    test_simulation(Job.new) do |_scenario|
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
 
-      run_simulation(Job.new) do |scenario|
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
-
-        # only performs primary IO operations once per job
-        assert_equal(
-          [Job::AwaitedJob.name, Job::AwaitedJob.name, Job.name],
-          ChaoticJob.journal_entries.map { |entry| entry["job_class"] }
-        )
-        assert_equal 3, ChaoticJob.journal_size
-        assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job.name }.size
-        assert_equal 2, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job::AwaitedJob.name }.size
-      end
+      # only performs primary IO operations once per job
+      assert_equal(
+        [Job::AwaitedJob.name, Job::AwaitedJob.name, Job.name],
+        ChaoticJob.journal_entries.map { |entry| entry["job_class"] }
+      )
+      assert_equal 3, ChaoticJob.journal_size
+      assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job.name }.size
+      assert_equal 2, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job::AwaitedJob.name }.size
     end
   end
 end
