@@ -43,6 +43,10 @@ ActiveJob::Base.logger = ActiveRecord::Base.logger = AcidicJob.logger = Logger.n
 
 require "chaotic_job"
 
+class DefaultsError < StandardError; end
+class DiscardableError < StandardError; end
+class BreakingError < StandardError; end
+
 class ActiveSupport::TestCase
   # Run tests in parallel with specified workers
   parallelize(workers: :number_of_processors)
