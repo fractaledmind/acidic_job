@@ -87,7 +87,7 @@ class AcidicJob::IdempotencyKey < ActiveSupport::TestCase
       def step_1; nil; end
     end
 
-    job = AcidicByBlockWithArgValue.new([1, "string", { a: 1, b: 2 }, [3, 4, 5]])
+    job = AcidicByBlockWithArgValue.new([ 1, "string", { a: 1, b: 2 }, [ 3, 4, 5 ] ])
     job.perform_now
 
     execution = AcidicJob::Execution.first

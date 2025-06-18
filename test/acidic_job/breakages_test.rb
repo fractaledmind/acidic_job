@@ -130,7 +130,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
@@ -141,7 +141,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -163,7 +163,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "perform_step.acidic_job",
         "record_entry.acidic_job",
         "process_step.acidic_job",
-        "process_workflow.acidic_job",
+        "process_workflow.acidic_job"
       ],
       events.map(&:name)
     )
@@ -194,7 +194,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
@@ -205,7 +205,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -228,7 +228,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "perform_step.acidic_job",
         "record_entry.acidic_job",
         "process_step.acidic_job",
-        "process_workflow.acidic_job",
+        "process_workflow.acidic_job"
       ],
       events.map(&:name)
     )
@@ -261,7 +261,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
@@ -274,7 +274,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -301,7 +301,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "perform_step.acidic_job",
         "record_entry.acidic_job",
         "process_step.acidic_job",
-        "process_workflow.acidic_job",
+        "process_workflow.acidic_job"
       ],
       events.map(&:name)
     )
@@ -333,7 +333,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 8, AcidicJob::Entry.count
@@ -346,7 +346,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -374,7 +374,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "perform_step.acidic_job",
         "record_entry.acidic_job",
         "process_step.acidic_job",
-        "process_workflow.acidic_job",
+        "process_workflow.acidic_job"
       ],
       events.map(&:name)
     )
@@ -407,7 +407,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 7, AcidicJob::Entry.count
@@ -419,7 +419,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -445,7 +445,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "perform_step.acidic_job",
         "record_entry.acidic_job",
         "process_step.acidic_job",
-        "process_workflow.acidic_job",
+        "process_workflow.acidic_job"
       ],
       events.map(&:name)
     )
@@ -477,7 +477,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
 
     execution = AcidicJob::Execution.first
 
-    assert_equal [self.class.name, "Job"].join("::"), execution.serialized_job["job_class"]
+    assert_equal [ self.class.name, "Job" ].join("::"), execution.serialized_job["job_class"]
     assert_equal AcidicJob::FINISHED_RECOVERY_POINT, execution.recover_to
 
     assert_equal 6, AcidicJob::Entry.count
@@ -488,7 +488,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         %w[step_2 started],
         %w[step_2 succeeded],
         %w[step_3 started],
-        %w[step_3 succeeded],
+        %w[step_3 succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -512,7 +512,7 @@ class AcidicJob::BreakagesTest < ActiveJob::TestCase
         "perform_step.acidic_job",
         "record_entry.acidic_job",
         "process_step.acidic_job",
-        "process_workflow.acidic_job",
+        "process_workflow.acidic_job"
       ],
       events.map(&:name)
     )

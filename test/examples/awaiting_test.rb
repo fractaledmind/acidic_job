@@ -35,7 +35,7 @@ module Examples
 
         return if ctx[@awaited_job_1.job_id] || ctx[@awaited_job_2.job_id]
 
-        ctx[:job_ids] = [@awaited_job_1.job_id, @awaited_job_2.job_id]
+        ctx[:job_ids] = [ @awaited_job_1.job_id, @awaited_job_2.job_id ]
         ActiveJob.perform_all_later(@awaited_job_1, @awaited_job_2)
       end
 
@@ -81,7 +81,7 @@ module Examples
           %w[await_jobs started],
           %w[await_jobs succeeded],
           %w[do_something started],
-          %w[do_something succeeded],
+          %w[do_something succeeded]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -126,7 +126,7 @@ module Examples
           %w[await_jobs started],
           %w[await_jobs succeeded],
           %w[do_something started],
-          %w[do_something succeeded],
+          %w[do_something succeeded]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -169,7 +169,7 @@ module Examples
           %w[await_jobs started],
           %w[await_jobs succeeded],
           %w[do_something started],
-          %w[do_something succeeded],
+          %w[do_something succeeded]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -187,7 +187,7 @@ module Examples
 
       # only performs primary IO operations once per job
       assert_equal(
-        [Job::AwaitedJob.name, Job::AwaitedJob.name, Job.name],
+        [ Job::AwaitedJob.name, Job::AwaitedJob.name, Job.name ],
         ChaoticJob.journal_entries.map { |entry| entry["job_class"] }
       )
       assert_equal 3, ChaoticJob.journal_size

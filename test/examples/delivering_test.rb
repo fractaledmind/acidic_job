@@ -44,7 +44,7 @@ module Examples
       assert_equal 1, performed_jobs.count { |job| job["job_class"] == Job.name }
       assert_equal 2, performed_jobs.count { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }
       assert_equal 1, performed_jobs.count { |job|
-        job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == [ "args" ]
       }
       assert_equal 1, performed_jobs.count { |job|
         job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
@@ -65,7 +65,7 @@ module Examples
           %w[deliver_parameterized_email started],
           %w[deliver_parameterized_email succeeded],
           %w[do_something started],
-          %w[do_something succeeded],
+          %w[do_something succeeded]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -75,13 +75,13 @@ module Examples
       email_1 = AcidicJob::Value.find_by(key: :email_1).value
       assert_equal ActionMailer::MailDeliveryJob, email_1.class
       assert_equal(
-        ["TestMailer", "hello_world", "deliver_now", { args: [] }],
+        [ "TestMailer", "hello_world", "deliver_now", { args: [] } ],
         email_1.arguments
       )
       email_2 = AcidicJob::Value.find_by(key: :email_2).value
       assert_equal ActionMailer::MailDeliveryJob, email_2.class
       assert_equal(
-        ["TestMailer", "hello_world", "deliver_now", { params: { recipient: "me@mail.com" }, args: [] }],
+        [ "TestMailer", "hello_world", "deliver_now", { params: { recipient: "me@mail.com" }, args: [] } ],
         email_2.arguments
       )
     end
@@ -97,7 +97,7 @@ module Examples
       assert_equal 2, performed_jobs.count { |job| job["job_class"] == Job.name }
       assert_equal 2, performed_jobs.count { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }
       assert_equal 1, performed_jobs.count { |job|
-        job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == [ "args" ]
       }
       assert_equal 1, performed_jobs.count { |job|
         job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
@@ -120,7 +120,7 @@ module Examples
           %w[deliver_parameterized_email started],
           %w[deliver_parameterized_email succeeded],
           %w[do_something started],
-          %w[do_something succeeded],
+          %w[do_something succeeded]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -130,13 +130,13 @@ module Examples
       email_1 = AcidicJob::Value.find_by(key: :email_1).value
       assert_equal ActionMailer::MailDeliveryJob, email_1.class
       assert_equal(
-        ["TestMailer", "hello_world", "deliver_now", { args: [] }],
+        [ "TestMailer", "hello_world", "deliver_now", { args: [] } ],
         email_1.arguments
       )
       email_2 = AcidicJob::Value.find_by(key: :email_2).value
       assert_equal ActionMailer::MailDeliveryJob, email_2.class
       assert_equal(
-        ["TestMailer", "hello_world", "deliver_now", { params: { recipient: "me@mail.com" }, args: [] }],
+        [ "TestMailer", "hello_world", "deliver_now", { params: { recipient: "me@mail.com" }, args: [] } ],
         email_2.arguments
       )
     end
@@ -150,7 +150,7 @@ module Examples
       assert_equal 2, performed_jobs.count { |job| job["job_class"] == Job.name }
       assert_equal 2, performed_jobs.count { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }
       assert_equal 1, performed_jobs.count { |job|
-        job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == [ "args" ]
       }
       assert_equal 1, performed_jobs.count { |job|
         job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]

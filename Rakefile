@@ -62,7 +62,7 @@ end
 
 # Hook into the `test:prepare` task hook provided by Rails
 namespace :test do
-  task :prepare => :environment do
+  task prepare: :environment do
     Rake::Task["db:sync"].invoke
   end
 end
@@ -111,8 +111,8 @@ namespace :test do
   end
 
   # Convenience aliases
-  task :pg => :postgres
-  task :postgresql => :postgres
+  task pg: :postgres
+  task postgresql: :postgres
 end
 
 # Help task to show usage examples

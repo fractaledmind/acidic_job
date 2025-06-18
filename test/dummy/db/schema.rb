@@ -19,8 +19,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_22_154837) do
     t.text "data"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["execution_id", "step", "action"], name: "index_acidic_job_entries_on_execution_id_and_step_and_action"
-    t.index ["execution_id"], name: "index_acidic_job_entries_on_execution_id"
+    t.index [ "execution_id", "step", "action" ], name: "index_acidic_job_entries_on_execution_id_and_step_and_action"
+    t.index [ "execution_id" ], name: "index_acidic_job_entries_on_execution_id"
   end
 
   create_table "acidic_job_executions", force: :cascade do |t|
@@ -32,7 +32,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_22_154837) do
     t.text "definition"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["idempotency_key"], name: "index_acidic_job_executions_on_idempotency_key", unique: true
+    t.index [ "idempotency_key" ], name: "index_acidic_job_executions_on_idempotency_key", unique: true
   end
 
   create_table "acidic_job_values", force: :cascade do |t|
@@ -41,8 +41,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_22_154837) do
     t.text "value", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["execution_id", "key"], name: "index_acidic_job_values_on_execution_id_and_key", unique: true
-    t.index ["execution_id"], name: "index_acidic_job_values_on_execution_id"
+    t.index [ "execution_id", "key" ], name: "index_acidic_job_values_on_execution_id_and_key", unique: true
+    t.index [ "execution_id" ], name: "index_acidic_job_values_on_execution_id"
   end
 
   create_table :things, force: true

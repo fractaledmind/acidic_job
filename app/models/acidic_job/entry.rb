@@ -6,8 +6,8 @@ module AcidicJob
 
     serialize :data, coder: AcidicJob::Serializer
 
-    scope :for_step, -> (step) { where(step: step) }
-    scope :for_action, -> (action) { where(action: action) }
+    scope :for_step, ->(step) { where(step: step) }
+    scope :for_action, ->(action) { where(action: action) }
     scope :ordered, -> { order(timestamp: :asc, created_at: :asc) }
 
     def self.most_recent

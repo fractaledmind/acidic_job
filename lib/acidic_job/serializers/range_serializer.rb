@@ -9,7 +9,7 @@ module AcidicJob
       KEYS = %w[begin end exclude_end].freeze
 
       def serialize(range)
-        args = Arguments.serialize([range.begin, range.end, range.exclude_end?])
+        args = Arguments.serialize([ range.begin, range.end, range.exclude_end? ])
         super(KEYS.zip(args).to_h)
       end
 

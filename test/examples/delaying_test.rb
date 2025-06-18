@@ -62,7 +62,7 @@ module Examples
           %w[delay started],
           %w[delay succeeded],
           %w[halt started],
-          %w[halt halted],
+          %w[halt halted]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -93,7 +93,7 @@ module Examples
             %w[halt started],
             %w[halt succeeded],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -135,7 +135,7 @@ module Examples
           %w[halt started],
           %w[halt errored],
           %w[halt started],
-          %w[halt halted],
+          %w[halt halted]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -165,7 +165,7 @@ module Examples
             %w[halt started],
             %w[halt succeeded],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -207,7 +207,7 @@ module Examples
           %w[delay started],
           %w[delay succeeded],
           %w[halt started],
-          %w[halt halted],
+          %w[halt halted]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -237,7 +237,7 @@ module Examples
             %w[halt started],
             %w[halt succeeded],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -279,7 +279,7 @@ module Examples
           %w[halt started],
           %w[halt halted],
           %w[halt started],
-          %w[halt halted],
+          %w[halt halted]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -309,7 +309,7 @@ module Examples
             %w[halt started],
             %w[halt succeeded],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )

@@ -13,7 +13,7 @@ class IteratingJobTest < ActiveJob::TestCase
 
     # performs primary IO operation once per iteration
     assert_equal 3, ChaoticJob.journal_size
-    assert_equal [1, 2, 3], ChaoticJob::Journal.entries
+    assert_equal [ 1, 2, 3 ], ChaoticJob::Journal.entries
 
     assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
     execution = AcidicJob::Execution.first
@@ -26,7 +26,7 @@ class IteratingJobTest < ActiveJob::TestCase
         %w[do_something started],
         %w[do_something started],
         %w[do_something started],
-        %w[do_something succeeded],
+        %w[do_something succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -46,7 +46,7 @@ class IteratingJobTest < ActiveJob::TestCase
 
       # performs primary IO operation once per iteration
       assert_equal 3, ChaoticJob.journal_size
-      assert_equal [1, 2, 3], ChaoticJob::Journal.entries
+      assert_equal [ 1, 2, 3 ], ChaoticJob::Journal.entries
 
       assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
@@ -61,7 +61,7 @@ class IteratingJobTest < ActiveJob::TestCase
           %w[do_something started],
           %w[do_something started],
           %w[do_something started],
-          %w[do_something succeeded],
+          %w[do_something succeeded]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -77,6 +77,6 @@ class IteratingJobTest < ActiveJob::TestCase
 
     # performs primary IO operation once per iteration
     assert_equal 3, ChaoticJob.journal_size
-    assert_equal [1, 2, 3], ChaoticJob::Journal.entries
+    assert_equal [ 1, 2, 3 ], ChaoticJob::Journal.entries
   end
 end

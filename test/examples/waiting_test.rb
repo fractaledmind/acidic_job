@@ -64,7 +64,7 @@ module Examples
         assert_equal(
           [
             %w[check started],
-            %w[check halted],
+            %w[check halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -96,7 +96,7 @@ module Examples
             %w[check started],
             %w[check halted],
             %w[check started],
-            %w[check halted],
+            %w[check halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -133,7 +133,7 @@ module Examples
             %w[check started],
             %w[check succeeded],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -174,7 +174,7 @@ module Examples
         assert_equal(
           [
             %w[check started],
-            %w[check halted],
+            %w[check halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -206,7 +206,7 @@ module Examples
             %w[check started],
             %w[check halted],
             %w[check started],
-            %w[check halted],
+            %w[check halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -243,7 +243,7 @@ module Examples
             %w[check started],
             %w[check succeeded],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -284,7 +284,7 @@ module Examples
         assert_equal(
           [
             %w[check started],
-            %w[check halted],
+            %w[check halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -316,7 +316,7 @@ module Examples
             %w[check started],
             %w[check halted],
             %w[check started],
-            %w[check halted],
+            %w[check halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -353,7 +353,7 @@ module Examples
             %w[check started],
             %w[check succeeded],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )

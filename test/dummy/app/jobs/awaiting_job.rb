@@ -15,7 +15,7 @@ class AwaitingJob < ApplicationJob
 
     return if ctx[awaited_job_1.job_id] || ctx[awaited_job_2.job_id]
 
-    ctx[:job_ids] = [awaited_job_1.job_id, awaited_job_2.job_id]
+    ctx[:job_ids] = [ awaited_job_1.job_id, awaited_job_2.job_id ]
 
     ActiveJob.perform_all_later(awaited_job_1, awaited_job_2)
   end

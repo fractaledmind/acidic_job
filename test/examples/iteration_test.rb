@@ -38,7 +38,7 @@ module Examples
 
       # performs primary IO operation once per iteration
       assert_equal 3, ChaoticJob.journal_size
-      assert_equal [1, 2, 3], ChaoticJob::Journal.entries
+      assert_equal [ 1, 2, 3 ], ChaoticJob::Journal.entries
 
       assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
@@ -51,7 +51,7 @@ module Examples
           %w[step_1 started],
           %w[step_1 started],
           %w[step_1 started],
-          %w[step_1 succeeded],
+          %w[step_1 succeeded]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -71,7 +71,7 @@ module Examples
 
         # performs primary IO operation once per iteration
         assert_equal 3, ChaoticJob.journal_size
-        assert_equal [1, 2, 3], ChaoticJob::Journal.entries
+        assert_equal [ 1, 2, 3 ], ChaoticJob::Journal.entries
 
         assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
         execution = AcidicJob::Execution.first
@@ -86,7 +86,7 @@ module Examples
             %w[step_1 started],
             %w[step_1 started],
             %w[step_1 started],
-            %w[step_1 succeeded],
+            %w[step_1 succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -102,7 +102,7 @@ module Examples
 
       # performs primary IO operation once per iteration
       assert_equal 3, ChaoticJob.journal_size
-      assert_equal [1, 2, 3], ChaoticJob::Journal.entries
+      assert_equal [ 1, 2, 3 ], ChaoticJob::Journal.entries
     end
   end
 end

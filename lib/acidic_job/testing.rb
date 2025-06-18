@@ -26,7 +26,7 @@ module AcidicJob
     # except that any `transaction` strategies for any ORMs are replaced with a `deletion` strategy.
     private def transaction_free_cleaners_for(original_cleaners)
       non_transaction_cleaners = original_cleaners.dup.to_h do |(orm, opts), cleaner|
-        [[orm, opts], ensure_no_transaction_strategies_for(cleaner)]
+        [ [ orm, opts ], ensure_no_transaction_strategies_for(cleaner) ]
       end
       ::DatabaseCleaner::Cleaners.new(non_transaction_cleaners)
     end
@@ -55,12 +55,12 @@ module AcidicJob
         .name                       # "DatabaseCleaner::ActiveRecord::Truncation"
         .rpartition("::")           # ["DatabaseCleaner::ActiveRecord", "::", "Truncation"]
         .first                      # "DatabaseCleaner::ActiveRecord"
-      deletion_strategy_class_name = [strategy_namespace, "::", "Deletion"].join
+      deletion_strategy_class_name = [ strategy_namespace, "::", "Deletion" ].join
       deletion_strategy_class = deletion_strategy_class_name.constantize
       instance_variable_hash = strategy.instance_variables.to_h do |var|
         [
           var.to_s.remove("@"),
-          strategy.instance_variable_get(var),
+          strategy.instance_variable_get(var)
         ]
       end
       options = instance_variable_hash.except("db", "connection_class")

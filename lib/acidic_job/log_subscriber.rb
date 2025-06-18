@@ -37,7 +37,7 @@ module AcidicJob
     end
 
     private def formatted_error(error)
-      [error.class, error.message].compact.join(" ")
+      [ error.class, error.message ].compact.join(" ")
     end
 
     # Use the logger configured for AcidicJob

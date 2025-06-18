@@ -22,7 +22,7 @@ class CreateAcidicJobTables < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    add_index :acidic_job_entries, [:execution_id, :step, :action]
+    add_index :acidic_job_entries, [ :execution_id, :step, :action ]
 
     create_table :acidic_job_values, id: :primary_key do |t|
       t.references :execution, null: false,
@@ -33,6 +33,6 @@ class CreateAcidicJobTables < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    add_index :acidic_job_values, [:execution_id, :key], unique: true
+    add_index :acidic_job_values, [ :execution_id, :key ], unique: true
   end
 end

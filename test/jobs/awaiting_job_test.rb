@@ -32,7 +32,7 @@ class AwaitingJobTest < ActiveJob::TestCase
         %w[await_jobs started],
         %w[await_jobs succeeded],
         %w[do_something started],
-        %w[do_something succeeded],
+        %w[do_something succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -77,7 +77,7 @@ class AwaitingJobTest < ActiveJob::TestCase
         %w[await_jobs started],
         %w[await_jobs succeeded],
         %w[do_something started],
-        %w[do_something succeeded],
+        %w[do_something succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -120,7 +120,7 @@ class AwaitingJobTest < ActiveJob::TestCase
         %w[await_jobs started],
         %w[await_jobs succeeded],
         %w[do_something started],
-        %w[do_something succeeded],
+        %w[do_something succeeded]
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -138,7 +138,7 @@ class AwaitingJobTest < ActiveJob::TestCase
 
     # only performs primary IO operations once per job
     assert_equal(
-      ["AwaitedJob", "AwaitedJob", "AwaitingJob"],
+      [ "AwaitedJob", "AwaitedJob", "AwaitingJob" ],
       ChaoticJob.journal_entries.map { |entry| entry["job_class"] }
     )
     assert_equal 3, ChaoticJob.journal_size
