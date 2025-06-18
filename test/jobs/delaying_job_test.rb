@@ -160,7 +160,7 @@ class DelayingJobTest < ActiveJob::TestCase
   test "scenario with error before setting wait_until" do
     future = 14.days.from_now + 1.second
 
-    run_scenario(DelayingJob.new, glitch: glitch_before_call("AcidicJob::Context#[]=", :halt, true)) do
+    run_scenario(DelayingJob.new, glitch: glitch_before_call("AcidicJob::Context#[]=", :wait_until)) do
       perform_all_jobs_within(1.minute)
     end
 
