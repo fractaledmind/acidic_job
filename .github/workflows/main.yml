@@ -36,3 +36,5 @@ jobs:
       - name: Run the default task
         run: bundle exec rake
         timeout-minutes: 2
+        env:
+          TESTOPTS: "--verbose"
