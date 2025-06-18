@@ -33,7 +33,13 @@ if ActiveRecord.respond_to?(:commit_transaction_on_non_local_return) &&
   ActiveRecord.commit_transaction_on_non_local_return = true
 end
 
-ActiveSupport.to_time_preserves_timezone = true if ActiveSupport.respond_to?(:to_time_preserves_timezone)
+if ActiveSupport.respond_to?(:to_time_preserves_timezone)
+  if Rails::VERSION::MAJOR >= 8
+    ActiveSupport.to_time_preserves_timezone = :zone
+  else
+    ActiveSupport.to_time_preserves_timezone = true
+  end
+end
 
 ActiveJob::Base.logger = ActiveRecord::Base.logger = AcidicJob.logger = Logger.new(ENV["LOG"].present? ? $stdout : IO::NULL)
 # rubocop:enable Layout/LineLength
