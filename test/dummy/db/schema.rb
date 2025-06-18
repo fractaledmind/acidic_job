@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_22_154837) do
+ActiveRecord::Schema[7.1].define(version: 2025_05_22_154837) do
   create_table "acidic_job_entries", force: :cascade do |t|
     t.bigint "execution_id", null: false
     t.string "step", null: false
