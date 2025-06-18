@@ -22,11 +22,11 @@ class IteratingJobTest < ActiveJob::TestCase
     assert_equal 5, AcidicJob::Entry.count
     assert_equal(
       [
-        %w[step_1 started],
-        %w[step_1 started],
-        %w[step_1 started],
-        %w[step_1 started],
-        %w[step_1 succeeded],
+        %w[do_something started],
+        %w[do_something started],
+        %w[do_something started],
+        %w[do_something started],
+        %w[do_something succeeded],
       ],
       execution.entries.ordered.pluck(:step, :action)
     )
@@ -55,13 +55,13 @@ class IteratingJobTest < ActiveJob::TestCase
       assert_equal 7, AcidicJob::Entry.count
       assert_equal(
         [
-          %w[step_1 started],
-          %w[step_1 errored],
-          %w[step_1 started],
-          %w[step_1 started],
-          %w[step_1 started],
-          %w[step_1 started],
-          %w[step_1 succeeded],
+          %w[do_something started],
+          %w[do_something errored],
+          %w[do_something started],
+          %w[do_something started],
+          %w[do_something started],
+          %w[do_something started],
+          %w[do_something succeeded],
         ],
         execution.entries.ordered.pluck(:step, :action)
       )
