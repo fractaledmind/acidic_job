@@ -3,10 +3,13 @@
 require "test_helper"
 
 class TestMailer < ActionMailer::Base
+  # self.delivery_job = MailDeliveryJob
+
   def hello_world
     @message = "Hello, world"
+    recipient = params.fetch(:recipient, "user@example.com")
 
-    mail from: "test@example.com", to: "user@example.com" do |format|
+    mail from: "test@example.com", to: recipient do |format|
       format.html { render inline: "<h1><%= @message %></h1>" }
       format.text { render inline: "<%= @message %>" }
     end
@@ -27,15 +30,21 @@ module Examples
       end
 
       def deliver_email
-        TestMailer.hello_world.deliver_later
+        # enqueue the message for delivery once, and store it.
+        # on retries, just fetch it from the context
+        ctx.fetch(:email_1) { TestMailer.hello_world.deliver_later }
       end
 
       def deliver_parameterized_email
-        TestMailer.with({}).hello_world.deliver_later
+        # enqueue the message for delivery once, and store it.
+        # on retries, just fetch it from the context
+        ctx.fetch(:email_2) { TestMailer.with({ recipient: "me@mail.com" }).hello_world.deliver_later }
       end
 
       def do_something
-        ChaoticJob.log_to_journal!(serialize)
+        # idempotent because journal logging is idempotent via Set
+        # but this means data logged must be identical across executions
+        ChaoticJob.log_to_journal!(serialize.slice("job_class", "job_id", "arguments"))
       end
     end
 
@@ -46,16 +55,17 @@ module Examples
       # Performed the job and the mail deliveries
       assert_equal 3, performed_jobs.size
       assert_equal 0, enqueued_jobs.size
+      assert_equal 1, performed_jobs.count { |job| job["job_class"] == Job.name }
+      assert_equal 2, performed_jobs.count { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }
+      assert_equal 1, performed_jobs.count { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
+      }
+      assert_equal 1, performed_jobs.count { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
+      }
 
       # only performs primary IO operations once per job
       assert_equal 1, ChaoticJob.journal_size
-      assert_equal 2, performed_jobs.select { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }.size
-      assert_equal 1, performed_jobs.select { |job|
-        job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
-      }.size
-      assert_equal 1, performed_jobs.select { |job|
-        job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
-      }.size
 
       assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
       execution = AcidicJob::Execution.first
@@ -74,24 +84,94 @@ module Examples
         execution.entries.ordered.pluck(:step, :action)
       )
 
-      # no context needed or stored
-      assert_equal 0, AcidicJob::Value.count
+      # context for each email delivery stored
+      assert_equal 2, AcidicJob::Value.count
+      email_1 = AcidicJob::Value.find_by(key: :email_1).value
+      assert_equal ActionMailer::MailDeliveryJob, email_1.class
+      assert_equal(
+        ["TestMailer", "hello_world", "deliver_now", { args: [] }],
+        email_1.arguments
+      )
+      email_2 = AcidicJob::Value.find_by(key: :email_2).value
+      assert_equal ActionMailer::MailDeliveryJob, email_2.class
+      assert_equal(
+        ["TestMailer", "hello_world", "deliver_now", { params: { recipient: "me@mail.com" }, args: [] }],
+        email_2.arguments
+      )
     end
 
-    test "simulation" do
-      run_simulation(Job.new) do |_scenario|
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
-
-        # only performs primary IO operations once per job
-        assert_equal 1, ChaoticJob.journal_size
-        assert_equal 2, performed_jobs.select { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }.size
-        assert_equal 1, performed_jobs.select { |job|
-          job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
-        }.size
-        assert_equal 1, performed_jobs.select { |job|
-          job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
-        }.size
+    test "scenario with error before deliver_email returns" do
+      run_scenario(Job.new, glitch: glitch_before_return("#{Job.name}#deliver_email")) do
+        perform_all_jobs
       end
+
+      # Performed the job, the retry, and the mail deliveries
+      assert_equal 4, performed_jobs.size
+      assert_equal 0, enqueued_jobs.size
+      assert_equal 2, performed_jobs.count { |job| job["job_class"] == Job.name }
+      assert_equal 2, performed_jobs.count { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }
+      assert_equal 1, performed_jobs.count { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
+      }
+      assert_equal 1, performed_jobs.count { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
+      }
+
+      # only performs primary IO operations once per job
+      assert_equal 1, ChaoticJob.journal_size
+
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+      execution = AcidicJob::Execution.first
+
+      # simple walkthrough of the execution
+      assert_equal 8, AcidicJob::Entry.count
+      assert_equal(
+        [
+          %w[deliver_email started],
+          %w[deliver_email errored],
+          %w[deliver_email started],
+          %w[deliver_email succeeded],
+          %w[deliver_parameterized_email started],
+          %w[deliver_parameterized_email succeeded],
+          %w[do_something started],
+          %w[do_something succeeded],
+        ],
+        execution.entries.ordered.pluck(:step, :action)
+      )
+
+      # context for each email delivery stored
+      assert_equal 2, AcidicJob::Value.count
+      email_1 = AcidicJob::Value.find_by(key: :email_1).value
+      assert_equal ActionMailer::MailDeliveryJob, email_1.class
+      assert_equal(
+        ["TestMailer", "hello_world", "deliver_now", { args: [] }],
+        email_1.arguments
+      )
+      email_2 = AcidicJob::Value.find_by(key: :email_2).value
+      assert_equal ActionMailer::MailDeliveryJob, email_2.class
+      assert_equal(
+        ["TestMailer", "hello_world", "deliver_now", { params: { recipient: "me@mail.com" }, args: [] }],
+        email_2.arguments
+      )
+    end
+
+    test_simulation(Job.new) do |_scenario|
+      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+
+      # Performed the job, the retry, and the mail deliveries
+      assert_equal 4, performed_jobs.size
+      assert_equal 0, enqueued_jobs.size
+      assert_equal 2, performed_jobs.count { |job| job["job_class"] == Job.name }
+      assert_equal 2, performed_jobs.count { |job| job["job_class"] == "ActionMailer::MailDeliveryJob" }
+      assert_equal 1, performed_jobs.count { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == ["args"]
+      }
+      assert_equal 1, performed_jobs.count { |job|
+        job["arguments"].last&.fetch("_aj_ruby2_keywords") == %w[params args]
+      }
+
+      # only performs primary IO operations once per job
+      assert_equal 1, ChaoticJob.journal_size
     end
   end
 end

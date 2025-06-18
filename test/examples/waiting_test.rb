@@ -4,71 +4,421 @@ require "test_helper"
 
 module Examples
   class WaitingTest < ActiveJob::TestCase
+    def before_setup
+      ChaoticJob.switch_off!
+      super
+    end
+
     class Job < ActiveJob::Base
       include AcidicJob::Workflow
 
       def perform
         execute_workflow(unique_by: job_id) do |w|
-          w.step :wait_until
+          w.step :check
           w.step :do_something
         end
       end
 
-      def wait_until
+      def check
         # this is the condition that will be checked every time the step is retried
         # to determine whether to continue to the next step or not
-        return if step_retrying?
+        return if conditional?
 
-        enqueue(wait: 2.seconds)
+        enqueue(wait: 2.days)
 
         halt_workflow!
       end
 
       def do_something
-        ChaoticJob.log_to_journal!(serialize)
+        # idempotent because journal logging is idempotent via Set
+        # but this means data logged must be identical across executions
+        ChaoticJob.log_to_journal!(serialize.slice("job_class", "job_id", "scheduled_at"))
+      end
+
+      def conditional?
+        ChaoticJob.switch_on? || executions == 10
       end
     end
 
     test "workflow runs successfully" do
       Job.perform_later
-      perform_all_jobs
 
-      # Performed the original job and waited job
-      assert_equal 2, performed_jobs.size
-      assert_equal 0, enqueued_jobs.size
+      # first run
+      Time.stub :now, Time.now do
+        perform_all_jobs_within(1.minute)
 
-      # only performs primary IO operations once
-      assert_equal 1, ChaoticJob.journal_size
-      assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job.name }.size
+        # Performed the original job
+        assert_equal 1, performed_jobs.select { |job| job["job_class"] == Job.name }.size
+        # Retry in 2 minutes hasn't been executed yet
+        assert_equal 1, enqueued_jobs.select { |job| job["job_class"] == Job.name }.size
+        assert_equal 1, performed_jobs.size
+        assert_equal 1, enqueued_jobs.size
 
-      assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
-      execution = AcidicJob::Execution.first
+        # execution is for this job and is paused on the `delayed` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
 
-      # halts once as condition is false, then continues after 2 seconds
-      assert_equal 6, AcidicJob::Entry.count
-      assert_equal(
-        [
-          %w[wait_until started],
-          %w[wait_until halted],
-          %w[wait_until started],
-          %w[wait_until succeeded],
-          %w[do_something started],
-          %w[do_something succeeded],
-        ],
-        execution.entries.ordered.pluck(:step, :action)
-      )
+        # nothing happened beyond halting on the `delayed` step
+        assert_equal 2, AcidicJob::Entry.count
+        assert_equal(
+          [
+            %w[check started],
+            %w[check halted],
+          ],
+          execution.entries.ordered.pluck(:step, :action)
+        )
 
-      # no context needed or stored
-      assert_equal 0, AcidicJob::Value.count
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
+
+      # First retry
+      Time.stub :now, 2.days.from_now.to_time do
+        perform_all_jobs_within(1.minute.from_now)
+
+        # Performed the original job and the first retry
+        assert_equal 2, performed_jobs.select { |job| job["job_class"] == Job.name }.size
+        # Next retry in 2 minutes hasn't been executed yet
+        assert_equal 1, enqueued_jobs.select { |job| job["job_class"] == Job.name }.size
+        assert_equal 2, performed_jobs.size
+        assert_equal 1, enqueued_jobs.size
+
+        # execution is for this job and is still paused on the `delayed` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
+
+        # nothing happened beyond halting on the `delayed` step
+        assert_equal 4, AcidicJob::Entry.count
+        assert_equal(
+          [
+            %w[check started],
+            %w[check halted],
+            %w[check started],
+            %w[check halted],
+          ],
+          execution.entries.ordered.pluck(:step, :action)
+        )
+
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
+
+      # Final retry
+      future = 4.days.from_now
+      Time.stub :now, future.to_time do
+        ChaoticJob.switch_on!
+        perform_all_jobs
+
+        # Performed the original job, first retry, and final retry
+        assert_equal 3, performed_jobs.select { |job| job["job_class"] == Job.name }.size
+        # No more retries, job done
+        assert_equal 0, enqueued_jobs.select { |job| job["job_class"] == Job.name }.size
+        assert_equal 3, performed_jobs.size
+        assert_equal 0, enqueued_jobs.size
+
+        # job is finished successfully
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        execution = AcidicJob::Execution.first
+
+        # nothing happened beyond halting on the `delayed` step
+        assert_equal 8, AcidicJob::Entry.count
+        assert_equal(
+          [
+            %w[check started],
+            %w[check halted],
+            %w[check started],
+            %w[check halted],
+            %w[check started],
+            %w[check succeeded],
+            %w[do_something started],
+            %w[do_something succeeded],
+          ],
+          execution.entries.ordered.pluck(:step, :action)
+        )
+
+        # the most recent job that was performed is the future scheduled job
+        assert_equal 1, ChaoticJob.journal_size
+        job_that_performed = ChaoticJob.top_journal_entry
+        assert_in_delta(
+          Time.parse(job_that_performed["scheduled_at"]).to_i,
+          future.to_i,
+          1,
+          "performed job at: #{job_that_performed['scheduled_at']}, but expected #{future}"
+        )
+      end
     end
 
-    test "simulation" do
-      run_simulation(Job.new) do |_scenario|
-        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+    test "scenario before call perform" do
+      run_scenario(Job.new, glitch: glitch_before_call("#{Job.name}#perform")) do
+        perform_all_jobs_within(1.minute)
+      end
 
-        # only performs primary IO operations once
+      # first run
+      begin
+        # Performed the original job and the retry
+        assert_equal 2, performed_jobs.select { |job| job["job_class"] == Job.name }.size
+        # Retry in 2 minutes hasn't been executed yet
+        assert_equal 1, enqueued_jobs.select { |job| job["job_class"] == Job.name }.size
+        assert_equal 2, performed_jobs.size
+        assert_equal 1, enqueued_jobs.size
+
+        # execution is for this job and is paused on the `delayed` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
+
+        # nothing happened beyond halting on the `delayed` step
+        assert_equal 2, AcidicJob::Entry.count
+        assert_equal(
+          [
+            %w[check started],
+            %w[check halted],
+          ],
+          execution.entries.ordered.pluck(:step, :action)
+        )
+
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
+
+      # First retry
+      Time.stub :now, 2.days.from_now.to_time do
+        perform_all_jobs_within(1.minute.from_now)
+
+        # Performed the original job, the retry, and the first wait
+        assert_equal 3, performed_jobs.select { |job| job["job_class"] == Job.name }.size
+        # Next retry in 2 minutes hasn't been executed yet
+        assert_equal 1, enqueued_jobs.select { |job| job["job_class"] == Job.name }.size
+        assert_equal 3, performed_jobs.size
+        assert_equal 1, enqueued_jobs.size
+
+        # execution is for this job and is still paused on the `delayed` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
+
+        # nothing happened beyond halting on the `delayed` step
+        assert_equal 4, AcidicJob::Entry.count
+        assert_equal(
+          [
+            %w[check started],
+            %w[check halted],
+            %w[check started],
+            %w[check halted],
+          ],
+          execution.entries.ordered.pluck(:step, :action)
+        )
+
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
+
+      # Final retry
+      future = 4.days.from_now
+      Time.stub :now, future.to_time do
+        ChaoticJob.switch_on!
+        perform_all_jobs
+
+        # Performed the original job, the retry, the first wait, and the second wait
+        assert_equal 4, performed_jobs.select { |job| job["job_class"] == Job.name }.size
+        # No more retries, job done
+        assert_equal 0, enqueued_jobs.select { |job| job["job_class"] == Job.name }.size
+        assert_equal 4, performed_jobs.size
+        assert_equal 0, enqueued_jobs.size
+
+        # job is finished successfully
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        execution = AcidicJob::Execution.first
+
+        # nothing happened beyond halting on the `delayed` step
+        assert_equal 8, AcidicJob::Entry.count
+        assert_equal(
+          [
+            %w[check started],
+            %w[check halted],
+            %w[check started],
+            %w[check halted],
+            %w[check started],
+            %w[check succeeded],
+            %w[do_something started],
+            %w[do_something succeeded],
+          ],
+          execution.entries.ordered.pluck(:step, :action)
+        )
+
+        # the most recent job that was performed is the future scheduled job
         assert_equal 1, ChaoticJob.journal_size
-        assert_equal 1, ChaoticJob::Journal.entries.select { |job| job["job_class"] == Job.name }.size
+        job_that_performed = ChaoticJob.top_journal_entry
+        assert_in_delta(
+          Time.parse(job_that_performed["scheduled_at"]).to_i,
+          future.to_i,
+          1,
+          "performed job at: #{job_that_performed['scheduled_at']}, but expected #{future}"
+        )
+      end
+    end
+
+    test "scenario before call do_something" do
+      run_scenario(Job.new, glitch: glitch_before_call("#{Job.name}#do_something")) do
+        perform_all_jobs_within(1.minute)
+      end
+
+      # first run
+      begin
+        # Performed the original job
+        assert_equal 1, performed_jobs.select { |job| job["job_class"] == Job.name }.size
+        # Retry in 2 minutes hasn't been executed yet
+        assert_equal 1, enqueued_jobs.select { |job| job["job_class"] == Job.name }.size
+        assert_equal 1, performed_jobs.size
+        assert_equal 1, enqueued_jobs.size
+
+        # execution is for this job and is paused on the `delayed` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
+
+        # nothing happened beyond halting on the `delayed` step
+        assert_equal 2, AcidicJob::Entry.count
+        assert_equal(
+          [
+            %w[check started],
+            %w[check halted],
+          ],
+          execution.entries.ordered.pluck(:step, :action)
+        )
+
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
+
+      # First retry
+      Time.stub :now, 2.days.from_now.to_time do
+        perform_all_jobs_within(1.minute.from_now)
+
+        # Performed the original job, and the first wait
+        assert_equal 2, performed_jobs.select { |job| job["job_class"] == Job.name }.size
+        # Next retry in 2 minutes hasn't been executed yet
+        assert_equal 1, enqueued_jobs.select { |job| job["job_class"] == Job.name }.size
+        assert_equal 2, performed_jobs.size
+        assert_equal 1, enqueued_jobs.size
+
+        # execution is for this job and is still paused on the `delayed` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
+
+        # nothing happened beyond halting on the `delayed` step
+        assert_equal 4, AcidicJob::Entry.count
+        assert_equal(
+          [
+            %w[check started],
+            %w[check halted],
+            %w[check started],
+            %w[check halted],
+          ],
+          execution.entries.ordered.pluck(:step, :action)
+        )
+
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
+
+      # Final retry
+      future = 4.days.from_now
+      Time.stub :now, future.to_time do
+        ChaoticJob.switch_on!
+        perform_all_jobs
+
+        # Performed the original job, the first wait, and the second wait
+        assert_equal 3, performed_jobs.select { |job| job["job_class"] == Job.name }.size
+        # No more retries, job done
+        assert_equal 0, enqueued_jobs.select { |job| job["job_class"] == Job.name }.size
+        assert_equal 3, performed_jobs.size
+        assert_equal 0, enqueued_jobs.size
+
+        # job is finished successfully
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        execution = AcidicJob::Execution.first
+
+        # nothing happened beyond halting on the `delayed` step
+        assert_equal 8, AcidicJob::Entry.count
+        assert_equal(
+          [
+            %w[check started],
+            %w[check halted],
+            %w[check started],
+            %w[check halted],
+            %w[check started],
+            %w[check succeeded],
+            %w[do_something started],
+            %w[do_something succeeded],
+          ],
+          execution.entries.ordered.pluck(:step, :action)
+        )
+
+        # the most recent job that was performed is the future scheduled job
+        assert_equal 1, ChaoticJob.journal_size
+        job_that_performed = ChaoticJob.top_journal_entry
+        assert_in_delta(
+          Time.parse(job_that_performed["scheduled_at"]).to_i,
+          future.to_i,
+          1,
+          "performed job at: #{job_that_performed['scheduled_at']}, but expected #{future}"
+        )
+      end
+    end
+
+    test_simulation(Job.new, perform_only_jobs_within: 1.minute) do |_scenario|
+      # first run
+      begin
+        first_run_performances = performed_jobs.size
+        assert_operator first_run_performances, :>, 0
+        # execution is for this job and is paused on the `check` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
+
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
+
+      # First retry
+      Time.stub :now, 2.days.from_now.to_time do
+        perform_all_jobs_within(1.minute)
+
+        assert_operator performed_jobs.size, :>, first_run_performances
+
+        # execution is for this job and is still paused on the `check` step
+        execution = AcidicJob::Execution.first
+        assert_equal Job.name, execution.serialized_job["job_class"]
+        assert_equal "check", execution.recover_to
+
+        # no step methods have executed
+        assert_equal 0, ChaoticJob.journal_size
+      end
+
+      future = 4.days.from_now
+      Time.stub :now, future.to_time do
+        ChaoticJob.switch_on!
+        perform_all_jobs
+
+        assert_operator performed_jobs.size, :>, first_run_performances
+
+        # job is finished successfully
+        assert_only_one_execution_that_is_finished_and_each_step_only_succeeds_once
+        execution = AcidicJob::Execution.first
+
+        # the most recent job that was performed is the future scheduled job
+        assert_includes 1..2, ChaoticJob.journal_size, ChaoticJob.journal_entries
+        job_that_performed = ChaoticJob.top_journal_entry
+        assert_in_delta(
+          Time.parse(job_that_performed["scheduled_at"]).to_i,
+          future.to_i,
+          1,
+          "performed job at: #{job_that_performed['scheduled_at']}, but expected #{future}"
+        )
       end
     end
   end
