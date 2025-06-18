@@ -22,6 +22,22 @@ ActiveSupport.on_load :active_job do
   self.queue_adapter = :test
 end
 
+# see: https://github.com/rails/rails/pull/48600
+if ActiveRecord.respond_to?(:commit_transaction_on_non_local_return) &&
+    Rails::VERSION::MAJOR >= 7 &&
+    Rails::VERSION::MINOR <= 1
+
+  ActiveRecord.commit_transaction_on_non_local_return = true
+end
+
+if ActiveSupport.respond_to?(:to_time_preserves_timezone)
+  if Rails::VERSION::MAJOR >= 8
+    ActiveSupport.to_time_preserves_timezone = :zone
+  else
+    ActiveSupport.to_time_preserves_timezone = true
+  end
+end
+
 ActiveJob::Base.logger = ActiveRecord::Base.logger = AcidicJob.logger = Logger.new(ENV["LOG"].present? ? $stdout : IO::NULL)
 
 require "chaotic_job"

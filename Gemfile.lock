@@ -61,7 +61,7 @@ GEM
     benchmark (0.4.0)
     bigdecimal (3.1.9)
     builder (3.3.0)
-    chaotic_job (0.11.1)
+    chaotic_job (0.11.2)
     concurrent-ruby (1.3.5)
     connection_pool (2.5.3)
     crass (1.0.6)
@@ -212,7 +212,7 @@ PLATFORMS
 DEPENDENCIES
   acidic_job!
   actionmailer
-  chaotic_job (>= 0.11.1)
+  chaotic_job (>= 0.11.2)
   minitest
   mysql2
   pg
