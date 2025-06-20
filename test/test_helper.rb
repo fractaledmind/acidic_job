@@ -1,10 +1,15 @@
 # Configure Rails Environment
 ENV["RAILS_ENV"] = "test"
 
+require "simplecov"
+
 require_relative "../test/dummy/config/environment"
 
+RAILS_VERSION = Rails::VERSION::STRING
+DB_ENGINE = ActiveRecord::Base.connection.adapter_name.downcase
+
 puts ""
-puts "Running Ruby #{RUBY_VERSION} with Rails #{Rails::VERSION::STRING} on #{ActiveRecord::Base.connection.adapter_name}"
+puts "Running Ruby #{RUBY_VERSION} with Rails #{RAILS_VERSION} on #{DB_ENGINE}"
 
 ActiveRecord::Migrator.migrations_paths = [ File.expand_path("../test/dummy/db/migrate", __dir__) ]
 ActiveRecord::Migrator.migrations_paths << File.expand_path("../db/migrate", __dir__)
@@ -50,6 +55,15 @@ class BreakingError < StandardError; end
 class ActiveSupport::TestCase
   # Run tests in parallel with specified workers
   parallelize(workers: :number_of_processors)
+
+  parallelize_setup do |worker|
+    context = ["ruby-#{RUBY_VERSION}", "rails-#{RAILS_VERSION}", DB_ENGINE].join(":")
+    SimpleCov.command_name "#{context}--#{SimpleCov.command_name}-#{worker}"
+  end
+
+  parallelize_teardown do |worker|
+    SimpleCov.result
+  end
 
   include ChaoticJob::Helpers
 
