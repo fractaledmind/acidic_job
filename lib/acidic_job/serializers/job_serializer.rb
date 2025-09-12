@@ -22,6 +22,10 @@ module AcidicJob
       def serialize?(argument)
         defined?(::ActiveJob::Base) && argument.class < ::ActiveJob::Base
       end
+
+      def klass
+        ::ActiveJob::Base
+      end
     end
   end
 end
