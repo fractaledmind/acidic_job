@@ -28,9 +28,9 @@ module AcidicJob
         require_relative "serializers/job_serializer"
 
         ActiveJob::Serializers.add_serializers(
-          Serializers::ExceptionSerializer,
-          Serializers::NewRecordSerializer,
-          Serializers::JobSerializer
+          Serializers::ExceptionSerializer.instance,
+          Serializers::NewRecordSerializer.instance,
+          Serializers::JobSerializer.instance
         )
       end
     end
