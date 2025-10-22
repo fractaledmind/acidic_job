@@ -26,13 +26,11 @@ module AcidicJob
         require_relative "serializers/exception_serializer"
         require_relative "serializers/new_record_serializer"
         require_relative "serializers/job_serializer"
-        require_relative "serializers/range_serializer"
 
         ActiveJob::Serializers.add_serializers(
           Serializers::ExceptionSerializer,
           Serializers::NewRecordSerializer,
-          Serializers::JobSerializer,
-          Serializers::RangeSerializer
+          Serializers::JobSerializer
         )
       end
     end
