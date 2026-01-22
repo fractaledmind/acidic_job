@@ -17,7 +17,7 @@ SimpleCov.configure do
   add_group "Library", "lib/"
   add_group "App", "app/"
 
-  # Merge results from parallel test runs
+  # Configure timeout for merging coverage results (useful if tests are run in parallel)
   merge_timeout 3600
 
   # Track all files in lib and app, even if not loaded during tests
