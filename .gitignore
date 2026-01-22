@@ -10,5 +10,6 @@
 /test/dummy/storage/
 /test/dummy/tmp/
 /test/dummy/test*
+/test/dummy/coverage/
 .DS_Store
 /coverage/
