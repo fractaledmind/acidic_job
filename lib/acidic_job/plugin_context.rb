@@ -20,6 +20,10 @@ module AcidicJob
       @context.get(*keys)
     end
 
+    def fetch(key, default = nil, &block)
+      @context.fetch(key, default = nil, &block)
+    end
+
     def definition
       @step_definition.fetch(@plugin.keyword.to_s, PLUGIN_INACTIVE)
     end
