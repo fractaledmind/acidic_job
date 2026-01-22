@@ -6,6 +6,7 @@
 /tmp/
 /test/dummy/db/*.sqlite3
 /test/dummy/db/*.sqlite3-*
+/test/dummy/db/*.sqlite3_*
 /test/dummy/log/*.log
 /test/dummy/storage/
 /test/dummy/tmp/

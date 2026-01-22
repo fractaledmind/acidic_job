@@ -183,7 +183,7 @@ class Job < ActiveJob::Base
 ```
 
 > [!TIP]
-> You should think carefully about what constitutes a unique execution of a workflow. Imagine you had a workflow job for balance transers. Jill transfers $10 to John. Your system **must** be able to differentiate between retries of this transfer and new independent transfers. If you were only to use the `sender`, `recipient`, and `amount` as your `unique_by` values, then if Jill tries to transfer another $10 to John at some point in the future, that work will be considered a retry of the first transfer and not a new transfer.
+> You should think carefully about what constitutes a unique execution of a workflow. Imagine you had a workflow job for balance transfers. Jill transfers $10 to John. Your system **must** be able to differentiate between retries of this transfer and new independent transfers. If you were only to use the `sender`, `recipient`, and `amount` as your `unique_by` values, then if Jill tries to transfer another $10 to John at some point in the future, that work will be considered a retry of the first transfer and not a new transfer.
 
 
 ### Orchestrating steps
