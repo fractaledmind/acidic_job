@@ -8,5 +8,6 @@ gem "activesupport", "~> 7.1.0"
 gem "actionmailer", "~> 7.1.0"
 gem "railties", "~> 7.1.0"
 gem "sqlite3", ">= 2.0.0"
+gem "minitest", "< 6" # minitest 6.0 removed minitest/mock
 
 gemspec path: "../"

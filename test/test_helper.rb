@@ -17,7 +17,6 @@ puts "Running Ruby #{RUBY_VERSION} with Rails #{Rails::VERSION::STRING} on #{Act
 ActiveRecord::Migrator.migrations_paths = [ File.expand_path("../test/dummy/db/migrate", __dir__) ]
 ActiveRecord::Migrator.migrations_paths << File.expand_path("../db/migrate", __dir__)
 require "rails/test_help"
-require "minitest"
 require "minitest/mock"
 
 # Load fixtures from the engine
