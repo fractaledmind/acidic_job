@@ -28,4 +28,11 @@ SimpleCov.configure do
     SimpleCov::Formatter::HTMLFormatter,
     SimpleCov::Formatter::SimpleFormatter
   ])
+
+  # Minimum coverage thresholds - fail CI if coverage drops below these
+  # Only enforce when running the full test suite (not during db:prepare, etc.)
+  if ENV["COVERAGE_CHECK"]
+    minimum_coverage line: 80, branch: 70
+    minimum_coverage_by_file line: 50, branch: 40
+  end
 end

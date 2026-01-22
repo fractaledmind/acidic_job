@@ -97,6 +97,7 @@ jobs:
     env:
       TARGET_DB: sqlite
       COVERAGE: 1
+      COVERAGE_CHECK: 1
 
     steps:
       - name: Checkout code

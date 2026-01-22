@@ -351,6 +351,14 @@ COVERAGE=1 bundle exec rake test:sqlite
 
 The HTML report is generated in the `coverage/` directory.
 
+To enforce minimum coverage thresholds (used in CI), also set `COVERAGE_CHECK`:
+
+```sh
+COVERAGE=1 COVERAGE_CHECK=1 bundle exec rake test:sqlite
+```
+
+This will fail if line coverage drops below 80% or branch coverage drops below 70%.
+
 These options can be combined to help narrow down your debugging when you find a failing test in CI.
 
 ## Contributing
