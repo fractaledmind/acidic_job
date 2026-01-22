@@ -160,4 +160,108 @@ class AcidicJob::SerializersTest < ActiveJob::TestCase
     assert serializers.any? { |s| s.is_a?(AcidicJob::Serializers::NewRecordSerializer) },
            "NewRecordSerializer should be registered"
   end
+
+  test "RangeSerializer is only registered when Rails does not provide one" do
+    serializers = ActiveJob::Serializers.serializers
+    has_rails_range_serializer = defined?(ActiveJob::Serializers::RangeSerializer)
+
+    # Check if AcidicJob's RangeSerializer is registered (not just defined, since tests may load it)
+    acidic_range_serializer_registered = defined?(AcidicJob::Serializers::RangeSerializer) &&
+                                         serializers.any? { |s| s.is_a?(AcidicJob::Serializers::RangeSerializer) }
+
+    if has_rails_range_serializer
+      # When Rails provides RangeSerializer, AcidicJob's should not be registered
+      assert_not acidic_range_serializer_registered,
+                 "AcidicJob::RangeSerializer should not be registered when Rails provides one"
+    else
+      # When Rails doesn't provide RangeSerializer, AcidicJob's should be registered
+      assert acidic_range_serializer_registered,
+             "AcidicJob::RangeSerializer should be registered when Rails does not provide one"
+    end
+  end
+end
+
+class AcidicJob::RangeSerializerTest < ActiveJob::TestCase
+  # Test the RangeSerializer directly, regardless of whether it's registered
+  def setup
+    require "acidic_job/serializers/range_serializer"
+    @serializer = AcidicJob::Serializers::RangeSerializer.instance
+  end
+
+  test "RangeSerializer has public klass method returning Range" do
+    assert_equal ::Range, @serializer.klass
+  end
+
+  test "RangeSerializer serializes inclusive range" do
+    range = 1..10
+
+    assert @serializer.serialize?(range)
+
+    serialized = @serializer.serialize(range)
+    assert serialized.key?("_aj_serialized")
+    assert serialized.key?("begin")
+    assert serialized.key?("end")
+    assert serialized.key?("exclude_end")
+    assert_equal 1, serialized["begin"]
+    assert_equal 10, serialized["end"]
+    assert_equal false, serialized["exclude_end"]
+  end
+
+  test "RangeSerializer serializes exclusive range" do
+    range = 1...10
+
+    serialized = @serializer.serialize(range)
+    assert_equal true, serialized["exclude_end"]
+  end
+
+  test "RangeSerializer deserializes inclusive range" do
+    range = 1..10
+
+    serialized = @serializer.serialize(range)
+    deserialized = @serializer.deserialize(serialized)
+
+    assert_instance_of Range, deserialized
+    assert_equal 1, deserialized.begin
+    assert_equal 10, deserialized.end
+    assert_not deserialized.exclude_end?
+  end
+
+  test "RangeSerializer deserializes exclusive range" do
+    range = 1...10
+
+    serialized = @serializer.serialize(range)
+    deserialized = @serializer.deserialize(serialized)
+
+    assert_instance_of Range, deserialized
+    assert deserialized.exclude_end?
+  end
+
+  test "RangeSerializer round-trips string ranges" do
+    range = "a".."z"
+
+    serialized = @serializer.serialize(range)
+    deserialized = @serializer.deserialize(serialized)
+
+    assert_equal range, deserialized
+  end
+
+  test "RangeSerializer round-trips beginless range" do
+    range = (..10)
+
+    serialized = @serializer.serialize(range)
+    deserialized = @serializer.deserialize(serialized)
+
+    assert_equal range, deserialized
+    assert_nil deserialized.begin
+  end
+
+  test "RangeSerializer round-trips endless range" do
+    range = (1..)
+
+    serialized = @serializer.serialize(range)
+    deserialized = @serializer.deserialize(serialized)
+
+    assert_equal range, deserialized
+    assert_nil deserialized.end
+  end
 end

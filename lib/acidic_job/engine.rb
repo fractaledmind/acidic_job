@@ -27,11 +27,19 @@ module AcidicJob
         require_relative "serializers/new_record_serializer"
         require_relative "serializers/job_serializer"
 
-        ActiveJob::Serializers.add_serializers(
+        serializers = [
           Serializers::ExceptionSerializer.instance,
           Serializers::NewRecordSerializer.instance,
           Serializers::JobSerializer.instance
-        )
+        ]
+
+        # Rails 7.1+ includes a RangeSerializer, so only add ours for older versions
+        unless defined?(ActiveJob::Serializers::RangeSerializer)
+          require_relative "serializers/range_serializer"
+          serializers << Serializers::RangeSerializer.instance
+        end
+
+        ActiveJob::Serializers.add_serializers(*serializers)
       end
     end
 
