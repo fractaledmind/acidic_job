@@ -305,37 +305,53 @@ end
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
-You can run a specific Rails version using one of the Gemfiles defined in the `/gemfiles` directory via the `BUNDLE_GEMFILE` ENV variable, e.g.:
+### Running Tests
+
+The test suite can be run against multiple databases (SQLite, MySQL, PostgreSQL). By default, tests run in parallel for speed.
 
 ```sh
-BUNDLE_GEMFILE=gemfiles/rails_7.0.gemfile bundle exec rake test
+bundle exec rake test           # Run all tests against all databases
+bundle exec rake test:sqlite    # Run tests against SQLite only
+bundle exec rake test:mysql     # Run tests against MySQL only
+bundle exec rake test:postgres  # Run tests against PostgreSQL only
+bundle exec rake help           # Show all available commands with examples
 ```
 
-You can likewise test only one particular test file using the `TEST` ENV variable, e.g.:
+**Run a specific test file or line:**
 
 ```sh
-TEST=test/acidic_job/basics_test.rb
+bundle exec rake test:sqlite TEST=test/jobs/doing_job_test.rb
+bundle exec rake test:sqlite TEST=test/jobs/doing_job_test.rb:10
 ```
 
-Finally, if you need to only run one particular test case itself, use the `TESTOPTS` ENV variable with the `--name` option, e.g.:
+**Run with a specific Rails version:**
 
 ```sh
-TESTOPTS="--name=test_workflow_with_each_step_succeeding"
+BUNDLE_GEMFILE=gemfiles/rails_7_1.gemfile bundle exec rake test:sqlite
 ```
 
-You may also need to run the test suite with a particular Ruby version. If you are using the ASDF version manager, you can set the Ruby version with the `ASDF_RUBY_VERSION` ENV variable, e.g.:
+**Run with a specific Ruby version** (using ASDF or rbenv):
 
 ```sh
-ASDF_RUBY_VERSION=2.7.7 bundle exec rake test
+ASDF_RUBY_VERSION=3.2.0 bundle exec rake test
+RBENV_VERSION=3.2.0 bundle exec rake test
 ```
 
-If you are using `rbenv` to manage your Ruby versions, you can use the `RBENV_VERSION` ENV variable instead.
+### Code Coverage
 
-These options can of course be combined to help narrow down your debugging when you find a failing test in CI.
+To generate a coverage report, set the `COVERAGE` environment variable. This runs tests serially to ensure accurate coverage tracking:
+
+```sh
+COVERAGE=1 bundle exec rake test:sqlite
+```
+
+The HTML report is generated in the `coverage/` directory.
+
+These options can be combined to help narrow down your debugging when you find a failing test in CI.
 
 ## Contributing
 
