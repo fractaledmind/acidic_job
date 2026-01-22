@@ -340,3 +340,45 @@ These options can of course be combined to help narrow down your debugging when 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/fractaledmind/acidic_job.
+
+
+
+```ruby
+class AcidicJobProExample < ActiveJob::Base
+  include AcidicJob::Workflow
+
+  def perform
+    execute_workflow(unique_by: job_id) do |w|
+      w.step :step_1, check: { every: 2.minutes, until: :conditional? }
+      w.step :step_2, after: 14.days
+      w.step :step_3, compensate: { on: CustomError, with: :compensation }
+      w.step :step_4, skip_if: :check?
+      w.step :step_5, for_each: :models
+    end
+  end
+
+  private
+
+  def step_1 = # ...
+  def step_2 = # ...
+  def step_3 = # ...
+  def step_4 = # ...
+  def step_5 = # ...
+
+  def conditional?
+    # make some IO read to determine if it is OK now to perform the step
+  end
+
+  def compensation
+    # undo the actions taken in `step_3` given that the `CustomError` was raised
+  end
+
+  def check?
+    # make some IO read to determine whether to skip `step_4`
+  end
+
+  def models(cursor:)
+    Model.where("id > ?", cursor).order(id: :asc).limit(limit)
+  end
+end
+```
