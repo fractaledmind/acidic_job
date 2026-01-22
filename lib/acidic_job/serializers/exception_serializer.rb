@@ -8,18 +8,21 @@ module AcidicJob
   module Serializers
     class ExceptionSerializer < ::ActiveJob::Serializers::ObjectSerializer
       def serialize(exception)
-        compressed = Zlib::Deflate.deflate(exception.to_yaml)
+        yaml_str = exception.to_yaml
+        deflated_binary = Zlib::Deflate.deflate(yaml_str)
+        deflated_hex = deflated_binary.unpack("H*")
 
-        super("deflated_yaml" => compressed)
+        super("deflated_yaml" => deflated_hex)
       end
 
       def deserialize(hash)
-        uncompressed = Zlib::Inflate.inflate(hash["deflated_yaml"])
+        deflated_binary = hash["deflated_yaml"].pack("H*")
+        yaml_str = Zlib::Inflate.inflate(deflated_binary)
 
         if YAML.respond_to?(:unsafe_load)
-          YAML.unsafe_load(uncompressed)
+          YAML.unsafe_load(yaml_str)
         else
-          YAML.load(uncompressed) # rubocop:disable Security/YAMLLoad
+          YAML.load(yaml_str) # rubocop:disable Security/YAMLLoad
         end
       end
 
