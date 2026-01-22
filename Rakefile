@@ -7,11 +7,6 @@ load "rails/tasks/statistics.rake"
 
 require "bundler/gem_tasks"
 
-require "minitest/test_task"
-Minitest::TestTask.create :test do |t|
-  t.framework = nil
-end
-
 def databases
   %w[ sqlite mysql postgres ]
 end
@@ -25,12 +20,16 @@ def run_test_with_database(database, test_files = nil)
   setup_database(database)
 
   # Ensure schema is up to date by running the db:sync task
-  # sh("TARGET_DB=#{database} bin/rails db:sync")
+  sh("TARGET_DB=#{database} bin/rails db:sync")
+
+  # Build environment string, including COVERAGE if set
+  env_vars = "TARGET_DB=#{database}"
+  env_vars += " COVERAGE=#{ENV['COVERAGE']}" if ENV["COVERAGE"]
 
   if test_files
-    sh("TARGET_DB=#{database} bin/rails test #{test_files}")
+    sh("#{env_vars} bin/rails test #{test_files}")
   else
-    sh("TARGET_DB=#{database} bin/rails test")
+    sh("#{env_vars} bin/rails test")
   end
 end
 
@@ -69,6 +68,16 @@ end
 namespace :test do
   task prepare: :environment do
     Rake::Task["db:sync"].invoke
+  end
+end
+
+# Original task for backward compatibility - all tests against all databases
+task :test do
+  databases.each do |database|
+    puts "\n" + "="*60
+    puts "Running all tests against #{database.upcase}"
+    puts "="*60
+    run_test_with_database(database)
   end
 end
 
