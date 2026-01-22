@@ -1,15 +1,18 @@
 # Configure Rails Environment
 ENV["RAILS_ENV"] = "test"
 
-require "simplecov"
+# Coverage mode: COVERAGE=1 bin/rails test
+# - Enables SimpleCov (started in test/dummy/config/boot.rb before gems load)
+# - Runs tests serially for accurate coverage tracking
+#
+# Normal mode: bin/rails test
+# - No coverage overhead
+# - Runs tests in parallel for speed
 
 require_relative "../test/dummy/config/environment"
 
-RAILS_VERSION = Rails::VERSION::STRING
-DB_ENGINE = ActiveRecord::Base.connection.adapter_name.downcase
-
 puts ""
-puts "Running Ruby #{RUBY_VERSION} with Rails #{RAILS_VERSION} on #{DB_ENGINE}"
+puts "Running Ruby #{RUBY_VERSION} with Rails #{Rails::VERSION::STRING} on #{ActiveRecord::Base.connection.adapter_name}"
 
 ActiveRecord::Migrator.migrations_paths = [ File.expand_path("../test/dummy/db/migrate", __dir__) ]
 ActiveRecord::Migrator.migrations_paths << File.expand_path("../db/migrate", __dir__)
@@ -53,16 +56,11 @@ class DiscardableError < StandardError; end
 class BreakingError < StandardError; end
 
 class ActiveSupport::TestCase
-  # Run tests in parallel with specified workers
-  parallelize(workers: :number_of_processors)
-
-  parallelize_setup do |worker|
-    context = ["ruby-#{RUBY_VERSION}", "rails-#{RAILS_VERSION}", DB_ENGINE].join(":")
-    SimpleCov.command_name "#{context}--#{SimpleCov.command_name}-#{worker}"
-  end
-
-  parallelize_teardown do |worker|
-    SimpleCov.result
+  # Run tests in parallel for speed, or serially when collecting coverage
+  if ENV["COVERAGE"]
+    parallelize(workers: 1)
+  else
+    parallelize(workers: :number_of_processors)
   end
 
   include ChaoticJob::Helpers
