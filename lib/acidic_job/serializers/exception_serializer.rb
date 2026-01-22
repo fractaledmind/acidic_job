@@ -26,6 +26,10 @@ module AcidicJob
       def serialize?(argument)
         defined?(Exception) && argument.is_a?(Exception)
       end
+
+      def klass
+        ::Exception
+      end
     end
   end
 end
