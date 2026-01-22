@@ -12,7 +12,6 @@ require "bundler/setup" if File.exist?(ENV["BUNDLE_GEMFILE"])
 
 # Load SimpleCov before any gem code is loaded (only in test environment)
 if ["test", nil].include?(ENV["RAILS_ENV"])
-  p '*'*100
   require "simplecov"
 end
 
