@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # SimpleCov configuration for acidic_job
-# SimpleCov is started in test/dummy/config/boot.rb when COVERAGE=1
+# SimpleCov is started in test/test_helper.rb when COVERAGE=1
 
 SimpleCov.configure do
   enable_coverage :branch

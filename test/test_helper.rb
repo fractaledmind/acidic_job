@@ -2,12 +2,16 @@
 ENV["RAILS_ENV"] = "test"
 
 # Coverage mode: COVERAGE=1 bin/rails test
-# - Enables SimpleCov (started in test/dummy/config/boot.rb before gems load)
+# - Enables SimpleCov for code coverage tracking
 # - Runs tests serially for accurate coverage tracking
 #
 # Normal mode: bin/rails test
 # - No coverage overhead
 # - Runs tests in parallel for speed
+if ENV["COVERAGE"]
+  require "simplecov"
+  SimpleCov.start
+end
 
 require_relative "../test/dummy/config/environment"
 
