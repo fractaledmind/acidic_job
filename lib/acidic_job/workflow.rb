@@ -48,9 +48,10 @@ module AcidicJob
               raise ArgumentMismatchError.new(serialized_job["arguments"], record.raw_arguments)
             end
 
-            if record.definition != workflow_definition
-              raise DefinitionMismatchError.new(workflow_definition, record.definition)
-            end
+            # TODO: compare the serialized versions of the definitions
+            # if record.definition != workflow_definition
+            #   raise DefinitionMismatchError.new(workflow_definition, record.definition)
+            # end
 
             # Only acquire a lock if the key is unlocked or its lock has expired
             # because the original job was long enough ago.
@@ -140,6 +141,24 @@ module AcidicJob
 
     def ctx
       @__acidic_job_context__
+    end
+
+    def self.included(base)
+      # base.extend(ClassMethods)
+      base.after_perform do |job|
+        ctx = Value.find_by(key: job.job_id)
+
+        next unless ctx
+
+        ctx.update(value: true)
+
+        return if awaited_by.batched_runs.outstanding.any?
+
+        ctx.execution.enqueue_job
+      end
+    end
+
+    module ClassMethods
     end
 
     private def take_step(step_definition)
