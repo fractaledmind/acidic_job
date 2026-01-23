@@ -8,5 +8,6 @@ gem "activesupport", branch: "main", git: "https://github.com/rails/rails.git"
 gem "actionmailer", branch: "main", git: "https://github.com/rails/rails.git"
 gem "railties", branch: "main", git: "https://github.com/rails/rails.git"
 gem "sqlite3", ">= 2.1.0"
+gem "minitest", "< 6" # minitest 6.0 removed minitest/mock
 
 gemspec path: "../"

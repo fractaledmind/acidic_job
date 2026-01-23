@@ -29,7 +29,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "chaotic_job", ">= 0.11.2"
   spec.add_development_dependency "simplecov"
-  spec.add_development_dependency "minitest"
+  spec.add_development_dependency "minitest", "< 6" # minitest 6.0 removed minitest/mock
   spec.add_development_dependency "mysql2"
   spec.add_development_dependency "pg"
   spec.add_development_dependency "sqlite3"
