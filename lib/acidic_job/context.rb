@@ -33,7 +33,7 @@ module AcidicJob
               raise
             end
           end
-        # :nocov:
+          # :nocov:
         end
       end
     end
