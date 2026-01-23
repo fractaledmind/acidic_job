@@ -159,6 +159,24 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   # Error message tests (to exercise #message methods)
   # ============================================
 
+  # Helper to create an anonymous module plugin for testing error messages.
+  # Plugins must respond to `keyword` to be valid.
+  def create_test_plugin(keyword: :test)
+    Module.new do
+      extend self
+      define_method(:keyword) { keyword }
+    end
+  end
+
+  # Helper to create a named class instance for testing error messages.
+  # Used to verify error messages include the class name.
+  def create_named_plugin_instance(name)
+    plugin_class = Class.new do
+      define_singleton_method(:name) { name }
+    end
+    plugin_class.new
+  end
+
   test "SucceededStepError message includes step name" do
     error = AcidicJob::SucceededStepError.new("my_step")
     assert_match(/my_step/, error.message)
@@ -179,22 +197,16 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "DoublePluginCallError works with module plugin" do
-    test_plugin_module = Module.new do
-      extend self
-      def keyword; :test; end
-    end
+    plugin = create_test_plugin(keyword: :test)
 
-    error = AcidicJob::DoublePluginCallError.new(test_plugin_module, "step_name")
+    error = AcidicJob::DoublePluginCallError.new(plugin, "step_name")
     assert_match(/step_name/, error.message)
   end
 
   test "DoublePluginCallError works with class instance plugin" do
-    plugin_class = Class.new do
-      def self.name; "MyPluginClass"; end
-    end
-    plugin_instance = plugin_class.new
+    plugin = create_named_plugin_instance("MyPluginClass")
 
-    error = AcidicJob::DoublePluginCallError.new(plugin_instance, "step_name")
+    error = AcidicJob::DoublePluginCallError.new(plugin, "step_name")
     assert_match(/MyPluginClass/, error.message)
   end
 
@@ -206,22 +218,16 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "MissingPluginCallError works with module plugin" do
-    another_test_plugin = Module.new do
-      extend self
-      def keyword; :another; end
-    end
+    plugin = create_test_plugin(keyword: :another)
 
-    error = AcidicJob::MissingPluginCallError.new(another_test_plugin, "some_step")
+    error = AcidicJob::MissingPluginCallError.new(plugin, "some_step")
     assert_match(/some_step/, error.message)
   end
 
   test "MissingPluginCallError works with class instance plugin" do
-    plugin_class = Class.new do
-      def self.name; "InstancePlugin"; end
-    end
-    plugin_instance = plugin_class.new
+    plugin = create_named_plugin_instance("InstancePlugin")
 
-    error = AcidicJob::MissingPluginCallError.new(plugin_instance, "step")
+    error = AcidicJob::MissingPluginCallError.new(plugin, "step")
     assert_match(/InstancePlugin/, error.message)
   end
 end

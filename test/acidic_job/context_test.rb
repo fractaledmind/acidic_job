@@ -167,6 +167,17 @@ class AcidicJob::ContextTest < ActiveSupport::TestCase
   # Integration with workflow
   # ============================================
 
+  # This test verifies that workflow context values persist across job retries.
+  #
+  # How it works:
+  # 1. First execution (executions=1): set_context stores attempt=1, then raises DefaultsError
+  # 2. retry_on triggers a retry, incrementing the job's `executions` counter to 2
+  # 3. Second execution (executions=2): set_context stores attempt=2 (overwriting), completes successfully
+  # 4. read_context runs and logs the final context values
+  #
+  # The assertion checks that attempt=2 because set_context ran twice (once per execution),
+  # each time storing the current `executions` value. The nested data persists unchanged
+  # since it was set identically in both executions.
   test "context persists across job retries" do
     class ContextRetryJob < ActiveJob::Base
       include AcidicJob::Workflow
@@ -198,7 +209,7 @@ class AcidicJob::ContextTest < ActiveSupport::TestCase
     perform_all_jobs
 
     entry = ChaoticJob.top_journal_entry
-    # After retry, attempt should be 2 (from second execution)
+    # After retry, attempt=2 because set_context ran twice, storing executions each time
     assert_equal 2, entry["attempt"]
     assert_equal "value", entry["data"][:nested]
   end

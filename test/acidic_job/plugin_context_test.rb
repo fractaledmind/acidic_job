@@ -3,17 +3,31 @@
 require "test_helper"
 
 class AcidicJob::PluginContextTest < ActiveJob::TestCase
-  # Reset all cattr_accessor values between tests to ensure isolation
+  # Thread-local storage for capturing values from plugins during tests.
+  # This approach is cleaner than cattr_accessor with manual resets and
+  # is safe for parallel test execution.
+  module TestCapture
+    class << self
+      def store
+        Thread.current[:plugin_context_test_capture] ||= {}
+      end
+
+      def [](key)
+        store[key]
+      end
+
+      def []=(key, value)
+        store[key] = value
+      end
+
+      def clear!
+        Thread.current[:plugin_context_test_capture] = {}
+      end
+    end
+  end
+
   setup do
-    # These classes are defined inside tests but persist at top-level
-    CurrentStepJob.captured_step = nil if defined?(CurrentStepJob)
-    EntriesJob.found_entries = nil if defined?(EntriesJob)
-    PluginActionJob.action_result = nil if defined?(PluginActionJob)
-    EnqueuePluginJob.enqueue_called = false if defined?(EnqueuePluginJob)
-    RepeatPluginJob.call_count = 0 if defined?(RepeatPluginJob)
-    ResolveMethodJob.resolved_method = nil if defined?(ResolveMethodJob)
-    PluginContextMissingMethodJob.raised_error = nil if defined?(PluginContextMissingMethodJob)
-    PluginGetJob.got_value = nil if defined?(PluginGetJob)
+    TestCapture.clear!
   end
 
   test "PluginContext#set delegates to context" do
@@ -52,14 +66,12 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     class CurrentStepJob < ActiveJob::Base
       include AcidicJob::Workflow
 
-      cattr_accessor :captured_step
-
       module CapturePlugin
         extend self
         def keyword; :capture; end
         def validate(input); input; end
         def around_step(context, &block)
-          CurrentStepJob.captured_step = context.current_step
+          AcidicJob::PluginContextTest::TestCapture[:captured_step] = context.current_step
           yield
         end
       end
@@ -74,14 +86,12 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     end
 
     CurrentStepJob.perform_now
-    assert_equal "my_step", CurrentStepJob.captured_step
+    assert_equal "my_step", TestCapture[:captured_step]
   end
 
   test "PluginContext#entries_for_action queries entries with plugin prefix" do
     class EntriesJob < ActiveJob::Base
       include AcidicJob::Workflow
-
-      cattr_accessor :found_entries
 
       module EntriesPlugin
         extend self
@@ -90,7 +100,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
         def around_step(context, &block)
           # First call records, second call should find entries
           context.record!(step: "test", action: "recorded", timestamp: Time.current)
-          EntriesJob.found_entries = context.entries_for_action("recorded").count
+          AcidicJob::PluginContextTest::TestCapture[:found_entries] = context.entries_for_action("recorded").count
           yield
         end
       end
@@ -105,7 +115,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     end
 
     EntriesJob.perform_now
-    assert_equal 1, EntriesJob.found_entries
+    assert_equal 1, TestCapture[:found_entries]
   end
 
   test "PluginContext#record! creates entry with plugin-prefixed action" do
@@ -143,14 +153,12 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     class PluginActionJob < ActiveJob::Base
       include AcidicJob::Workflow
 
-      cattr_accessor :action_result
-
       module ActionPlugin
         extend self
         def keyword; :my_plugin; end
         def validate(input); input; end
         def around_step(context, &block)
-          PluginActionJob.action_result = context.plugin_action("something")
+          AcidicJob::PluginContextTest::TestCapture[:action_result] = context.plugin_action("something")
           yield
         end
       end
@@ -165,14 +173,12 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     end
 
     PluginActionJob.perform_now
-    assert_equal "my_plugin/something", PluginActionJob.action_result
+    assert_equal "my_plugin/something", TestCapture[:action_result]
   end
 
   test "PluginContext#enqueue_job enqueues the job" do
     class EnqueuePluginJob < ActiveJob::Base
       include AcidicJob::Workflow
-
-      cattr_accessor :enqueue_called, default: false
 
       module EnqueuePlugin
         extend self
@@ -180,7 +186,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
         def validate(input); input; end
         def around_step(context, &block)
           # Enqueue a delayed retry and record that we called it
-          EnqueuePluginJob.enqueue_called = true
+          AcidicJob::PluginContextTest::TestCapture[:enqueue_called] = true
           context.enqueue_job(wait: 1.hour)
           context.halt_workflow!
         end
@@ -195,11 +201,10 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       def will_enqueue; end
     end
 
-    EnqueuePluginJob.enqueue_called = false
     # Use perform_now to avoid the infinite loop from perform_all_jobs
     EnqueuePluginJob.perform_now
 
-    assert EnqueuePluginJob.enqueue_called
+    assert TestCapture[:enqueue_called]
     # Should have enqueued a delayed job
     assert_equal 1, enqueued_jobs.size
   end
@@ -245,15 +250,14 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     class RepeatPluginJob < ActiveJob::Base
       include AcidicJob::Workflow
 
-      cattr_accessor :call_count, default: 0
-
       module RepeatPlugin
         extend self
         def keyword; :repeater; end
         def validate(input); input; end
         def around_step(context, &block)
-          RepeatPluginJob.call_count += 1
-          if RepeatPluginJob.call_count < 3
+          AcidicJob::PluginContextTest::TestCapture[:call_count] ||= 0
+          AcidicJob::PluginContextTest::TestCapture[:call_count] += 1
+          if AcidicJob::PluginContextTest::TestCapture[:call_count] < 3
             context.repeat_step!
           else
             yield
@@ -270,10 +274,9 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       def will_repeat; end
     end
 
-    RepeatPluginJob.call_count = 0
     RepeatPluginJob.perform_now
 
-    assert_equal 3, RepeatPluginJob.call_count
+    assert_equal 3, TestCapture[:call_count]
     assert AcidicJob::Execution.first.finished?
   end
 
@@ -281,14 +284,12 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     class ResolveMethodJob < ActiveJob::Base
       include AcidicJob::Workflow
 
-      cattr_accessor :resolved_method
-
       module ResolverPlugin
         extend self
         def keyword; :resolver; end
         def validate(input); input; end
         def around_step(context, &block)
-          ResolveMethodJob.resolved_method = context.resolve_method(:my_method)
+          AcidicJob::PluginContextTest::TestCapture[:resolved_method] = context.resolve_method(:my_method)
           yield
         end
       end
@@ -304,15 +305,13 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     end
 
     ResolveMethodJob.perform_now
-    assert_kind_of Method, ResolveMethodJob.resolved_method
-    assert_equal "found", ResolveMethodJob.resolved_method.call
+    assert_kind_of Method, TestCapture[:resolved_method]
+    assert_equal "found", TestCapture[:resolved_method].call
   end
 
   test "PluginContext#resolve_method raises UndefinedMethodError for missing method" do
     class PluginContextMissingMethodJob < ActiveJob::Base
       include AcidicJob::Workflow
-
-      cattr_accessor :raised_error
 
       module MissingPlugin
         extend self
@@ -322,7 +321,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
           begin
             context.resolve_method(:nonexistent_method)
           rescue AcidicJob::UndefinedMethodError => e
-            PluginContextMissingMethodJob.raised_error = e
+            AcidicJob::PluginContextTest::TestCapture[:raised_error] = e
           end
           yield
         end
@@ -338,15 +337,13 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     end
 
     PluginContextMissingMethodJob.perform_now
-    assert_kind_of AcidicJob::UndefinedMethodError, PluginContextMissingMethodJob.raised_error
-    assert_match(/nonexistent_method/, PluginContextMissingMethodJob.raised_error.message)
+    assert_kind_of AcidicJob::UndefinedMethodError, TestCapture[:raised_error]
+    assert_match(/nonexistent_method/, TestCapture[:raised_error].message)
   end
 
   test "PluginContext#get delegates to context" do
     class PluginGetJob < ActiveJob::Base
       include AcidicJob::Workflow
-
-      cattr_accessor :got_value
 
       module GetPlugin
         extend self
@@ -354,7 +351,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
         def validate(input); input; end
         def around_step(context, &block)
           context.set(test_key: "test_value")
-          PluginGetJob.got_value = context.get(:test_key)
+          AcidicJob::PluginContextTest::TestCapture[:got_value] = context.get(:test_key)
           yield
         end
       end
@@ -369,6 +366,6 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     end
 
     PluginGetJob.perform_now
-    assert_equal [ "test_value" ], PluginGetJob.got_value
+    assert_equal [ "test_value" ], TestCapture[:got_value]
   end
 end

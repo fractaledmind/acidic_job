@@ -19,10 +19,10 @@ SimpleCov.configure do
   add_filter "/.github/"
   add_filter "/bin/"
 
-  # Ignore dummy app scaffolding (not part of the gem)
-  add_filter "application_mailer.rb"
-  add_filter "application_job.rb"
-  add_filter "application_controller.rb"
+  # Ignore gem scaffolding base classes (inherited by users, contain no logic)
+  add_filter %r{app/mailers/acidic_job/application_mailer\.rb}
+  add_filter %r{app/jobs/acidic_job/application_job\.rb}
+  add_filter %r{app/controllers/acidic_job/application_controller\.rb}
 
   # Ignore trivial files
   add_filter "version.rb"
