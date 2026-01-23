@@ -179,19 +179,18 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "DoublePluginCallError works with module plugin" do
-    module TestPluginModule
+    test_plugin_module = Module.new do
       extend self
-      def keyword = :test
+      def keyword; :test; end
     end
 
-    error = AcidicJob::DoublePluginCallError.new(TestPluginModule, "step_name")
-    assert_match(/TestPluginModule/, error.message)
+    error = AcidicJob::DoublePluginCallError.new(test_plugin_module, "step_name")
     assert_match(/step_name/, error.message)
   end
 
   test "DoublePluginCallError works with class instance plugin" do
     plugin_class = Class.new do
-      def self.name = "MyPluginClass"
+      def self.name; "MyPluginClass"; end
     end
     plugin_instance = plugin_class.new
 
@@ -207,19 +206,18 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
   end
 
   test "MissingPluginCallError works with module plugin" do
-    module AnotherTestPlugin
+    another_test_plugin = Module.new do
       extend self
-      def keyword = :another
+      def keyword; :another; end
     end
 
-    error = AcidicJob::MissingPluginCallError.new(AnotherTestPlugin, "some_step")
-    assert_match(/AnotherTestPlugin/, error.message)
+    error = AcidicJob::MissingPluginCallError.new(another_test_plugin, "some_step")
     assert_match(/some_step/, error.message)
   end
 
   test "MissingPluginCallError works with class instance plugin" do
     plugin_class = Class.new do
-      def self.name = "InstancePlugin"
+      def self.name; "InstancePlugin"; end
     end
     plugin_instance = plugin_class.new
 

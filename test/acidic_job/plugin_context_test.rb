@@ -9,8 +9,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module SetPlugin
         extend self
-        def keyword = :setter
-        def validate(input) = input
+        def keyword; :setter; end
+        def validate(input); input; end
         def around_step(context, &block)
           context.set(plugin_called: true)
           yield
@@ -18,7 +18,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [SetPlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ SetPlugin ]) do |w|
           w.step :do_work, setter: true
         end
       end
@@ -43,8 +43,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module CapturePlugin
         extend self
-        def keyword = :capture
-        def validate(input) = input
+        def keyword; :capture; end
+        def validate(input); input; end
         def around_step(context, &block)
           CurrentStepJob.captured_step = context.current_step
           yield
@@ -52,7 +52,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [CapturePlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ CapturePlugin ]) do |w|
           w.step :my_step, capture: true
         end
       end
@@ -72,8 +72,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module EntriesPlugin
         extend self
-        def keyword = :entries_test
-        def validate(input) = input
+        def keyword; :entries_test; end
+        def validate(input); input; end
         def around_step(context, &block)
           # First call records, second call should find entries
           context.record!(step: "test", action: "recorded", timestamp: Time.current)
@@ -83,7 +83,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [EntriesPlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ EntriesPlugin ]) do |w|
           w.step :check_entries, entries_test: true
         end
       end
@@ -101,8 +101,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module RecordPlugin
         extend self
-        def keyword = :recorder
-        def validate(input) = input
+        def keyword; :recorder; end
+        def validate(input); input; end
         def around_step(context, &block)
           context.record!(step: "test_step", action: "custom_action", timestamp: Time.current)
           yield
@@ -110,7 +110,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [RecordPlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ RecordPlugin ]) do |w|
           w.step :do_record, recorder: true
         end
       end
@@ -134,8 +134,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module ActionPlugin
         extend self
-        def keyword = :my_plugin
-        def validate(input) = input
+        def keyword; :my_plugin; end
+        def validate(input); input; end
         def around_step(context, &block)
           PluginActionJob.action_result = context.plugin_action("something")
           yield
@@ -143,7 +143,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [ActionPlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ ActionPlugin ]) do |w|
           w.step :test_action, my_plugin: true
         end
       end
@@ -163,8 +163,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module EnqueuePlugin
         extend self
-        def keyword = :enqueuer
-        def validate(input) = input
+        def keyword; :enqueuer; end
+        def validate(input); input; end
         def around_step(context, &block)
           # Enqueue a delayed retry and record that we called it
           EnqueuePluginJob.enqueue_called = true
@@ -174,7 +174,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [EnqueuePlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ EnqueuePlugin ]) do |w|
           w.step :will_enqueue, enqueuer: true
         end
       end
@@ -197,15 +197,15 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module HaltPlugin
         extend self
-        def keyword = :halter
-        def validate(input) = input
+        def keyword; :halter; end
+        def validate(input); input; end
         def around_step(context, &block)
           context.halt_workflow!
         end
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [HaltPlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ HaltPlugin ]) do |w|
           w.step :will_halt, halter: true
           w.step :never_reached
         end
@@ -236,8 +236,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module RepeatPlugin
         extend self
-        def keyword = :repeater
-        def validate(input) = input
+        def keyword; :repeater; end
+        def validate(input); input; end
         def around_step(context, &block)
           RepeatPluginJob.call_count += 1
           if RepeatPluginJob.call_count < 3
@@ -249,7 +249,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [RepeatPlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ RepeatPlugin ]) do |w|
           w.step :will_repeat, repeater: true
         end
       end
@@ -272,8 +272,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module ResolverPlugin
         extend self
-        def keyword = :resolver
-        def validate(input) = input
+        def keyword; :resolver; end
+        def validate(input); input; end
         def around_step(context, &block)
           ResolveMethodJob.resolved_method = context.resolve_method(:my_method)
           yield
@@ -281,7 +281,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [ResolverPlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ ResolverPlugin ]) do |w|
           w.step :test_resolve, resolver: true
         end
       end
@@ -303,8 +303,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module MissingPlugin
         extend self
-        def keyword = :missing
-        def validate(input) = input
+        def keyword; :missing; end
+        def validate(input); input; end
         def around_step(context, &block)
           begin
             context.resolve_method(:nonexistent_method)
@@ -316,7 +316,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [MissingPlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ MissingPlugin ]) do |w|
           w.step :test_missing, missing: true
         end
       end
@@ -337,8 +337,8 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
 
       module GetPlugin
         extend self
-        def keyword = :getter
-        def validate(input) = input
+        def keyword; :getter; end
+        def validate(input); input; end
         def around_step(context, &block)
           context.set(test_key: "test_value")
           PluginGetJob.got_value = context.get(:test_key)
@@ -347,7 +347,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       end
 
       def perform
-        execute_workflow(unique_by: job_id, with: [GetPlugin]) do |w|
+        execute_workflow(unique_by: job_id, with: [ GetPlugin ]) do |w|
           w.step :do_get, getter: true
         end
       end
@@ -356,6 +356,6 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     end
 
     PluginGetJob.perform_now
-    assert_equal ["test_value"], PluginGetJob.got_value
+    assert_equal [ "test_value" ], PluginGetJob.got_value
   end
 end
