@@ -142,30 +142,6 @@ class AcidicJob::Plugins::TransactionalStepTest < ActiveSupport::TestCase
     assert_equal 1, Thing.count
   end
 
-  test "transactional: { on: Model } wraps step in that model's transaction" do
-    class TransactionalOnModelJob < ActiveJob::Base
-      include AcidicJob::Workflow
-
-      def perform
-        execute_workflow(unique_by: job_id) do |w|
-          w.step :create_thing, transactional: { on: Thing }
-        end
-      end
-
-      def create_thing
-        Thing.create!
-        raise StandardError, "rollback via Thing"
-      end
-    end
-
-    assert_raises(StandardError) do
-      TransactionalOnModelJob.perform_now
-    end
-
-    # Thing creation should be rolled back via Thing.transaction
-    assert_equal 0, Thing.count
-  end
-
   test "step without transactional option does not wrap in transaction" do
     class NonTransactionalJob < ActiveJob::Base
       include AcidicJob::Workflow

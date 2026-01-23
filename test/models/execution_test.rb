@@ -193,7 +193,7 @@ class AcidicJob::ExecutionTest < ActiveSupport::TestCase
   end
 
   test "clear_finished_in_batches accepts custom finished_before parameter" do
-    old_execution = create_execution(
+    create_execution(
       recover_to: AcidicJob::FINISHED_RECOVERY_POINT,
       last_run_at: 10.days.ago
     )
