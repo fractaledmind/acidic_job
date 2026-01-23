@@ -7,11 +7,29 @@ SimpleCov.configure do
   enable_coverage :branch
   primary_coverage :branch
 
+  # Enable nocov comments to exclude lines from coverage
+  nocov_token "nocov"
+
+  # Use database name in command_name for proper merging across database runs
+  command_name "#{ENV.fetch('TARGET_DB', 'sqlite')}-tests"
+
   # Focus on the gem's code, not the test dummy app or other non-gem files
   add_filter "/test/"
   add_filter "/gemfiles/"
   add_filter "/.github/"
   add_filter "/bin/"
+
+  # Ignore gem scaffolding base classes (inherited by users, contain no logic)
+  add_filter %r{app/mailers/acidic_job/application_mailer\.rb}
+  add_filter %r{app/jobs/acidic_job/application_job\.rb}
+  add_filter %r{app/controllers/acidic_job/application_controller\.rb}
+
+  # Ignore trivial files
+  add_filter "version.rb"
+  add_filter "Rakefile"
+
+  # Ignore test utility module (testing test utilities is meta)
+  add_filter "testing.rb"
 
   # Group the gem's code
   add_group "Library", "lib/"
@@ -31,8 +49,15 @@ SimpleCov.configure do
 
   # Minimum coverage thresholds - fail CI if coverage drops below these
   # Only enforce when running the full test suite (not during db:prepare, etc.)
+  #
+  # Rationale for thresholds:
+  # - 95% line / 80% branch overall: High bar to catch regressions while allowing
+  #   some leeway for legitimately untestable code (marked with :nocov:)
+  # - 80% line per-file: Ensures no single file is significantly under-tested
+  # - 0% branch per-file: Branch coverage varies widely by file complexity;
+  #   enforcing at the global level is sufficient
   if ENV["COVERAGE_CHECK"]
-    minimum_coverage line: 70, branch: 40
-    minimum_coverage_by_file line: 0, branch: 0
+    minimum_coverage line: 95, branch: 80
+    minimum_coverage_by_file line: 80, branch: 0
   end
 end

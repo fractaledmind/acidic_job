@@ -21,6 +21,7 @@ module AcidicJob
           AcidicJob::Value.upsert_all(records, unique_by: [ :execution_id, :key ])
         when :mysql2, :mysql, :trilogy
           AcidicJob::Value.upsert_all(records)
+        # :nocov:
         else
           # Fallback for other adapters - try with unique_by first, fall back without
           begin
@@ -32,6 +33,7 @@ module AcidicJob
               raise
             end
           end
+          # :nocov:
         end
       end
     end

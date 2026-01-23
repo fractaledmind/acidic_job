@@ -154,4 +154,80 @@ class AcidicJob::ErrorsTest < ActiveJob::TestCase
       AcidicJob::InvalidMethodError.new("test", "test")
     end
   end
+
+  # ============================================
+  # Error message tests (to exercise #message methods)
+  # ============================================
+
+  # Helper to create an anonymous module plugin for testing error messages.
+  # Plugins must respond to `keyword` to be valid.
+  def create_test_plugin(keyword: :test)
+    Module.new do
+      extend self
+      define_method(:keyword) { keyword }
+    end
+  end
+
+  # Helper to create a named class instance for testing error messages.
+  # Used to verify error messages include the class name.
+  def create_named_plugin_instance(name)
+    plugin_class = Class.new do
+      define_singleton_method(:name) { name }
+    end
+    plugin_class.new
+  end
+
+  test "SucceededStepError message includes step name" do
+    error = AcidicJob::SucceededStepError.new("my_step")
+    assert_match(/my_step/, error.message)
+    assert_match(/already recorded.*succeeded/i, error.message)
+  end
+
+  test "InvalidMethodError message includes step name" do
+    error = AcidicJob::InvalidMethodError.new("bad_step")
+    assert_match(/bad_step/, error.message)
+    assert_match(/cannot expect arguments/i, error.message)
+  end
+
+  test "DoublePluginCallError takes plugin and step arguments" do
+    error = AcidicJob::DoublePluginCallError.new(AcidicJob::Plugins::TransactionalStep, "my_step")
+    assert_match(/TransactionalStep/, error.message)
+    assert_match(/my_step/, error.message)
+    assert_match(/multiple times/i, error.message)
+  end
+
+  test "DoublePluginCallError works with module plugin" do
+    plugin = create_test_plugin(keyword: :test)
+
+    error = AcidicJob::DoublePluginCallError.new(plugin, "step_name")
+    assert_match(/step_name/, error.message)
+  end
+
+  test "DoublePluginCallError works with class instance plugin" do
+    plugin = create_named_plugin_instance("MyPluginClass")
+
+    error = AcidicJob::DoublePluginCallError.new(plugin, "step_name")
+    assert_match(/MyPluginClass/, error.message)
+  end
+
+  test "MissingPluginCallError takes plugin and step arguments" do
+    error = AcidicJob::MissingPluginCallError.new(AcidicJob::Plugins::TransactionalStep, "my_step")
+    assert_match(/TransactionalStep/, error.message)
+    assert_match(/my_step/, error.message)
+    assert_match(/failed to call/i, error.message)
+  end
+
+  test "MissingPluginCallError works with module plugin" do
+    plugin = create_test_plugin(keyword: :another)
+
+    error = AcidicJob::MissingPluginCallError.new(plugin, "some_step")
+    assert_match(/some_step/, error.message)
+  end
+
+  test "MissingPluginCallError works with class instance plugin" do
+    plugin = create_named_plugin_instance("InstancePlugin")
+
+    error = AcidicJob::MissingPluginCallError.new(plugin, "step")
+    assert_match(/InstancePlugin/, error.message)
+  end
 end
