@@ -13,6 +13,18 @@ SimpleCov.configure do
   add_filter "/.github/"
   add_filter "/bin/"
 
+  # Ignore dummy app scaffolding (not part of the gem)
+  add_filter "application_mailer.rb"
+  add_filter "application_job.rb"
+  add_filter "application_controller.rb"
+
+  # Ignore trivial files
+  add_filter "version.rb"
+  add_filter "Rakefile"
+
+  # Ignore test utility module (testing test utilities is meta)
+  add_filter "testing.rb"
+
   # Group the gem's code
   add_group "Library", "lib/"
   add_group "App", "app/"
