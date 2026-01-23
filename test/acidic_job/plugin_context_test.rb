@@ -30,6 +30,11 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
     TestCapture.clear!
   end
 
+  teardown do
+    # Ensure cleanup even if a test fails mid-execution
+    TestCapture.clear!
+  end
+
   test "PluginContext#set delegates to context" do
     class PluginSetJob < ActiveJob::Base
       include AcidicJob::Workflow

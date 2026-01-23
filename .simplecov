@@ -49,6 +49,13 @@ SimpleCov.configure do
 
   # Minimum coverage thresholds - fail CI if coverage drops below these
   # Only enforce when running the full test suite (not during db:prepare, etc.)
+  #
+  # Rationale for thresholds:
+  # - 95% line / 80% branch overall: High bar to catch regressions while allowing
+  #   some leeway for legitimately untestable code (marked with :nocov:)
+  # - 80% line per-file: Ensures no single file is significantly under-tested
+  # - 0% branch per-file: Branch coverage varies widely by file complexity;
+  #   enforcing at the global level is sufficient
   if ENV["COVERAGE_CHECK"]
     minimum_coverage line: 95, branch: 80
     minimum_coverage_by_file line: 80, branch: 0
