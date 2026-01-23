@@ -7,6 +7,12 @@ SimpleCov.configure do
   enable_coverage :branch
   primary_coverage :branch
 
+  # Enable nocov comments to exclude lines from coverage
+  nocov_token "nocov"
+
+  # Use database name in command_name for proper merging across database runs
+  command_name "#{ENV.fetch('TARGET_DB', 'sqlite')}-tests"
+
   # Focus on the gem's code, not the test dummy app or other non-gem files
   add_filter "/test/"
   add_filter "/gemfiles/"
