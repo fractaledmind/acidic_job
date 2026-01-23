@@ -3,6 +3,19 @@
 require "test_helper"
 
 class AcidicJob::PluginContextTest < ActiveJob::TestCase
+  # Reset all cattr_accessor values between tests to ensure isolation
+  setup do
+    # These classes are defined inside tests but persist at top-level
+    CurrentStepJob.captured_step = nil if defined?(CurrentStepJob)
+    EntriesJob.found_entries = nil if defined?(EntriesJob)
+    PluginActionJob.action_result = nil if defined?(PluginActionJob)
+    EnqueuePluginJob.enqueue_called = false if defined?(EnqueuePluginJob)
+    RepeatPluginJob.call_count = 0 if defined?(RepeatPluginJob)
+    ResolveMethodJob.resolved_method = nil if defined?(ResolveMethodJob)
+    PluginContextMissingMethodJob.raised_error = nil if defined?(PluginContextMissingMethodJob)
+    PluginGetJob.got_value = nil if defined?(PluginGetJob)
+  end
+
   test "PluginContext#set delegates to context" do
     class PluginSetJob < ActiveJob::Base
       include AcidicJob::Workflow
@@ -296,7 +309,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
   end
 
   test "PluginContext#resolve_method raises UndefinedMethodError for missing method" do
-    class MissingMethodJob < ActiveJob::Base
+    class PluginContextMissingMethodJob < ActiveJob::Base
       include AcidicJob::Workflow
 
       cattr_accessor :raised_error
@@ -309,7 +322,7 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
           begin
             context.resolve_method(:nonexistent_method)
           rescue AcidicJob::UndefinedMethodError => e
-            MissingMethodJob.raised_error = e
+            PluginContextMissingMethodJob.raised_error = e
           end
           yield
         end
@@ -324,9 +337,9 @@ class AcidicJob::PluginContextTest < ActiveJob::TestCase
       def test_missing; end
     end
 
-    MissingMethodJob.perform_now
-    assert_kind_of AcidicJob::UndefinedMethodError, MissingMethodJob.raised_error
-    assert_match(/nonexistent_method/, MissingMethodJob.raised_error.message)
+    PluginContextMissingMethodJob.perform_now
+    assert_kind_of AcidicJob::UndefinedMethodError, PluginContextMissingMethodJob.raised_error
+    assert_match(/nonexistent_method/, PluginContextMissingMethodJob.raised_error.message)
   end
 
   test "PluginContext#get delegates to context" do

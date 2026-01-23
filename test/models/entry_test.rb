@@ -84,8 +84,9 @@ class AcidicJob::EntryTest < ActiveSupport::TestCase
   test "most_recent returns the most recently created entry" do
     execution = create_execution
 
-    create_entry(execution, step: "step_1", action: "started")
-    sleep 0.01  # Ensure different created_at
+    travel_to 1.minute.ago do
+      create_entry(execution, step: "step_1", action: "started")
+    end
     second = create_entry(execution, step: "step_1", action: "succeeded")
 
     result = AcidicJob::Entry.most_recent
