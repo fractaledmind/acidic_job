@@ -38,7 +38,7 @@ module AcidicJob
           skip_if = context.definition
 
           if (check_method = context.resolve_method(skip_if))
-            raise InvalidMethodError.new(delay_check) unless check_method.arity.zero?
+            raise InvalidMethodError.new(skip_if) unless check_method.arity.zero?
 
             if check_method.call
               context.record!(
