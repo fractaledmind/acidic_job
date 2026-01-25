@@ -21,7 +21,7 @@ module AcidicJob
     end
 
     def fetch(key, default = nil, &block)
-      @context.fetch(key, default = nil, &block)
+      @context.fetch(key, default, &block)
     end
 
     def definition
