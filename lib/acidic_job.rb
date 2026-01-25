@@ -24,6 +24,7 @@ module AcidicJob
   mattr_accessor :connects_to
   mattr_accessor :plugins, default: [ Plugins::TransactionalStep ]
   mattr_accessor :clear_finished_executions_after, default: 1.week
+  mattr_accessor :initialize_workflow_max_retries, default: 3
 
   def self.deprecator
     @deprecator ||= ActiveSupport::Deprecation.new("1.1", "AcidicJob")

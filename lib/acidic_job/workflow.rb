@@ -29,58 +29,13 @@ module AcidicJob
       end
 
       AcidicJob.instrument(:initialize_workflow, definition: workflow_definition) do
-        transaction_args = case ::ActiveRecord::Base.connection.adapter_name.downcase.to_sym
-          # SQLite doesn't support `serializable` transactions
-        when :sqlite
-            {}
-        else
-            { isolation: :serializable }
-        end
         idempotency_key = Digest::SHA256.hexdigest(JSON.generate([ self.class.name, unique_by ], strict: true))
 
-        @__acidic_job_execution__ = ::ActiveRecord::Base.transaction(**transaction_args) do
-          record = Execution.find_by(idempotency_key: idempotency_key)
-
-          if record.present?
-            # Programs enqueuing multiple jobs with different parameters but the
-            # same idempotency key is a bug.
-            if record.raw_arguments != serialized_job["arguments"]
-              raise ArgumentMismatchError.new(serialized_job["arguments"], record.raw_arguments)
-            end
-
-            if record.definition != workflow_definition
-              raise DefinitionMismatchError.new(workflow_definition, record.definition)
-            end
-
-            # Only acquire a lock if the key is unlocked or its lock has expired
-            # because the original job was long enough ago.
-            # raise "LockedIdempotencyKey" if record.locked_at > Time.current - 2.seconds
-
-            record.update!(
-              last_run_at: Time.current
-            )
-          else
-            starting_point = if workflow_definition.key?("steps")
-              workflow_definition["steps"].keys.first
-            else
-              AcidicJob.deprecator.warn(
-                "Workflow definitions without a 'steps' key are deprecated and will be removed in AcidicJob 1.1. " \
-                "Please update your workflow to use the new format.",
-                caller_locations(1)
-              )
-              workflow_definition.keys.first
-            end
-
-            record = Execution.create!(
-              idempotency_key: idempotency_key,
-              serialized_job: serialized_job,
-              definition: workflow_definition,
-              recover_to: starting_point
-            )
-          end
-
-          record
-        end
+        @__acidic_job_execution__ = find_or_create_execution(
+          idempotency_key: idempotency_key,
+          serialized_job: serialized_job,
+          workflow_definition: workflow_definition
+        )
       end
       @__acidic_job_context__ ||= Context.new(@__acidic_job_execution__)
 
@@ -236,6 +191,74 @@ module AcidicJob
       end
 
       catch(:repeat) { plugin_pipeline_callable.call }
+    end
+
+    private def find_or_create_execution(idempotency_key:, serialized_job:, workflow_definition:)
+      retries = 0
+      max_retries = AcidicJob.initialize_workflow_max_retries
+
+      transaction_args = case ::ActiveRecord::Base.connection.adapter_name.downcase.to_sym
+        # SQLite doesn't support `serializable` transactions
+      when :sqlite
+          {}
+      else
+          { isolation: :serializable }
+      end
+
+      begin
+        ::ActiveRecord::Base.transaction(**transaction_args) do
+          record = Execution.find_by(idempotency_key: idempotency_key)
+
+          if record.present?
+            # Programs enqueuing multiple jobs with different parameters but the
+            # same idempotency key is a bug.
+            if record.raw_arguments != serialized_job["arguments"]
+              raise ArgumentMismatchError.new(serialized_job["arguments"], record.raw_arguments)
+            end
+
+            if record.definition != workflow_definition
+              raise DefinitionMismatchError.new(workflow_definition, record.definition)
+            end
+
+            # Only acquire a lock if the key is unlocked or its lock has expired
+            # because the original job was long enough ago.
+            # raise "LockedIdempotencyKey" if record.locked_at > Time.current - 2.seconds
+
+            record.update!(
+              last_run_at: Time.current
+            )
+          else
+            starting_point = if workflow_definition.key?("steps")
+              workflow_definition["steps"].keys.first
+            else
+              AcidicJob.deprecator.warn(
+                "Workflow definitions without a 'steps' key are deprecated and will be removed in AcidicJob 1.1. " \
+                "Please update your workflow to use the new format.",
+                caller_locations(1)
+              )
+              workflow_definition.keys.first
+            end
+
+            record = Execution.create!(
+              idempotency_key: idempotency_key,
+              serialized_job: serialized_job,
+              definition: workflow_definition,
+              recover_to: starting_point
+            )
+          end
+
+          record
+        end
+      rescue ActiveRecord::SerializationFailure, ActiveRecord::Deadlocked
+        retries += 1
+        if retries <= max_retries
+          # Exponential backoff: 50ms, 100ms, 200ms, etc.
+          sleep(0.05 * (2 ** (retries - 1)))
+          retry
+        else
+          raise InitializeWorkflowRetriesExhaustedError.new(retries)
+        end
+      end
     end
   end
 end
