@@ -79,7 +79,10 @@ module AcidicJob
     end
 
     def halt_step!
-      # TODO add deprecation warning
+      AcidicJob.deprecator.warn(
+        "halt_step! is deprecated and will be removed in AcidicJob 1.1. Use halt_workflow! instead.",
+        caller_locations(1)
+      )
       halt_workflow!
     end
 
@@ -228,7 +231,11 @@ module AcidicJob
             starting_point = if workflow_definition.key?("steps")
               workflow_definition["steps"].keys.first
             else
-              # TODO: add deprecation warning
+              AcidicJob.deprecator.warn(
+                "Workflow definitions without a 'steps' key are deprecated and will be removed in AcidicJob 1.1. " \
+                "Please update your workflow to use the new format.",
+                caller_locations(1)
+              )
               workflow_definition.keys.first
             end
 

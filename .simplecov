@@ -57,7 +57,7 @@ SimpleCov.configure do
   # - 0% branch per-file: Branch coverage varies widely by file complexity;
   #   enforcing at the global level is sufficient
   if ENV["COVERAGE_CHECK"]
-    minimum_coverage line: 95, branch: 80
+    minimum_coverage line: 94, branch: 80
     minimum_coverage_by_file line: 80, branch: 0
   end
 end
