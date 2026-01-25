@@ -201,14 +201,8 @@ class AcidicJob::WorkflowErrorsTest < ActiveJob::TestCase
   end
 
   test "retries on ActiveRecord::SerializationFailure and succeeds" do
-    attempt_count = 0
-
     class SerializationRetryJob < ActiveJob::Base
       include AcidicJob::Workflow
-
-      cattr_accessor :attempt_count, default: 0
-      cattr_accessor :fail_count, default: 2
-
       def perform
         execute_workflow(unique_by: "serialization-retry-test") do |w|
           w.step :step_1
