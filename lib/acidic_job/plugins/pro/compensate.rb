@@ -8,7 +8,7 @@ module AcidicJob
 
         class InvalidMethodError < AcidicJob::Error
           def message
-            "skip_if: must be a 0-arity method"
+            "compensate: must be a 0-arity method"
           end
         end
 
@@ -18,7 +18,7 @@ module AcidicJob
           end
 
           def message
-            "skip_if: undefined method: #{@method.inspect}"
+            "compensate: undefined method: #{@method.inspect}"
           end
         end
 
@@ -74,7 +74,7 @@ module AcidicJob
             )
             method.call
           else
-            raise UndefinedMethodError.new(skip_if)
+            raise UndefinedMethodError.new(compensation)
           end
         end
       end
