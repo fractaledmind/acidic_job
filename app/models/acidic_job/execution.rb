@@ -45,11 +45,14 @@ module AcidicJob
 
     def finished?
       if recover_to.to_s == "FINISHED"
-        AcidicJob.deprecator.warn(
-          "The 'FINISHED' recovery point value is deprecated and will be removed in AcidicJob 1.1. " \
-          "Executions should use the new '#{FINISHED_RECOVERY_POINT}' value.",
-          caller_locations(1)
-        )
+        unless defined?(@finished_deprecation_warned) && @finished_deprecation_warned
+          AcidicJob.deprecator.warn(
+            "The 'FINISHED' recovery point value is deprecated and will be removed in AcidicJob 1.1. " \
+            "Executions should use the new '#{FINISHED_RECOVERY_POINT}' value.",
+            caller_locations(1)
+          )
+          @finished_deprecation_warned = true
+        end
         return true
       end
 
