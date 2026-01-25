@@ -199,4 +199,130 @@ class AcidicJob::WorkflowErrorsTest < ActiveJob::TestCase
     assert_match(/does not reference this step/i, error.message)
     assert_match(/nonexistent_step/, error.message)
   end
+
+  test "retries on ActiveRecord::SerializationFailure and succeeds" do
+    attempt_count = 0
+
+    class SerializationRetryJob < ActiveJob::Base
+      include AcidicJob::Workflow
+
+      cattr_accessor :attempt_count, default: 0
+      cattr_accessor :fail_count, default: 2
+
+      def perform
+        execute_workflow(unique_by: "serialization-retry-test") do |w|
+          w.step :step_1
+        end
+      end
+
+      def step_1; end
+    end
+
+    # Mock the transaction to fail twice then succeed
+    original_transaction = ActiveRecord::Base.method(:transaction)
+    call_count = 0
+
+    ActiveRecord::Base.stub(:transaction, ->(**args, &block) {
+      call_count += 1
+      if call_count <= 2
+        raise ActiveRecord::SerializationFailure, "Serialization failure"
+      end
+      original_transaction.call(**args, &block)
+    }) do
+      SerializationRetryJob.perform_now
+    end
+
+    assert_equal 1, AcidicJob::Execution.count
+    assert AcidicJob::Execution.first.finished?
+  end
+
+  test "raises InitializeWorkflowRetriesExhaustedError after max retries" do
+    class SerializationExhaustedJob < ActiveJob::Base
+      include AcidicJob::Workflow
+
+      def perform
+        execute_workflow(unique_by: "serialization-exhausted-test") do |w|
+          w.step :step_1
+        end
+      end
+
+      def step_1; end
+    end
+
+    # Mock the transaction to always fail
+    ActiveRecord::Base.stub(:transaction, ->(**args, &block) {
+      raise ActiveRecord::SerializationFailure, "Serialization failure"
+    }) do
+      error = assert_raises(AcidicJob::InitializeWorkflowRetriesExhaustedError) do
+        SerializationExhaustedJob.perform_now
+      end
+      assert_match(/failed after.*retries/i, error.message)
+    end
+  end
+
+  test "retries on ActiveRecord::Deadlocked and succeeds" do
+    class DeadlockRetryJob < ActiveJob::Base
+      include AcidicJob::Workflow
+
+      def perform
+        execute_workflow(unique_by: "deadlock-retry-test") do |w|
+          w.step :step_1
+        end
+      end
+
+      def step_1; end
+    end
+
+    # Mock the transaction to fail once with deadlock then succeed
+    original_transaction = ActiveRecord::Base.method(:transaction)
+    call_count = 0
+
+    ActiveRecord::Base.stub(:transaction, ->(**args, &block) {
+      call_count += 1
+      if call_count == 1
+        raise ActiveRecord::Deadlocked, "Deadlock detected"
+      end
+      original_transaction.call(**args, &block)
+    }) do
+      DeadlockRetryJob.perform_now
+    end
+
+    assert_equal 1, AcidicJob::Execution.count
+    assert AcidicJob::Execution.first.finished?
+  end
+
+  test "respects configurable max retries" do
+    original_max_retries = AcidicJob.initialize_workflow_max_retries
+
+    class ConfigurableRetryJob < ActiveJob::Base
+      include AcidicJob::Workflow
+
+      def perform
+        execute_workflow(unique_by: "configurable-retry-test") do |w|
+          w.step :step_1
+        end
+      end
+
+      def step_1; end
+    end
+
+    begin
+      AcidicJob.initialize_workflow_max_retries = 1
+
+      call_count = 0
+      ActiveRecord::Base.stub(:transaction, ->(**args, &block) {
+        call_count += 1
+        raise ActiveRecord::SerializationFailure, "Serialization failure"
+      }) do
+        assert_raises(AcidicJob::InitializeWorkflowRetriesExhaustedError) do
+          ConfigurableRetryJob.perform_now
+        end
+      end
+
+      # With max_retries=1, we should have 1 initial attempt + 1 retry = 2 calls
+      assert_equal 2, call_count
+    ensure
+      AcidicJob.initialize_workflow_max_retries = original_max_retries
+    end
+  end
 end
