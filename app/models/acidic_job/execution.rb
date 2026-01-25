@@ -44,15 +44,30 @@ module AcidicJob
     end
 
     def finished?
-      recover_to.to_s == FINISHED_RECOVERY_POINT ||
-        recover_to.to_s == "FINISHED" # old value pre-1.0, remove at v1.0
+      if recover_to.to_s == "FINISHED"
+        unless defined?(@finished_deprecation_warned) && @finished_deprecation_warned
+          AcidicJob.deprecator.warn(
+            "The 'FINISHED' recovery point value is deprecated and will be removed in AcidicJob 1.1. " \
+            "Executions should use the new '#{FINISHED_RECOVERY_POINT}' value.",
+            caller_locations(1)
+          )
+          @finished_deprecation_warned = true
+        end
+        return true
+      end
+
+      recover_to.to_s == FINISHED_RECOVERY_POINT
     end
 
     def defined?(step)
       if definition.key?("steps")
         definition["steps"].key?(step)
       else
-        # TODO: add deprecation warning
+        AcidicJob.deprecator.warn(
+          "Workflow definitions without a 'steps' key are deprecated and will be removed in AcidicJob 1.1. " \
+          "Please update your workflow to use the new format.",
+          caller_locations(1)
+        )
         definition.key?(step)
       end
     end
@@ -61,7 +76,11 @@ module AcidicJob
       if definition.key?("steps")
         definition["steps"].fetch(step)
       else
-        # TODO: add deprecation warning
+        AcidicJob.deprecator.warn(
+          "Workflow definitions without a 'steps' key are deprecated and will be removed in AcidicJob 1.1. " \
+          "Please update your workflow to use the new format.",
+          caller_locations(1)
+        )
         definition.fetch(step)
       end
     end

@@ -119,5 +119,15 @@ module AcidicJob
       "plugin `#{@plugin_name}` failed to call step: #{@step.inspect}"
     end
   end
+
+  class InitializeWorkflowRetriesExhaustedError < Error
+    def initialize(retries)
+      @retries = retries
+    end
+
+    def message
+      "serializable transaction failed after #{@retries} retries"
+    end
+  end
   # rubocop:enable Lint/MissingSuper
 end

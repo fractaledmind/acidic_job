@@ -20,6 +20,10 @@ module AcidicJob
       def serialize?(argument)
         defined?(::ActiveRecord) && argument.respond_to?(:new_record?) && argument.new_record?
       end
+
+      def klass
+        ::ActiveRecord::Base
+      end
     end
   end
 end

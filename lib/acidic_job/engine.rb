@@ -6,11 +6,13 @@ module AcidicJob
 
     config.acidic_job = ActiveSupport::OrderedOptions.new
 
+    # :nocov:
     initializer "acidic_job.config" do
       config.acidic_job.each do |name, value|
         AcidicJob.public_send("#{name}=", value)
       end
     end
+    # :nocov:
 
     initializer "acidic_job.logger" do
       ActiveSupport.on_load :acidic_job do
@@ -26,14 +28,22 @@ module AcidicJob
         require_relative "serializers/exception_serializer"
         require_relative "serializers/new_record_serializer"
         require_relative "serializers/job_serializer"
-        require_relative "serializers/range_serializer"
 
-        ActiveJob::Serializers.add_serializers(
-          Serializers::ExceptionSerializer,
-          Serializers::NewRecordSerializer,
-          Serializers::JobSerializer,
-          Serializers::RangeSerializer
-        )
+        serializers = [
+          Serializers::ExceptionSerializer.instance,
+          Serializers::NewRecordSerializer.instance,
+          Serializers::JobSerializer.instance
+        ]
+
+        # :nocov:
+        # Rails 7.1+ includes a RangeSerializer, so only add ours for older versions
+        unless defined?(ActiveJob::Serializers::RangeSerializer)
+          require_relative "serializers/range_serializer"
+          serializers << Serializers::RangeSerializer.instance
+        end
+        # :nocov:
+
+        ActiveJob::Serializers.add_serializers(*serializers)
       end
     end
 

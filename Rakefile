@@ -20,12 +20,21 @@ def run_test_with_database(database, test_files = nil)
   setup_database(database)
 
   # Ensure schema is up to date by running the db:sync task
-  sh("TARGET_DB=#{database} bin/rails db:sync")
+  # Explicitly unset COVERAGE_CHECK to avoid minimum coverage checks during db operations
+  sh({ "COVERAGE_CHECK" => nil }, "TARGET_DB=#{database} bin/rails db:sync")
+
+  # Build environment string, including COVERAGE if set.
+  # NOTE: The *presence* of COVERAGE (any non-empty value, including "0" or "false") enables coverage.
+  # COVERAGE_CHECK enables minimum coverage thresholds (only for test runs, not db:sync).
+  # Similarly, any non-empty COVERAGE_CHECK value enables minimum coverage checks.
+  env_vars = "TARGET_DB=#{database}"
+  env_vars += " COVERAGE=#{ENV['COVERAGE']}" if ENV["COVERAGE"]
+  env_vars += " COVERAGE_CHECK=#{ENV['COVERAGE_CHECK']}" if ENV["COVERAGE_CHECK"]
 
   if test_files
-    sh("TARGET_DB=#{database} bin/rails test #{test_files}")
+    sh("#{env_vars} bin/rails test #{test_files}")
   else
-    sh("TARGET_DB=#{database} bin/rails test")
+    sh("#{env_vars} bin/rails test")
   end
 end
 

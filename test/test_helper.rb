@@ -1,6 +1,14 @@
 # Configure Rails Environment
 ENV["RAILS_ENV"] = "test"
 
+# Coverage mode: COVERAGE=1 bin/rails test
+# - SimpleCov is started in bin/rails before loading Rails or the gem
+# - Tests run serially for accurate coverage tracking
+#
+# Normal mode: bin/rails test
+# - No coverage overhead
+# - Tests run in parallel for speed
+
 require_relative "../test/dummy/config/environment"
 
 puts ""
@@ -48,8 +56,11 @@ class DiscardableError < StandardError; end
 class BreakingError < StandardError; end
 
 class ActiveSupport::TestCase
-  # Run tests in parallel with specified workers
-  parallelize(workers: :number_of_processors)
+  # Run tests in parallel for speed, but disable parallelization entirely
+  # when collecting coverage to ensure accurate results
+  unless ENV["COVERAGE"]
+    parallelize(workers: :number_of_processors)
+  end
 
   include ChaoticJob::Helpers
 
