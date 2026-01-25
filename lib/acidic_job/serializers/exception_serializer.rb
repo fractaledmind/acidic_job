@@ -10,13 +10,13 @@ module AcidicJob
       def serialize(exception)
         yaml_str = exception.to_yaml
         deflated_binary = Zlib::Deflate.deflate(yaml_str)
-        deflated_hex = deflated_binary.unpack("H*")
+        deflated_hex = deflated_binary.unpack1("H*")
 
         super("deflated_yaml" => deflated_hex)
       end
 
       def deserialize(hash)
-        deflated_binary = hash["deflated_yaml"].pack("H*")
+        deflated_binary = [hash["deflated_yaml"]].pack("H*")
         yaml_str = Zlib::Inflate.inflate(deflated_binary)
 
         if YAML.respond_to?(:unsafe_load)
