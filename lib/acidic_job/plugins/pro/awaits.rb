@@ -19,8 +19,6 @@ module AcidicJob
         end
 
         def around_step(context) # &block
-          p '~'*100
-          p Value.all.pluck(:key, :value)
           awaited_jobs = context.definition
 
           if context.entries_for_action(:awaiting).empty?
