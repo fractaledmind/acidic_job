@@ -25,6 +25,10 @@ module AcidicJob
   mattr_accessor :plugins, default: [ Plugins::TransactionalStep ]
   mattr_accessor :clear_finished_executions_after, default: 1.week
 
+  def self.deprecator
+    @deprecator ||= ActiveSupport::Deprecation.new("1.1", "AcidicJob")
+  end
+
   def instrument(channel, **options, &block)
     ActiveSupport::Notifications.instrument("#{channel}.acidic_job", **options.deep_symbolize_keys, &block)
   end
