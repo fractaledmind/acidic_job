@@ -32,6 +32,10 @@ module AcidicJob
       @step_definition["does"]
     end
 
+    def execution_id
+      @execution.id
+    end
+
     def inactive?
       definition == PLUGIN_INACTIVE
     end
