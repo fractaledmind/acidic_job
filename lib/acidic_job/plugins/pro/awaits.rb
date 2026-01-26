@@ -73,12 +73,16 @@ module AcidicJob
             # Store the list of all job IDs for later reference
             context.set(job_ids: job_ids)
 
+            # Serialize plugin names so they can be restored for after_perform hooks
+            plugin_names = context.plugins.map { |p| p.name }
+
             # Store each awaited job with the info needed for the after_perform callback
             # to know which parent execution to re-enqueue when all jobs complete
             awaited_jobs.each do |job|
               context.set(job.job_id => {
                 "execution_id" => context.execution_id,
                 "job_ids" => job_ids,
+                "plugins" => plugin_names,
                 "completed" => false
               })
             end

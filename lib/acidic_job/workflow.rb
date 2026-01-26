@@ -106,8 +106,19 @@ module AcidicJob
 
     def self.included(base)
       base.after_perform do |job|
-        # Call after_perform hooks on all registered plugins that define one
-        AcidicJob.plugins.each do |plugin|
+        # Check if this job has associated plugin data (e.g., from awaits)
+        # Plugins store data keyed by job_id with a "plugins" array of plugin names
+        value_record = Value.find_by(key: job.job_id)
+
+        next unless value_record
+        next unless value_record.value.is_a?(Hash) && value_record.value["plugins"]
+
+        # Filter global plugins to only those used by the parent job
+        parent_plugin_names = value_record.value["plugins"]
+        plugins = AcidicJob.plugins.select { |plugin| parent_plugin_names.include?(plugin.name) }
+
+        # Call after_perform hooks in reverse order (same as around_step)
+        plugins.reverse_each do |plugin|
           next unless plugin.respond_to?(:after_perform)
 
           plugin.after_perform(job)

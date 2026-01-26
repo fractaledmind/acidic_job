@@ -36,6 +36,10 @@ module AcidicJob
       @execution.id
     end
 
+    def plugins
+      @job.instance_variable_get(:@__acidic_job_plugins__) || []
+    end
+
     def inactive?
       definition == PLUGIN_INACTIVE
     end
