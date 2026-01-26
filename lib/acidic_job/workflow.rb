@@ -105,36 +105,14 @@ module AcidicJob
     end
 
     def self.included(base)
-      # base.extend(ClassMethods)
       base.after_perform do |job|
-        # Check if this job was awaited by a parent workflow
-        # The awaits plugin stores: { job_id => { execution_id: X, job_ids: [...] } }
-        awaited_record = Value.find_by(key: job.job_id)
+        # Call after_perform hooks on all registered plugins that define one
+        AcidicJob.plugins.each do |plugin|
+          next unless plugin.respond_to?(:after_perform)
 
-        next unless awaited_record
-
-        # Mark this job as completed
-        awaited_record.update!(value: { **awaited_record.value, "completed" => true })
-
-        # Get the parent execution and all sibling job IDs
-        parent_execution_id = awaited_record.value["execution_id"]
-        sibling_job_ids = awaited_record.value["job_ids"]
-
-        next unless parent_execution_id && sibling_job_ids
-
-        # Check if all sibling jobs are complete
-        sibling_records = Value.where(execution_id: parent_execution_id, key: sibling_job_ids)
-        all_complete = sibling_records.all? { |record| record.value["completed"] == true }
-
-        next unless all_complete
-
-        # All awaited jobs are complete, re-enqueue the parent job
-        parent_execution = Execution.find(parent_execution_id)
-        parent_execution.enqueue_job
+          plugin.after_perform(job)
+        end
       end
-    end
-
-    module ClassMethods
     end
 
     private def take_step(step_definition)
