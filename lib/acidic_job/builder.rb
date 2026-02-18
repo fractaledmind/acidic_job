@@ -22,6 +22,23 @@ module AcidicJob
       @steps
     end
 
+    def context(method_name, fallback:, **kwargs)
+      step = {
+        "does" => method_name.to_s,
+        "type" => "context",
+        "fallback" => fallback.to_s
+      }
+
+      @plugins.each do |plugin|
+        next unless kwargs.key?(plugin.keyword)
+
+        step[plugin.keyword.to_s] = plugin.validate(kwargs[plugin.keyword])
+      end
+
+      @steps << step
+      @steps
+    end
+
     def define_workflow
       # [ { does: "step 1", transactional: true }, { does: "step 2", transactional: false }, ... ]
       @steps << { "does" => FINISHED_RECOVERY_POINT }

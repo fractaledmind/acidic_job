@@ -120,6 +120,8 @@ module AcidicJob
         when REPEAT_STEP
           curr_step
         else
+          resolve_context_step(step_definition, result) if step_definition["type"] == "context"
+
           @__acidic_job_execution__.record!(
             step: curr_step,
             action: :succeeded,
@@ -148,6 +150,38 @@ module AcidicJob
               "Failed to store exception at step #{curr_step} for execution ##{@__acidic_job_execution__.id}: #{e}."
             )
           end
+        end
+      end
+    end
+
+    private def resolve_context_step(step_definition, result)
+      step_name = step_definition.fetch("does")
+
+      if result
+        @__acidic_job_context__[step_name] = result
+      else
+        fallback_name = step_definition.fetch("fallback")
+        begin
+          fallback_method = method(fallback_name)
+        rescue NameError
+          raise UndefinedMethodError.new(fallback_name)
+        end
+
+        fallback_result = fallback_method.call
+
+        case fallback_result
+        when ActiveJob::Base
+          ActiveJob.perform_all_later(fallback_result)
+          halt_workflow!
+        when Array
+          if fallback_result.all? { |j| j.is_a?(ActiveJob::Base) }
+            ActiveJob.perform_all_later(*fallback_result)
+            halt_workflow!
+          else
+            @__acidic_job_context__[step_name] = fallback_result
+          end
+        else
+          @__acidic_job_context__[step_name] = fallback_result
         end
       end
     end
