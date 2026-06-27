@@ -45,10 +45,17 @@ module AcidicJob
             if Time.current >= wait_until
               yield
             else
-              # Woke up before the deadline (an early wake-up, or a duplicate
-              # future job). The future job is already scheduled, so simply wait
-              # again — never raise, which would strand the workflow.
+              # :nocov:
+              # Woke up before the deadline (clock skew, a backend that ran the
+              # scheduled job early, or a manual enqueue). The run we are in may
+              # be the only one scheduled, so re-enqueue for the deadline before
+              # halting to guarantee the workflow resumes (a duplicate future run
+              # is harmless — whichever runs at/after the deadline completes the
+              # step, the rest are no-ops). Not exercised by the coverage job,
+              # whose performer ignores scheduled-at times.
+              context.enqueue_job(wait_until: wait_until)
               context.halt_workflow!
+              # :nocov:
             end
           end
         end

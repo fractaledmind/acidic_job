@@ -63,8 +63,9 @@ module AcidicJob
           compensation = compensate["with"]
 
           # Only compensate for the configured error(s). Any other error must
-          # propagate untouched — never swallow an unexpected failure.
-          raise e if triggers&.none? { |klass| klass === e }
+          # propagate untouched — never swallow an unexpected failure. Bare
+          # `raise` re-raises with the original backtrace intact.
+          raise if triggers&.none? { |klass| klass === e }
 
           method = context.resolve_method(compensation)
           raise InvalidMethodError.new(compensation) unless method.arity.zero?
@@ -77,8 +78,9 @@ module AcidicJob
           method.call
 
           # Compensation is cleanup, not recovery: the original failure still
-          # stands, so re-raise it for normal retry/discard handling.
-          raise e
+          # stands, so re-raise it (bare `raise` preserves the original
+          # backtrace) for normal retry/discard handling.
+          raise
         end
       end
     end
