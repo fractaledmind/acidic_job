@@ -205,10 +205,10 @@ module AcidicJob
       begin
         consequence_method = method(consequence)
       rescue NameError
-        raise UndefinedMethodError.new(consequence)
+        raise UndefinedConsequenceError.new(consequence)
       end
 
-      raise InvalidMethodError.new(consequence) unless consequence_method.arity.zero?
+      raise InvalidConsequenceError.new(consequence) unless consequence_method.arity.zero?
 
       consequence_method.call
     end

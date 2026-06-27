@@ -3,9 +3,11 @@
 require "test_helper"
 
 # `commit:` declares a step's "consequence" — a method run transactionally with
-# the step's completion. The consequence, the `succeeded` entry, and the advance
-# of the recovery cursor all commit in a single transaction, so a projection
-# written by the consequence can never drift from the recorded progression.
+# the step's completion. The consequence and the authoritative `succeeded` entry
+# commit in a single transaction, so a projection written by the consequence can
+# never drift from the recorded progression. (The `recover_to` cursor is advanced
+# separately by the workflow loop; it stays lag-tolerant and is made safe by the
+# `succeeded`-entry guard, so it is intentionally NOT part of this transaction.)
 class AcidicJob::CommitTest < ActiveJob::TestCase
   # ============================================
   # Validation
@@ -41,7 +43,7 @@ class AcidicJob::CommitTest < ActiveJob::TestCase
   end
 
   test "raises when the consequence method is undefined" do
-    assert_raises(AcidicJob::UndefinedMethodError) { UndefinedConsequenceJob.perform_now }
+    assert_raises(AcidicJob::UndefinedConsequenceError) { UndefinedConsequenceJob.perform_now }
   end
 
   class ArityConsequenceJob < ActiveJob::Base
@@ -58,7 +60,7 @@ class AcidicJob::CommitTest < ActiveJob::TestCase
   end
 
   test "raises when the consequence method requires arguments" do
-    assert_raises(AcidicJob::InvalidMethodError) { ArityConsequenceJob.perform_now }
+    assert_raises(AcidicJob::InvalidConsequenceError) { ArityConsequenceJob.perform_now }
   end
 
   # ============================================
@@ -76,13 +78,23 @@ class AcidicJob::CommitTest < ActiveJob::TestCase
     end
 
     # idempotent bodies (Set-backed journal) standing in for external IO
-    def step_one = ChaoticJob.log_to_journal!(:one)
-    def step_two = ChaoticJob.log_to_journal!(:two)
+    def step_one
+      ChaoticJob.log_to_journal!(:one)
+    end
+
+    def step_two
+      ChaoticJob.log_to_journal!(:two)
+    end
 
     # NON-idempotent consequences: each call creates a new row. Exactly-once is
     # guaranteed by the atomic commit, NOT by the consequence being idempotent.
-    def commit_one = Thing.create!
-    def commit_two = Thing.create!
+    def commit_one
+      Thing.create!
+    end
+
+    def commit_two
+      Thing.create!
+    end
   end
 
   test "runs each consequence atomically with its step, leaving no extra bookkeeping" do
@@ -117,7 +129,9 @@ class AcidicJob::CommitTest < ActiveJob::TestCase
       end
     end
 
-    def do_work = ChaoticJob.log_to_journal!(:worked)
+    def do_work
+      ChaoticJob.log_to_journal!(:worked)
+    end
 
     def project
       Thing.create!
@@ -132,7 +146,7 @@ class AcidicJob::CommitTest < ActiveJob::TestCase
 
     # the projection was rolled back atomically with the succeeded entry...
     assert_equal 0, Thing.count
-    refute execution.entries.for_step("do_work").for_action("succeeded").exists?
+    assert_not execution.entries.for_step("do_work").for_action("succeeded").exists?
     # ...the step is recorded as errored, and the cursor never advanced
     assert execution.entries.for_step("do_work").for_action("errored").exists?
     assert_equal "do_work", execution.recover_to
@@ -151,8 +165,13 @@ class AcidicJob::CommitTest < ActiveJob::TestCase
       end
     end
 
-    def do_work = ChaoticJob.log_to_journal!(:worked)
-    def project = Thing.create!
+    def do_work
+      ChaoticJob.log_to_journal!(:worked)
+    end
+
+    def project
+      Thing.create!
+    end
   end
 
   test "consequence is exactly-once even when it crashes after executing but before commit" do
