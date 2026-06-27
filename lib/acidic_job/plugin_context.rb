@@ -20,12 +20,24 @@ module AcidicJob
       @context.get(*keys)
     end
 
+    def fetch(key, default = nil, &block)
+      @context.fetch(key, default, &block)
+    end
+
     def definition
       @step_definition.fetch(@plugin.keyword.to_s, PLUGIN_INACTIVE)
     end
 
     def current_step
       @step_definition["does"]
+    end
+
+    def execution_id
+      @execution.id
+    end
+
+    def plugins
+      @job.instance_variable_get(:@__acidic_job_plugins__) || []
     end
 
     def inactive?

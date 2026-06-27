@@ -44,6 +44,7 @@ module AcidicJob
     end
 
     def finished?
+      # :nocov: deprecated legacy "FINISHED" sentinel; removed in 1.1
       if recover_to.to_s == "FINISHED"
         unless defined?(@finished_deprecation_warned) && @finished_deprecation_warned
           AcidicJob.deprecator.warn(
@@ -55,6 +56,7 @@ module AcidicJob
         end
         return true
       end
+      # :nocov:
 
       recover_to.to_s == FINISHED_RECOVERY_POINT
     end
@@ -63,12 +65,14 @@ module AcidicJob
       if definition.key?("steps")
         definition["steps"].key?(step)
       else
+        # :nocov: deprecated pre-"steps" definition format; removed in 1.1
         AcidicJob.deprecator.warn(
           "Workflow definitions without a 'steps' key are deprecated and will be removed in AcidicJob 1.1. " \
           "Please update your workflow to use the new format.",
           caller_locations(1)
         )
         definition.key?(step)
+        # :nocov:
       end
     end
 
@@ -76,12 +80,14 @@ module AcidicJob
       if definition.key?("steps")
         definition["steps"].fetch(step)
       else
+        # :nocov: deprecated pre-"steps" definition format; removed in 1.1
         AcidicJob.deprecator.warn(
           "Workflow definitions without a 'steps' key are deprecated and will be removed in AcidicJob 1.1. " \
           "Please update your workflow to use the new format.",
           caller_locations(1)
         )
         definition.fetch(step)
+        # :nocov:
       end
     end
 

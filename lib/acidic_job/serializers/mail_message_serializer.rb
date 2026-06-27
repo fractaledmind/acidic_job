@@ -6,9 +6,9 @@ require "yaml"
 
 module AcidicJob
   module Serializers
-    class ExceptionSerializer < ::ActiveJob::Serializers::ObjectSerializer
-      def serialize(exception)
-        yaml_str = exception.to_yaml
+    class MailMessageSerializer < ::ActiveJob::Serializers::ObjectSerializer
+      def serialize(mail_msg)
+        yaml_str = mail_msg.to_yaml
         deflated_binary = Zlib::Deflate.deflate(yaml_str)
         deflated_hex = deflated_binary.unpack1("H*")
 
@@ -19,19 +19,11 @@ module AcidicJob
         deflated_binary = [ hash["deflated_yaml"] ].pack("H*")
         yaml_str = Zlib::Inflate.inflate(deflated_binary)
 
-        if YAML.respond_to?(:unsafe_load)
-          YAML.unsafe_load(yaml_str)
-        else
-          YAML.load(yaml_str) # rubocop:disable Security/YAMLLoad
-        end
+        Mail::Message.from_yaml(yaml_str)
       end
 
       def serialize?(argument)
-        defined?(Exception) && argument.is_a?(Exception)
-      end
-
-      def klass
-        ::Exception
+        defined?(Mail::Message) && argument.is_a?(Mail::Message)
       end
     end
   end

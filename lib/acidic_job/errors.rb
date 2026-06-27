@@ -98,6 +98,26 @@ module AcidicJob
     end
   end
 
+  class UndefinedConsequenceError < Error
+    def initialize(method)
+      @method = method
+    end
+
+    def message
+      "commit: consequence method is undefined: #{@method.inspect}"
+    end
+  end
+
+  class InvalidConsequenceError < Error
+    def initialize(method)
+      @method = method
+    end
+
+    def message
+      "commit: consequence method cannot expect arguments: #{@method.inspect}"
+    end
+  end
+
   class DoublePluginCallError < Error
     def initialize(plugin, step)
       @plugin_name = (Module === plugin) ? plugin.name : plugin.class.name

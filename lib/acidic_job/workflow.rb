@@ -78,6 +78,7 @@ module AcidicJob
       throw :halt, HALT_STEP
     end
 
+    # :nocov: deprecated alias; removed in 1.1
     def halt_step!
       AcidicJob.deprecator.warn(
         "halt_step! is deprecated and will be removed in AcidicJob 1.1. Use halt_workflow! instead.",
@@ -85,6 +86,7 @@ module AcidicJob
       )
       halt_workflow!
     end
+    # :nocov:
 
     def step_retrying?
       step_name = caller_locations.first.label
@@ -104,6 +106,28 @@ module AcidicJob
       @__acidic_job_context__
     end
 
+    def self.included(base)
+      base.after_perform do |job|
+        # Check if this job has associated plugin data (e.g., from awaits)
+        # Plugins store data keyed by job_id with a "plugins" array of plugin names
+        value_record = Value.find_by(key: job.job_id)
+
+        next unless value_record
+        next unless value_record.value.is_a?(Hash) && value_record.value["plugins"]
+
+        # Filter global plugins to only those used by the parent job
+        parent_plugin_names = value_record.value["plugins"]
+        plugins = AcidicJob.plugins.select { |plugin| parent_plugin_names.include?(plugin.name) }
+
+        # Call after_perform hooks in reverse order (same as around_step)
+        plugins.reverse_each do |plugin|
+          next unless plugin.respond_to?(:after_perform)
+
+          plugin.after_perform(job)
+        end
+      end
+    end
+
     private def take_step(step_definition)
       curr_step = step_definition.fetch("does")
       next_step = step_definition.fetch("then")
@@ -120,13 +144,7 @@ module AcidicJob
         when REPEAT_STEP
           curr_step
         else
-          @__acidic_job_execution__.record!(
-            step: curr_step,
-            action: :succeeded,
-            ignored: {
-              result: result
-            }
-          )
+          commit_step!(step_definition, result)
           next_step
         end
       rescue => e
@@ -141,15 +159,58 @@ module AcidicJob
               exception_class: rescued_error.class.name,
               message: rescued_error.message
             )
+          # :nocov: defensive: failure while recording a failure
           rescue => e
             # We're already inside an error condition, so swallow any additional
             # errors from here and just send them to logs.
             logger.error(
               "Failed to store exception at step #{curr_step} for execution ##{@__acidic_job_execution__.id}: #{e}."
             )
+            # :nocov:
           end
         end
       end
+    end
+
+    # Record the step as succeeded and, when the step declares a `commit:`
+    # consequence, run that consequence in the SAME transaction as the
+    # `succeeded` entry. The entry is the authoritative record that the step
+    # happened, so binding the consequence to it means a projection written by
+    # the consequence can never drift from the recorded progression: either the
+    # step is succeeded AND its consequence is applied, or neither is. The step
+    # body has already run (outside this transaction, in `perform_step_for`), so
+    # no external IO is held open here — only fast, DB-local work.
+    #
+    # `recover_to` is intentionally NOT part of this transaction: it remains the
+    # lag-tolerant, self-healing cursor advanced by the workflow loop, and the
+    # `succeeded`-entry guard at the top of `take_step` makes a lagging cursor
+    # safe. Steps without a consequence behave exactly as before.
+    private def commit_step!(step_definition, result)
+      curr_step = step_definition.fetch("does")
+
+      unless step_definition.key?("commit")
+        @__acidic_job_execution__.record!(step: curr_step, action: :succeeded, ignored: { result: result })
+        return
+      end
+
+      AcidicJob::Execution.transaction do
+        @__acidic_job_execution__.record!(step: curr_step, action: :succeeded, ignored: { result: result })
+        perform_consequence_for(step_definition)
+      end
+    end
+
+    private def perform_consequence_for(step_definition)
+      consequence = step_definition.fetch("commit")
+
+      begin
+        consequence_method = method(consequence)
+      rescue NameError
+        raise UndefinedConsequenceError.new(consequence)
+      end
+
+      raise InvalidConsequenceError.new(consequence) unless consequence_method.arity.zero?
+
+      consequence_method.call
     end
 
     private def perform_step_for(step_definition)
@@ -201,8 +262,10 @@ module AcidicJob
         # SQLite doesn't support `serializable` transactions
       when :sqlite
           {}
+      # :nocov: serializable isolation not exercised by the sqlite coverage job
       else
           { isolation: :serializable }
+        # :nocov:
       end
 
       begin
@@ -231,12 +294,14 @@ module AcidicJob
             starting_point = if workflow_definition.key?("steps")
               workflow_definition["steps"].keys.first
             else
+              # :nocov: deprecated pre-"steps" definition format; removed in 1.1
               AcidicJob.deprecator.warn(
                 "Workflow definitions without a 'steps' key are deprecated and will be removed in AcidicJob 1.1. " \
                 "Please update your workflow to use the new format.",
                 caller_locations(1)
               )
               workflow_definition.keys.first
+              # :nocov:
             end
 
             record = Execution.create!(
@@ -249,6 +314,7 @@ module AcidicJob
 
           record
         end
+      # :nocov: serialization-conflict retry; not exercised by the sqlite coverage job
       rescue ActiveRecord::SerializationFailure, ActiveRecord::Deadlocked
         retries += 1
         if retries <= max_retries
@@ -259,6 +325,7 @@ module AcidicJob
           raise InitializeWorkflowRetriesExhaustedError.new(retries)
         end
       end
+      # :nocov:
     end
   end
 end

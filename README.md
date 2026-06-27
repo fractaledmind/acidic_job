@@ -125,6 +125,32 @@ execute_workflow(unique_by: [@user, @params]) do |workflow|
 end
 ```
 
+> [!NOTE]
+> `transactional:` wraps the step's _body_. If instead you want to keep a _projection_ of a step — such as a status column other parts of your system read — atomically in sync with the workflow's progress, see [Committing consequences](#committing-consequences) below.
+
+#### Committing consequences
+
+`transactional:` couples a step's _body_ to a transaction. Sometimes, though, the thing you need to keep in lock-step with the workflow's progress isn't the body's work but a _projection_ of it — most often a status column on some record that other parts of your system read to decide what to do next. The `commit:` option lets a step declare a **consequence**: a method run in the _same transaction_ as the step's `succeeded` record.
+
+```ruby
+execute_workflow(unique_by: @order) do |workflow|
+  workflow.step :reserve_inventory, commit: :mark_reserved
+  workflow.step :charge_payment,    commit: :mark_charged
+  workflow.step :send_receipt
+end
+
+def mark_reserved
+  @order.update_column(:status, :reserved)
+end
+```
+
+Because the consequence and the `succeeded` entry commit together — or not at all — the projected state can never drift from the workflow's recorded progression. Either the step is recorded as succeeded _and_ `@order.status` is `:reserved`, or neither is. This closes the window in which another process (a cron job, a generic event handler) could observe a status the workflow has not actually reached.
+
+Unlike `transactional:`, which wraps the step body, the consequence runs _after_ the body returns, so no external IO is ever held open inside the transaction — only the fast, database-local projection. The body itself must remain idempotent, exactly as for any other step; the consequence, however, does **not** need to be idempotent, because it is bound atomically to the (exactly-once) `succeeded` record.
+
+> [!IMPORTANT]
+> The consequence shares the transaction that writes the `succeeded` entry to the `AcidicJob::Execution` record. Because that entry write is *always* part of the transaction, the consequence **must** write to the same database as the `AcidicJob` tables — that is the only way the two writes can be atomic. There is deliberately no option to bind the transaction to a different model or database: a consequence that mutates a record on a _different_ database simply cannot be committed atomically with the workflow's progression, and should instead be modeled as its own idempotent step.
+
 
 ### Persisted Attributes
 
@@ -364,3 +390,45 @@ These options can be combined to help narrow down your debugging when you find a
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/fractaledmind/acidic_job.
+
+
+
+```ruby
+class AcidicJobProExample < ActiveJob::Base
+  include AcidicJob::Workflow
+
+  def perform
+    execute_workflow(unique_by: job_id) do |w|
+      w.step :step_1, check: { every: 2.minutes, until: :conditional? }
+      w.step :step_2, after: 14.days
+      w.step :step_3, compensate: { on: CustomError, with: :compensation }
+      w.step :step_4, skip_if: :check?
+      w.step :step_5, for_each: :models
+    end
+  end
+
+  private
+
+  def step_1 = # ...
+  def step_2 = # ...
+  def step_3 = # ...
+  def step_4 = # ...
+  def step_5 = # ...
+
+  def conditional?
+    # make some IO read to determine if it is OK now to perform the step
+  end
+
+  def compensation
+    # undo the actions taken in `step_3` given that the `CustomError` was raised
+  end
+
+  def check?
+    # make some IO read to determine whether to skip `step_4`
+  end
+
+  def models(cursor:)
+    Model.where("id > ?", cursor).order(id: :asc).limit(limit)
+  end
+end
+```

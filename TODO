@@ -66,12 +66,12 @@
 
   The process can only be additive, like a strong migration. First, you create a new job with a new name that is a clone of the original job. Make the necessary changes to the new job. Update your codebase to only enqueue the new job. Deploy this change, where both the new job and the old jobs exist, but the application only enqueues the new job. Once deployed, wait until all currently running instances of the old job complete (provide some docs on how to check this). Once all old job instances are complete, you can safely delete the old job and deploy that change. This process ensures that no job is running with an outdated definition.
 
-- [ ] Automatically retry the serializable transaction for find/create the Run record (resolves #91)
+- [x] Automatically retry the serializable transaction for find/create the Run record (resolves #91)
   Serializable transactions are prone to failure: https://stackoverflow.com/a/21715207/2884386
 
-  Currently, if the transaction fails, the job will fail. We need to build automatic retries into the gem, as this failure will naturally resolve. But, we should also add a limit to the number of retries to prevent infinite loops.
+  Implemented `with_serializable_transaction_retry` which catches `ActiveRecord::SerializationFailure` and `ActiveRecord::Deadlocked` exceptions, retrying with exponential backoff (50ms, 100ms, 200ms). Configurable via `AcidicJob.initialize_workflow_max_retries` (default: 3). Raises `InitializeWorkflowRetriesExhaustedError` if all retries fail.
 
-- [ ] Ensure the gem works with GoodJob (resolves #92 and #94)
-  In the current version, GoodJob can't handle messing with the `job_id` and retrying a failed job raises a NoMethodError: "undefined method `utc' for an instance of Float".
+- [x] Ensure the gem works with GoodJob (resolves #92 and #94)
+  The v1 rewrite no longer overrides the `job_id` method on jobs, which was causing the incompatibility with GoodJob. The new architecture uses a separate `idempotency_key` on the `Execution` record instead of modifying the job itself.
 
 - [ ] Ensure users can transactionally enqueue other entities, like ActionMailer or Noticed objects
