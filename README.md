@@ -151,6 +151,22 @@ Unlike `transactional:`, which wraps the step body, the consequence runs _after_
 > [!IMPORTANT]
 > The consequence shares the transaction that writes the `succeeded` entry to the `AcidicJob::Execution` record. Because that entry write is *always* part of the transaction, the consequence **must** write to the same database as the `AcidicJob` tables — that is the only way the two writes can be atomic. There is deliberately no option to bind the transaction to a different model or database: a consequence that mutates a record on a _different_ database simply cannot be committed atomically with the workflow's progression, and should instead be modeled as its own idempotent step.
 
+#### Retrying individual steps
+
+Active Job's `retry_on` applies to the whole job. But within a workflow, different steps fail for different reasons — a third-party API call may deserve several backed-off attempts while a local database write does not. The `retry:` option (provided by the `AcidicJob::Plugins::Pro::Retry` plugin) gives a single step its own retry policy:
+
+```ruby
+execute_workflow(unique_by: @order) do |workflow|
+  workflow.step :charge_card, retry: { on: Net::OpenTimeout, attempts: 5, backoff: :exponential }
+  workflow.step :sync_crm,    retry: { attempts: 3, backoff: 2 } # any error, fixed 2s
+  workflow.step :send_receipt
+end
+```
+
+When the step raises a matching error (or any error, if `on:` is omitted), the workflow is re-enqueued with a backoff delay and the step re-runs from scratch — up to `attempts` times. Once the budget is exhausted the error propagates normally, so the job's own `retry_on`/`discard_on` still has the final say. `backoff:` accepts `:exponential` (1, 2, 4, … seconds), `:linear` (1, 2, 3, …), or a fixed number of seconds.
+
+Because a retried step simply runs again from the top, the same idempotency rules apply: a step method must be safe to re-run after a failure.
+
 
 ### Persisted Attributes
 
@@ -404,6 +420,7 @@ class AcidicJobProExample < ActiveJob::Base
       w.step :step_3, compensate: { on: CustomError, with: :compensation }
       w.step :step_4, skip_if: :check?
       w.step :step_5, for_each: :models
+      w.step :step_6, retry: { on: CustomError, attempts: 3, backoff: :exponential }
     end
   end
 
@@ -414,6 +431,7 @@ class AcidicJobProExample < ActiveJob::Base
   def step_3 = # ...
   def step_4 = # ...
   def step_5 = # ...
+  def step_6 = # ...
 
   def conditional?
     # make some IO read to determine if it is OK now to perform the step
