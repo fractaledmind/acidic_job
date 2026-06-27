@@ -29,7 +29,7 @@ module Pro
       end
 
       def awaited_jobs
-        [AwaitedJob.new, AwaitedJob.new]
+        [ AwaitedJob.new, AwaitedJob.new ]
       end
 
       def do_something
@@ -66,7 +66,7 @@ module Pro
           %w[do_something awaits/awaiting],
           %w[do_something halted],
           %w[do_something started],
-          %w[do_something succeeded],
+          %w[do_something succeeded]
         ],
         execution.entries.ordered.pluck(:step, :action)
       )

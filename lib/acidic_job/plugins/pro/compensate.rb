@@ -33,7 +33,7 @@ module AcidicJob
 
           case input
           in Hash[on: error, with: method]
-            unless error in Module | Array[Module]
+            unless error in Module | Array[ Module ]
               raise ArgumentError.new("compensate: `on` value must be error class or array of errors")
             end
             unless method in Symbol | String

@@ -16,7 +16,7 @@ module Pro
 
       def perform
         execute_workflow(unique_by: job_id) do |w|
-          w.step :iterate_1, for_each: [1, 2]
+          w.step :iterate_1, for_each: [ 1, 2 ]
           w.step :iterate_2, for_each: :zero_arity_enumerable
           w.step :iterate_3, for_each: :zero_arity_enumerator
           w.step :iterate_4, for_each: "cursor_keyreq_enumerable"
@@ -55,19 +55,19 @@ module Pro
       end
 
       def zero_arity_enumerable
-        [3, 4]
+        [ 3, 4 ]
       end
 
       def zero_arity_enumerator
-        [5, 6].each
+        [ 5, 6 ].each
       end
 
       def cursor_keyreq_enumerable(cursor:)
-        [7, 8]
+        [ 7, 8 ]
       end
 
       def cursor_keyreq_enumerator(cursor:)
-        [9, 10].each
+        [ 9, 10 ].each
       end
     end
 
@@ -120,7 +120,7 @@ module Pro
           %w[iterate_5 started],
           %w[iterate_5 for_each/iterated],
           %w[iterate_5 started],
-          %w[iterate_5 succeeded],
+          %w[iterate_5 succeeded]
 ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -133,9 +133,11 @@ module Pro
           "for_each/iterate_2/cursor",
           "for_each/iterate_3/cursor",
           "for_each/iterate_4/cursor",
-          "for_each/iterate_5/cursor",
+          "for_each/iterate_5/cursor"
 ],
-        AcidicJob::Value.pluck(:key)
+        # order explicitly: `pluck` without an ORDER BY returns rows in
+        # backend-defined order (e.g. heap order on Postgres after upserts)
+        AcidicJob::Value.order(:key).pluck(:key)
       )
     end
 

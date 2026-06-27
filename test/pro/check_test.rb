@@ -55,7 +55,7 @@ module Pro
           [
             %w[do_something started],
             %w[do_something check/waiting],
-            %w[do_something halted],
+            %w[do_something halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -89,7 +89,7 @@ module Pro
             %w[do_something halted],
             %w[do_something started],
             %w[do_something check/waiting],
-            %w[do_something halted],
+            %w[do_something halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -124,7 +124,7 @@ module Pro
             %w[do_something check/waiting],
             %w[do_something halted],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )

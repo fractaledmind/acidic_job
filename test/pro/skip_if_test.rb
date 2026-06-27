@@ -59,7 +59,7 @@ module Pro
           %w[skip_me skip_if/skipping],
           %w[skip_me succeeded],
           %w[do_something started],
-          %w[do_something succeeded],
+          %w[do_something succeeded]
 ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -95,7 +95,7 @@ module Pro
       assert_raises(BreakingError) { ErroringConditionJob.perform_now }
 
       execution = AcidicJob::Execution.first
-      refute execution.entries.for_step("do_something").for_action("succeeded").exists?
+      assert_not execution.entries.for_step("do_something").for_action("succeeded").exists?
       assert execution.entries.for_step("do_something").for_action("errored").exists?
       assert_equal 0, ChaoticJob.journal_size
     end

@@ -14,7 +14,6 @@ end
 
 module Pro
   class CompensateTest < ActiveJob::TestCase
-
     # ============================================
     # Happy path
     # ============================================
@@ -103,9 +102,9 @@ module Pro
       execution = AcidicJob::Execution.first
       # the bug this guards against: a non-matching error must not be swallowed
       # and the step must not be recorded as succeeded
-      refute execution.entries.for_action("compensate/compensating").exists?
+      assert_not execution.entries.for_action("compensate/compensating").exists?
       assert execution.entries.for_step("risky").for_action("errored").exists?
-      refute execution.entries.for_step("risky").for_action("succeeded").exists?
+      assert_not execution.entries.for_step("risky").for_action("succeeded").exists?
       assert_equal 0, ChaoticJob.journal_size
     end
 
@@ -133,7 +132,7 @@ module Pro
       execution = AcidicJob::Execution.first
       assert execution.entries.for_action("compensate/compensating").exists?
       assert execution.entries.for_step("always_fails").for_action("errored").exists?
-      refute execution.entries.for_step("always_fails").for_action("succeeded").exists?
+      assert_not execution.entries.for_step("always_fails").for_action("succeeded").exists?
       assert_equal [ :cleaned ], ChaoticJob::Journal.entries
     end
 
@@ -162,7 +161,7 @@ module Pro
       # compensating is recorded before the cleanup runs
       assert execution.entries.for_action("compensate/compensating").exists?
       assert execution.entries.for_step("risky").for_action("errored").exists?
-      refute execution.entries.for_step("risky").for_action("succeeded").exists?
+      assert_not execution.entries.for_step("risky").for_action("succeeded").exists?
     end
 
     # ============================================

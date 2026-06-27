@@ -82,7 +82,7 @@ module AcidicJob
               if iterable_method.arity.zero?
                 iterable_result = iterable_method.call
                 ensure_enumerator(iterable_result, cursor_position)
-              elsif iterable_method.arity == 1 && iterable_method.parameters.first == [:keyreq, :cursor]
+              elsif iterable_method.arity == 1 && iterable_method.parameters.first == [ :keyreq, :cursor ]
                 iterable_result = iterable_method.call(cursor: cursor_position)
                 ensure_enumerator(iterable_result, cursor_position)
               else

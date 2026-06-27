@@ -57,7 +57,7 @@ module Pro
         [
           %w[delayed started],
           %w[delayed delay/waiting],
-          %w[delayed halted],
+          %w[delayed halted]
 ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -84,7 +84,7 @@ module Pro
             %w[delayed started],
             %w[delayed succeeded],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
 ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -141,8 +141,13 @@ module Pro
       end
 
       # idempotent bodies (Set-backed journal) so replays under chaos are safe
-      def delayed = ChaoticJob.log_to_journal!(:delayed)
-      def do_something = ChaoticJob.log_to_journal!(:do_something)
+      def delayed
+        ChaoticJob.log_to_journal!(:delayed)
+      end
+
+      def do_something
+        ChaoticJob.log_to_journal!(:do_something)
+      end
     end
 
     test_simulation(SimJob.new, perform_only_jobs_within: 1.minute) do |_scenario|
