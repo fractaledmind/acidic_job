@@ -151,6 +151,40 @@ Unlike `transactional:`, which wraps the step body, the consequence runs _after_
 > [!IMPORTANT]
 > The consequence shares the transaction that writes the `succeeded` entry to the `AcidicJob::Execution` record. Because that entry write is *always* part of the transaction, the consequence **must** write to the same database as the `AcidicJob` tables — that is the only way the two writes can be atomic. There is deliberately no option to bind the transaction to a different model or database: a consequence that mutates a record on a _different_ database simply cannot be committed atomically with the workflow's progression, and should instead be modeled as its own idempotent step.
 
+#### Saga rollback with `undo:`
+
+A multi-step workflow that has already moved money or reserved resources can't simply stop when a later step fails — it needs to *unwind* the work it has already done. The `undo:` option (provided by the `AcidicJob::Plugins::Pro::Undo` plugin) turns a workflow into a saga: each step registers a compensating method, and if the workflow ultimately fails, the compensations of every completed step run in **reverse order**.
+
+```ruby
+class FulfillOrderJob < ActiveJob::Base
+  include AcidicJob::Workflow
+
+  discard_on Inventory::Unavailable
+
+  def perform(order_id)
+    @order = Order.find(order_id)
+    execute_workflow(unique_by: order_id) do |workflow|
+      workflow.step :reserve_inventory, undo: :release_inventory
+      workflow.step :charge_payment,    undo: :refund_payment
+      workflow.step :schedule_shipment
+    end
+  end
+
+  # ... forward steps ...
+
+  def release_inventory = Inventory.release!(ctx[:reservation_id])
+  def refund_payment    = Stripe::Refund.create(charge: ctx[:charge_id])
+end
+```
+
+If `schedule_shipment` fails terminally — i.e. the job is **discarded** after exhausting its `retry_on` attempts, or via `discard_on` — then `refund_payment` and `release_inventory` run, in that order. Rollback happens in the job's `after_discard` hook, so compensations execute on the job instance and can read whatever the forward steps stored in `ctx`.
+
+A few things worth knowing:
+
+- This is distinct from `compensate:`, which cleans up a **single** step's own failure and re-raises. `undo:` rolls back **earlier, already-completed** steps when a **later** step brings the whole workflow down.
+- Each step is compensated at most once, and a compensation that itself raises is recorded (as an `undo/failed` entry) and does **not** stop the remaining steps from being rolled back. Compensations should therefore be reliable and idempotent.
+- Because rollback is triggered by discard, a workflow only unwinds once Active Job considers it terminally failed — transient failures still retry and resume as usual.
+
 
 ### Persisted Attributes
 
@@ -404,6 +438,7 @@ class AcidicJobProExample < ActiveJob::Base
       w.step :step_3, compensate: { on: CustomError, with: :compensation }
       w.step :step_4, skip_if: :check?
       w.step :step_5, for_each: :models
+      w.step :step_6, undo: :undo_step_6
     end
   end
 

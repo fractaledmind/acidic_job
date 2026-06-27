@@ -126,6 +126,23 @@ module AcidicJob
           plugin.after_perform(job)
         end
       end
+
+      # When a workflow job is discarded (its retries are exhausted, or a
+      # `discard_on` matched), give plugins a chance to react to the terminal
+      # failure of *this* job's own execution — e.g. to run saga-style
+      # rollback. The execution is the one set up during the failed `perform`,
+      # so its context and recorded progress are available to the plugin.
+      base.after_discard do |job, _error|
+        execution = job.instance_variable_get(:@__acidic_job_execution__)
+        next unless execution
+
+        plugins = job.instance_variable_get(:@__acidic_job_plugins__) || AcidicJob.plugins
+        plugins.reverse_each do |plugin|
+          next unless plugin.respond_to?(:after_discard)
+
+          plugin.after_discard(job, execution)
+        end
+      end
     end
 
     private def take_step(step_definition)
