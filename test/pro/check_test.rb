@@ -177,6 +177,29 @@ module Pro
       assert_includes ChaoticJob::Journal.entries, :done
     end
 
+    # ============================================
+    # Validation
+    # ============================================
+
+    test "validate accepts every + until" do
+      assert_equal(
+        { "every" => 120, "until" => "ready?" },
+        AcidicJob::Plugins::Pro::Check.validate(every: 2.minutes, until: :ready?)
+      )
+    end
+
+    test "validate accepts until only" do
+      assert_equal({ "until" => "ready?" }, AcidicJob::Plugins::Pro::Check.validate(until: :ready?))
+    end
+
+    test "validate rejects a non-hash" do
+      assert_raises(ArgumentError) { AcidicJob::Plugins::Pro::Check.validate(:nope) }
+    end
+
+    test "validate rejects a hash missing the until: key" do
+      assert_raises(ArgumentError) { AcidicJob::Plugins::Pro::Check.validate(every: 2.minutes) }
+    end
+
     private def capture_callstack(&block)
       gem_root = AcidicJob::Engine.root.to_s
       tracer = ChaoticJob::Tracer.new { |tp| tp.path.start_with? gem_root }

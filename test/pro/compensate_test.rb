@@ -203,5 +203,28 @@ module Pro
       assert_includes ChaoticJob::Journal.entries, :risky_ok
       assert_includes ChaoticJob::Journal.entries, :finished
     end
+
+    # ============================================
+    # Validation
+    # ============================================
+
+    test "validate accepts on + with" do
+      assert_equal(
+        { "on" => [ CompensateError ], "with" => "cleanup" },
+        AcidicJob::Plugins::Pro::Compensate.validate(on: CompensateError, with: :cleanup)
+      )
+    end
+
+    test "validate accepts with only" do
+      assert_equal({ "with" => "cleanup" }, AcidicJob::Plugins::Pro::Compensate.validate(with: :cleanup))
+    end
+
+    test "validate rejects a non-hash" do
+      assert_raises(ArgumentError) { AcidicJob::Plugins::Pro::Compensate.validate(:nope) }
+    end
+
+    test "validate rejects a hash missing the with: key" do
+      assert_raises(ArgumentError) { AcidicJob::Plugins::Pro::Compensate.validate(on: CompensateError) }
+    end
   end
 end

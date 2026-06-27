@@ -78,6 +78,7 @@ module AcidicJob
       throw :halt, HALT_STEP
     end
 
+    # :nocov: deprecated alias; removed in 1.1
     def halt_step!
       AcidicJob.deprecator.warn(
         "halt_step! is deprecated and will be removed in AcidicJob 1.1. Use halt_workflow! instead.",
@@ -85,6 +86,7 @@ module AcidicJob
       )
       halt_workflow!
     end
+    # :nocov:
 
     def step_retrying?
       step_name = caller_locations.first.label
@@ -163,12 +165,14 @@ module AcidicJob
               exception_class: rescued_error.class.name,
               message: rescued_error.message
             )
+          # :nocov: defensive: failure while recording a failure
           rescue => e
             # We're already inside an error condition, so swallow any additional
             # errors from here and just send them to logs.
             logger.error(
               "Failed to store exception at step #{curr_step} for execution ##{@__acidic_job_execution__.id}: #{e}."
             )
+            # :nocov:
           end
         end
       end
@@ -223,8 +227,10 @@ module AcidicJob
         # SQLite doesn't support `serializable` transactions
       when :sqlite
           {}
+      # :nocov: serializable isolation not exercised by the sqlite coverage job
       else
           { isolation: :serializable }
+        # :nocov:
       end
 
       begin
@@ -253,12 +259,14 @@ module AcidicJob
             starting_point = if workflow_definition.key?("steps")
               workflow_definition["steps"].keys.first
             else
+              # :nocov: deprecated pre-"steps" definition format; removed in 1.1
               AcidicJob.deprecator.warn(
                 "Workflow definitions without a 'steps' key are deprecated and will be removed in AcidicJob 1.1. " \
                 "Please update your workflow to use the new format.",
                 caller_locations(1)
               )
               workflow_definition.keys.first
+              # :nocov:
             end
 
             record = Execution.create!(
@@ -271,6 +279,7 @@ module AcidicJob
 
           record
         end
+      # :nocov: serialization-conflict retry; not exercised by the sqlite coverage job
       rescue ActiveRecord::SerializationFailure, ActiveRecord::Deadlocked
         retries += 1
         if retries <= max_retries
@@ -281,6 +290,7 @@ module AcidicJob
           raise InitializeWorkflowRetriesExhaustedError.new(retries)
         end
       end
+      # :nocov:
     end
   end
 end
