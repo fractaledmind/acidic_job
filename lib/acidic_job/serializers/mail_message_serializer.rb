@@ -16,7 +16,7 @@ module AcidicJob
       end
 
       def deserialize(hash)
-        deflated_binary = [hash["deflated_yaml"]].pack("H*")
+        deflated_binary = [ hash["deflated_yaml"] ].pack("H*")
         yaml_str = Zlib::Inflate.inflate(deflated_binary)
 
         Mail::Message.from_yaml(yaml_str)

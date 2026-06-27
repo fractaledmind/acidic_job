@@ -6,6 +6,12 @@ module AcidicJob
       module ForEach
         extend self
 
+        # Sentinel marking an exhausted enumerator. Using a dedicated object
+        # (rather than `nil`) lets a collection legitimately contain `nil`
+        # elements without being mistaken for the end of iteration.
+        DONE = Object.new.freeze
+        private_constant :DONE
+
         class InvalidMethodError < AcidicJob::Error
           def message
             "for_each: must be a 0-arity method or require the `cursor` keyword argument"
@@ -49,9 +55,11 @@ module AcidicJob
           key = "#{keyword}/#{context.current_step}/cursor"
           cursor_position = context.get(key)[0] || -1
           enumerator = resolve_enumerator(context, iterable, cursor_position)
-          item_from_enumerator, cursor_from_enumerator = resolve_item_and_cursor(enumerator)
+          result = resolve_item_and_cursor(enumerator)
 
-          return if item_from_enumerator.nil?
+          return if result == DONE
+
+          item_from_enumerator, cursor_from_enumerator = result
 
           yield(item_from_enumerator)
 
@@ -74,7 +82,7 @@ module AcidicJob
               if iterable_method.arity.zero?
                 iterable_result = iterable_method.call
                 ensure_enumerator(iterable_result, cursor_position)
-              elsif iterable_method.arity == 1 && iterable_method.parameters.first == [:keyreq, :cursor]
+              elsif iterable_method.arity == 1 && iterable_method.parameters.first == [ :keyreq, :cursor ]
                 iterable_result = iterable_method.call(cursor: cursor_position)
                 ensure_enumerator(iterable_result, cursor_position)
               else
@@ -91,7 +99,7 @@ module AcidicJob
         private def resolve_item_and_cursor(enumerator)
           enumerator.next
         rescue StopIteration
-          nil
+          DONE
         end
 
         private def enumerable_to_enumerator(enumerable, cursor_position)

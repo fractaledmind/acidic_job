@@ -19,9 +19,9 @@ module AcidicJob
         case AcidicJob::Value.connection.adapter_name.downcase.to_sym
         when :postgresql, :sqlite
           AcidicJob::Value.upsert_all(records, unique_by: [ :execution_id, :key ])
+        # :nocov: adapter-specific branches not exercised by the sqlite coverage job
         when :mysql2, :mysql, :trilogy
           AcidicJob::Value.upsert_all(records)
-        # :nocov:
         else
           # Fallback for other adapters - try with unique_by first, fall back without
           begin

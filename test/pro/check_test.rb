@@ -3,6 +3,12 @@
 require "test_helper"
 require "acidic_job/plugins/pro/check"
 
+# Register at load time (not in `before_setup`) so the plugin is active during
+# `test_simulation`'s callstack capture, which runs when the class is defined.
+unless AcidicJob.plugins.include?(AcidicJob::Plugins::Pro::Check)
+  AcidicJob.plugins << AcidicJob::Plugins::Pro::Check
+end
+
 module Pro
   class CheckTest < ActiveJob::TestCase
     class Job < ActiveJob::Base
@@ -23,10 +29,6 @@ module Pro
       end
     end
 
-    def before_setup
-      AcidicJob.plugins << AcidicJob::Plugins::Pro::Check
-      super
-    end
 
     test "workflow runs successfully" do
       Job.perform_later
@@ -53,7 +55,7 @@ module Pro
           [
             %w[do_something started],
             %w[do_something check/waiting],
-            %w[do_something halted],
+            %w[do_something halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -87,7 +89,7 @@ module Pro
             %w[do_something halted],
             %w[do_something started],
             %w[do_something check/waiting],
-            %w[do_something halted],
+            %w[do_something halted]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -122,7 +124,7 @@ module Pro
             %w[do_something check/waiting],
             %w[do_something halted],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
           ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -130,6 +132,72 @@ module Pro
         # step method has now executed
         assert_equal 1, ChaoticJob.journal_size
       end
+    end
+
+    # ============================================
+    # Failure scenarios
+    # ============================================
+
+    test "self-heals when a crash interrupts between the check and enqueuing the retry" do
+      run_scenario(
+        Job.new,
+        glitch: glitch_before_call("AcidicJob::PluginContext#enqueue_job")
+      ) do
+        perform_all_jobs_within(1.minute)
+      end
+
+      # the check re-evaluates on every entry, so even a crash before the retry
+      # was enqueued leaves the workflow correctly parked with a retry scheduled
+      execution = AcidicJob::Execution.first
+      assert_equal "do_something", execution.recover_to
+      assert_equal 1, enqueued_jobs.select { |j| j["job_class"] == Job.name }.size
+      assert_equal 0, ChaoticJob.journal_size
+    end
+
+    class SimJob < ActiveJob::Base
+      include AcidicJob::Workflow
+
+      def perform
+        execute_workflow(unique_by: job_id) do |w|
+          w.step :do_something, check: { every: 2.minutes, until: :ready? }
+        end
+      end
+
+      def ready?
+        executions >= 3
+      end
+
+      def do_something
+        ChaoticJob.log_to_journal!(:done)
+      end
+    end
+
+    test_simulation(SimJob.new) do |_scenario|
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
+      assert_includes ChaoticJob::Journal.entries, :done
+    end
+
+    # ============================================
+    # Validation
+    # ============================================
+
+    test "validate accepts every + until" do
+      assert_equal(
+        { "every" => 120, "until" => "ready?" },
+        AcidicJob::Plugins::Pro::Check.validate(every: 2.minutes, until: :ready?)
+      )
+    end
+
+    test "validate accepts until only" do
+      assert_equal({ "until" => "ready?" }, AcidicJob::Plugins::Pro::Check.validate(until: :ready?))
+    end
+
+    test "validate rejects a non-hash" do
+      assert_raises(ArgumentError) { AcidicJob::Plugins::Pro::Check.validate(:nope) }
+    end
+
+    test "validate rejects a hash missing the until: key" do
+      assert_raises(ArgumentError) { AcidicJob::Plugins::Pro::Check.validate(every: 2.minutes) }
     end
 
     private def capture_callstack(&block)

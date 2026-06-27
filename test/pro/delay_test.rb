@@ -3,6 +3,12 @@
 require "test_helper"
 require "acidic_job/plugins/pro/delay"
 
+# Register at load time (not in `before_setup`) so the plugin is active during
+# `test_simulation`'s callstack capture, which runs when the class is defined.
+unless AcidicJob.plugins.include?(AcidicJob::Plugins::Pro::Delay)
+  AcidicJob.plugins << AcidicJob::Plugins::Pro::Delay
+end
+
 module Pro
   class DelayTest < ActiveJob::TestCase
     class Job < ActiveJob::Base
@@ -24,10 +30,6 @@ module Pro
       end
     end
 
-    def before_setup
-      AcidicJob.plugins << AcidicJob::Plugins::Pro::Delay
-      super
-    end
 
     test "workflow runs successfully" do
       Job.perform_later
@@ -55,7 +57,7 @@ module Pro
         [
           %w[delayed started],
           %w[delayed delay/waiting],
-          %w[delayed halted],
+          %w[delayed halted]
 ],
         execution.entries.ordered.pluck(:step, :action)
       )
@@ -82,7 +84,7 @@ module Pro
             %w[delayed started],
             %w[delayed succeeded],
             %w[do_something started],
-            %w[do_something succeeded],
+            %w[do_something succeeded]
 ],
           execution.entries.ordered.pluck(:step, :action)
         )
@@ -97,6 +99,43 @@ module Pro
         assert_in_delta Time.parse(job_that_performed["scheduled_at"]).to_i, Time.current.to_i, 1, 1
       end
     end
+
+    # ============================================
+    # Failure scenarios
+    # ============================================
+
+    test "self-heals when a crash interrupts between recording the wait and enqueuing the future job" do
+      future = 14.days.from_now + 1.second
+
+      run_scenario(
+        Job.new,
+        glitch: glitch_before_call("AcidicJob::PluginContext#enqueue_job")
+      ) do
+        perform_all_jobs_within(1.minute)
+      end
+
+      # Despite the crash before the first enqueue, the workflow is correctly
+      # parked AND a future job has been scheduled (the old WaitingError path
+      # would have stranded it with no future job).
+      execution = AcidicJob::Execution.first
+      assert_equal "delayed", execution.recover_to
+      assert_equal 1, enqueued_jobs.select { |j| j["job_class"] == Job.name }.size
+      assert_equal 0, ChaoticJob.journal_size
+
+      Time.stub :current, future.to_time do
+        perform_all_jobs
+
+        assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
+        assert_equal 2, ChaoticJob.journal_size
+      end
+    end
+
+    # NOTE: no `test_simulation` for delay. The simulation's callstack capture
+    # drives the job with a performer that ignores scheduled-at times, which is
+    # fundamentally incompatible with a step that waits for a future run: an
+    # early-wake re-enqueue (see `delay.rb`) would be performed immediately and
+    # loop forever. The happy-path and crash-before-enqueue tests above, which
+    # control time explicitly via `Time.stub`, cover the plugin's behavior.
 
     private def capture_callstack(&block)
       gem_root = AcidicJob::Engine.root.to_s
