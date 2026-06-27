@@ -144,13 +144,7 @@ module AcidicJob
         when REPEAT_STEP
           curr_step
         else
-          @__acidic_job_execution__.record!(
-            step: curr_step,
-            action: :succeeded,
-            ignored: {
-              result: result
-            }
-          )
+          commit_step!(step_definition, result)
           next_step
         end
       rescue => e
@@ -176,6 +170,47 @@ module AcidicJob
           end
         end
       end
+    end
+
+    # Record the step as succeeded and, when the step declares a `commit:`
+    # consequence, run that consequence in the SAME transaction as the
+    # `succeeded` entry. The entry is the authoritative record that the step
+    # happened, so binding the consequence to it means a projection written by
+    # the consequence can never drift from the recorded progression: either the
+    # step is succeeded AND its consequence is applied, or neither is. The step
+    # body has already run (outside this transaction, in `perform_step_for`), so
+    # no external IO is held open here — only fast, DB-local work.
+    #
+    # `recover_to` is intentionally NOT part of this transaction: it remains the
+    # lag-tolerant, self-healing cursor advanced by the workflow loop, and the
+    # `succeeded`-entry guard at the top of `take_step` makes a lagging cursor
+    # safe. Steps without a consequence behave exactly as before.
+    private def commit_step!(step_definition, result)
+      curr_step = step_definition.fetch("does")
+
+      unless step_definition.key?("commit")
+        @__acidic_job_execution__.record!(step: curr_step, action: :succeeded, ignored: { result: result })
+        return
+      end
+
+      AcidicJob::Execution.transaction do
+        @__acidic_job_execution__.record!(step: curr_step, action: :succeeded, ignored: { result: result })
+        perform_consequence_for(step_definition)
+      end
+    end
+
+    private def perform_consequence_for(step_definition)
+      consequence = step_definition.fetch("commit")
+
+      begin
+        consequence_method = method(consequence)
+      rescue NameError
+        raise UndefinedConsequenceError.new(consequence)
+      end
+
+      raise InvalidConsequenceError.new(consequence) unless consequence_method.arity.zero?
+
+      consequence_method.call
     end
 
     private def perform_step_for(step_definition)
