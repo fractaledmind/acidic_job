@@ -45,23 +45,44 @@ module AcidicJob
         end
 
         def around_step(context) # &block
-          if context.entries_for_action(:awaiting).empty?
-            # First time: resolve the jobs from the method and enqueue them
+          job_ids = context.get(:job_ids)[0]
+
+          if job_ids.nil?
+            # First entry: resolve the jobs to await, record everything needed to
+            # track and (if necessary) re-drive them, then enqueue and halt.
             awaits_method_name = context.definition
 
-            if (awaits_method = context.resolve_method(awaits_method_name))
-              raise InvalidMethodError.new unless awaits_method.arity.zero?
+            awaits_method = context.resolve_method(awaits_method_name)
+            raise InvalidMethodError.new unless awaits_method.arity.zero?
 
-              awaited_jobs = awaits_method.call
+            awaited_jobs = awaits_method.call
 
-              unless awaited_jobs.is_a?(Array) && awaited_jobs.all? { |j| j.is_a?(ActiveJob::Base) }
-                raise InvalidReturnValueError.new(awaited_jobs)
-              end
-            else
-              raise UndefinedMethodError.new(awaits_method_name)
+            unless awaited_jobs.is_a?(Array) && awaited_jobs.all? { |j| j.is_a?(ActiveJob::Base) }
+              raise InvalidReturnValueError.new(awaited_jobs)
             end
 
+            # Nothing to await — proceed immediately rather than halting forever
+            # (no child would ever re-enqueue this workflow).
+            return yield if awaited_jobs.empty?
+
             job_ids = awaited_jobs.map(&:job_id)
+            plugin_names = context.plugins.map { |p| p.name }
+
+            # Store each awaited job's completion record — including its
+            # serialization so an interrupted enqueue can be re-driven — BEFORE
+            # publishing the `job_ids` list. A crash before `job_ids` is stored
+            # simply re-runs this branch; a crash after it is recovered by the
+            # `else` branch, which re-enqueues anything not yet completed.
+            awaited_jobs.each do |job|
+              context.set(job.job_id => {
+                "execution_id" => context.execution_id,
+                "job_ids" => job_ids,
+                "plugins" => plugin_names,
+                "serialized" => job.serialize,
+                "completed" => false
+              })
+            end
+            context.set(job_ids: job_ids)
 
             context.record!(
               step: context.current_step,
@@ -70,28 +91,35 @@ module AcidicJob
               awaited_job_ids: job_ids
             )
 
-            # Store the list of all job IDs for later reference
-            context.set(job_ids: job_ids)
-
-            # Serialize plugin names so they can be restored for after_perform hooks
-            plugin_names = context.plugins.map { |p| p.name }
-
-            # Store each awaited job with the info needed for the after_perform callback
-            # to know which parent execution to re-enqueue when all jobs complete
-            awaited_jobs.each do |job|
-              context.set(job.job_id => {
-                "execution_id" => context.execution_id,
-                "job_ids" => job_ids,
-                "plugins" => plugin_names,
-                "completed" => false
-              })
-            end
-
             ActiveJob.perform_all_later(*awaited_jobs)
 
             context.halt_workflow!
           else
-            yield
+            # Resuming. Only run the step body once EVERY awaited job has reported
+            # completion. The parent can land here not just when all children are
+            # done, but also if Active Job retried it after a crash — so we must
+            # verify, not assume.
+            incomplete = job_ids.reject do |job_id|
+              record = context.get(job_id)[0]
+              record && record["completed"]
+            end
+
+            if incomplete.empty?
+              yield
+            else
+              # Some awaited jobs never completed (e.g. a crash interrupted the
+              # original enqueue, or a child has not finished yet). Re-enqueue the
+              # missing ones from their stored serialization and wait again,
+              # rather than running the body without its dependencies.
+              incomplete.each do |job_id|
+                record = context.get(job_id)[0]
+                next unless record && record["serialized"]
+
+                ActiveJob::Base.deserialize(record["serialized"]).enqueue
+              end
+
+              context.halt_workflow!
+            end
           end
         end
 
@@ -112,9 +140,12 @@ module AcidicJob
 
           return unless parent_execution_id && sibling_job_ids
 
-          # Check if all sibling jobs are complete
+          # Check if all sibling jobs are complete. Guard on the count too: an
+          # empty/partial result set would make `all?` vacuously true and
+          # re-enqueue the parent prematurely.
           sibling_records = AcidicJob::Value.where(execution_id: parent_execution_id, key: sibling_job_ids)
-          all_complete = sibling_records.all? { |record| record.value["completed"] == true }
+          all_complete = sibling_records.count == sibling_job_ids.size &&
+                         sibling_records.all? { |record| record.value["completed"] == true }
 
           return unless all_complete
 

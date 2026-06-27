@@ -62,20 +62,23 @@ module AcidicJob
           triggers = compensate["on"]
           compensation = compensate["with"]
 
-          return if triggers&.none? { |klass| klass === e }
+          # Only compensate for the configured error(s). Any other error must
+          # propagate untouched — never swallow an unexpected failure.
+          raise e if triggers&.none? { |klass| klass === e }
 
-          if (method = context.resolve_method(compensation))
-            raise InvalidMethodError.new(compensation) unless method.arity.zero?
+          method = context.resolve_method(compensation)
+          raise InvalidMethodError.new(compensation) unless method.arity.zero?
 
-            context.record!(
-              step: context.current_step,
-              action: :compensating,
-              timestamp: Time.current
-            )
-            method.call
-          else
-            raise UndefinedMethodError.new(compensation)
-          end
+          context.record!(
+            step: context.current_step,
+            action: :compensating,
+            timestamp: Time.current
+          )
+          method.call
+
+          # Compensation is cleanup, not recovery: the original failure still
+          # stands, so re-raise it for normal retry/discard handling.
+          raise e
         end
       end
     end

@@ -3,6 +3,12 @@
 require "test_helper"
 require "acidic_job/plugins/pro/for_each"
 
+# Register at load time (not in `before_setup`) so the plugin is active during
+# `test_simulation`'s callstack capture, which runs when the class is defined.
+unless AcidicJob.plugins.include?(AcidicJob::Plugins::Pro::ForEach)
+  AcidicJob.plugins << AcidicJob::Plugins::Pro::ForEach
+end
+
 module Pro
   class ForEachTest < ActiveJob::TestCase
     class Job < ActiveJob::Base
@@ -65,10 +71,6 @@ module Pro
       end
     end
 
-    def before_setup
-      AcidicJob.plugins << AcidicJob::Plugins::Pro::ForEach
-      super
-    end
 
     test "workflow runs successfully" do
       Job.perform_later
@@ -135,6 +137,70 @@ module Pro
 ],
         AcidicJob::Value.pluck(:key)
       )
+    end
+
+    # ============================================
+    # Edge cases & failure scenarios
+    # ============================================
+
+    class NilItemsJob < ActiveJob::Base
+      include AcidicJob::Workflow
+
+      def perform
+        execute_workflow(unique_by: job_id) do |w|
+          w.step :collect, for_each: [ 1, nil, 3 ]
+        end
+      end
+
+      def collect(item)
+        # wrap so a nil item is recorded distinctly (a bare nil is the journal's
+        # "no value" sentinel)
+        ChaoticJob.push_to_journal!({ "item" => item })
+      end
+    end
+
+    test "iterates over a collection containing nil without terminating early" do
+      NilItemsJob.perform_later
+      perform_all_jobs
+
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
+      # the nil element must NOT be mistaken for the end of the enumeration
+      assert_equal(
+        [ { "item" => 1 }, { "item" => nil }, { "item" => 3 } ],
+        ChaoticJob::Journal.entries
+      )
+    end
+
+    class IterateJob < ActiveJob::Base
+      include AcidicJob::Workflow
+
+      def perform
+        execute_workflow(unique_by: job_id) do |w|
+          w.step :collect, for_each: [ 1, 2, 3 ]
+        end
+      end
+
+      def collect(item)
+        # idempotent body (Set-backed journal) — safe to replay
+        ChaoticJob.log_to_journal!(item)
+      end
+    end
+
+    test "reprocesses the current item idempotently when it crashes before the cursor advances" do
+      run_scenario(
+        IterateJob.new,
+        glitch: glitch_before_call("AcidicJob::Context#set", Hash)
+      ) do
+        perform_all_jobs
+      end
+
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
+      assert_equal [ 1, 2, 3 ], ChaoticJob::Journal.entries
+    end
+
+    test_simulation(IterateJob.new) do |_scenario|
+      assert_only_one_execution_that_it_is_finished_and_each_step_only_succeeds_once
+      assert_equal [ 1, 2, 3 ], ChaoticJob::Journal.entries
     end
   end
 end
