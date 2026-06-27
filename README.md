@@ -151,6 +151,39 @@ Unlike `transactional:`, which wraps the step body, the consequence runs _after_
 > [!IMPORTANT]
 > The consequence shares the transaction that writes the `succeeded` entry to the `AcidicJob::Execution` record. Because that entry write is *always* part of the transaction, the consequence **must** write to the same database as the `AcidicJob` tables — that is the only way the two writes can be atomic. There is deliberately no option to bind the transaction to a different model or database: a consequence that mutates a record on a _different_ database simply cannot be committed atomically with the workflow's progression, and should instead be modeled as its own idempotent step.
 
+#### Waiting for an external signal
+
+Some workflows have to pause until something *outside* the job happens — a webhook lands, an admin approves, a third party finishes. The `await_signal:` option (provided by the `AcidicJob::Plugins::Pro::AwaitSignal` plugin) gates a step on a condition method and, if it isn't satisfied yet, halts the workflow:
+
+```ruby
+class OnboardJob < ActiveJob::Base
+  include AcidicJob::Workflow
+
+  def perform(user_id)
+    @user = User.find(user_id)
+    execute_workflow(unique_by: user_id) do |workflow|
+      workflow.step :await_kyc, await_signal: :kyc_approved?
+      workflow.step :activate_account
+    end
+  end
+
+  def kyc_approved? = @user.reload.kyc_approved?
+  # ...
+end
+```
+
+When `kyc_approved?` is false the workflow halts on the `await_kyc` step. It resumes when something re-enqueues the job with the **same `unique_by`** — typically an event handler:
+
+```ruby
+# in your KYC webhook controller
+OnboardJob.perform_later(user.id)
+```
+
+On resume the condition is re-checked; if it's now true the workflow proceeds, otherwise it simply halts again. This makes `await_signal:` the natural fit for human-in-the-loop gates and webhook-driven workflows.
+
+> [!NOTE]
+> Unlike `check: { every:, until: }`, which polls on a timer, `await_signal:` does **not** reschedule itself — it waits to be re-triggered by an external event. Use `check:` when time will eventually satisfy the condition; use `await_signal:` when an outside actor will. (And remember to key `unique_by` on a stable domain id, not `job_id`, so the re-trigger resumes the same execution.)
+
 
 ### Persisted Attributes
 
@@ -404,6 +437,7 @@ class AcidicJobProExample < ActiveJob::Base
       w.step :step_3, compensate: { on: CustomError, with: :compensation }
       w.step :step_4, skip_if: :check?
       w.step :step_5, for_each: :models
+      w.step :step_6, await_signal: :ready?
     end
   end
 
