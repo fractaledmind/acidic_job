@@ -44,24 +44,18 @@ jobs:
           - ruby: "3.2"
             gemfile: rails_main
 
-    services:
-      mysql:
-        image: mysql:8.0.31
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-        ports:
-          - 33060:3306
-        options: --health-cmd "mysql -h localhost -e \"select now()\"" --health-interval 1s --health-timeout 5s --health-retries 30
-      postgres:
-        image: postgres:15.1
-        env:
-          POSTGRES_HOST_AUTH_METHOD: "trust"
-        ports:
-          - 55432:5432
-
+    # No Docker service containers: use the database servers pre-installed on the
+    # GitHub-hosted runner instead, so CI never pulls images from Docker Hub
+    # (which was an intermittent source of "Initialize containers" failures).
     env:
       TARGET_DB: ${{ matrix.database }}
       BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/${{ matrix.gemfile }}.gemfile
+      # Point at the runner's pre-installed Postgres/MySQL (overrides the
+      # docker-compose defaults in test/dummy/config/database.yml).
+      POSTGRES_PORT: 5432
+      POSTGRES_PASSWORD: postgres
+      MYSQL_PORT: 3306
+      MYSQL_PASSWORD: root
 
     steps:
       - name: Install packages
@@ -75,6 +69,18 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+
+      - name: Start database server
+        run: |
+          case "${{ matrix.database }}" in
+            postgres)
+              sudo systemctl start postgresql
+              sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+              ;;
+            mysql)
+              sudo systemctl start mysql
+              ;;
+          esac
 
       - name: Setup test database
         run: |

@@ -7,19 +7,21 @@ default: &default
 default: &default
   adapter: postgresql
   encoding: unicode
-  username: postgres
+  username: <%= ENV.fetch("POSTGRES_USER", "postgres") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "") %>
   pool: 20
   host: "127.0.0.1"
-  port: 55432
+  port: <%= ENV.fetch("POSTGRES_PORT", 55432) %>
   gssencmode: disable # https://github.com/ged/ruby-pg/issues/311
 
 <% elsif ENV["TARGET_DB"] == "mysql" %>
 default: &default
   adapter: mysql2
-  username: root
+  username: <%= ENV.fetch("MYSQL_USER", "root") %>
+  password: <%= ENV.fetch("MYSQL_PASSWORD", "") %>
   pool: 20
   host: "127.0.0.1"
-  port: 33060
+  port: <%= ENV.fetch("MYSQL_PORT", 33060) %>
 <% end %>
 
 <% def database_name_from(name); ENV["TARGET_DB"]=="sqlite" ? "db/#{name}-#{ENV['TEST_ENV_NUMBER']}.sqlite3" : name; end %>
